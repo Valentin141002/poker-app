@@ -5,14 +5,18 @@ const path = require("path");
 
 const app = express();
 
-// Ajoutez une route par défaut pour servir une page d'accueil
-app.get('/', (req, res) => {
-  res.send("Bienvenue sur le serveur Socket.IO de IMDCX Poker App");
+// Servir les fichiers statiques du dossier build
+app.use(express.static(path.join(__dirname, 'build')));
+
+// Pour toute route non gérée, renvoyer index.html (pour le routage côté client)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
 const server = http.createServer(app);
 const io = socketIo(server);
 
+// Logique Socket.IO (exemple simple)
 const table = { players: [] };
 
 io.on("connection", (socket) => {
@@ -23,6 +27,7 @@ io.on("connection", (socket) => {
     socket.join("table1");
     console.log(`Socket ${socket.id} a rejoint la table.`);
     console.log("Nombre de joueurs dans la table:", table.players.length);
+
     io.in("table1").emit("roomUpdate", { players: table.players });
 
     if (table.players.length >= 2) {
