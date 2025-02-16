@@ -6,11 +6,15 @@ const PokerGame = require("./PokerGame");
 
 const app = express();
 
-// Servir le contenu statique du dossier build (votre interface web)
+// Servir les fichiers statiques depuis le dossier "build"
 app.use(express.static(path.join(__dirname, 'build')));
+
+// Pour toute autre route, renvoyer index.html
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
+
+module.exports = app;
 
 const server = http.createServer(app);
 const io = socketIo(server);
@@ -30,13 +34,13 @@ io.on("connection", (socket) => {
     io.in("gameRoom").emit("roomUpdate", { players: waitingPlayers.map(p => p.id) });
     console.log("Nombre de joueurs en attente:", waitingPlayers.length);
     
-    // Démarrer la partie dès qu'on a au moins 2 joueurs
     if (waitingPlayers.length >= 2) {
+      console.log("Deux joueurs connectés, démarrage de la partie...");
       currentGame = new PokerGame(waitingPlayers, io);
       currentGame.startGame();
       waitingPlayers = [];
     }
-  });
+  });  
   
   socket.on("playerAction", (actionData) => {
     // actionData : { action: "bet" | "call" | "raise" | "fold", amount: number (optionnel) }

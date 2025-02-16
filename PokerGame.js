@@ -167,13 +167,13 @@ class PokerGame {
   startGame() {
     this.shuffleDeck();
     this.dealPrivateCards();
-    // Envoyer les cartes privées à chaque joueur (seulement à lui)
     this.players.forEach(player => {
       player.socket.emit("privateCards", { cards: player.privateCards });
+      console.log(`Cartes privées envoyées à ${player.id}`);
     });
-    // Commencer le round de mises pré-flop interactif
+    // Commencer le round de mise pré-flop interactif
     this.startBettingRound("pre-flop", () => {});
-  }
+  }  
 }
 
 module.exports = PokerGame;
