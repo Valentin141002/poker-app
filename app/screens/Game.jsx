@@ -1,77 +1,130 @@
-// GameScreen.jsx
-import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
-import io from "socket.io-client";
+import React, { useEffect, useState } from 'react';
+import io from 'socket.io-client';
 
-// Remplacez par l'adresse IP locale de votre serveur et le port utilisé
-const SOCKET_SERVER_URL = "http://192.168.1.141:3000";
+const SOCKET_SERVER_URL = "https://imdcx-fcfa0a3fc0a8.herokuapp.com/"; // URL de votre serveur
 
 const GameScreen = () => {
   const [socket, setSocket] = useState(null);
-  const [players, setPlayers] = useState([]);
+  const [privateCards, setPrivateCards] = useState([]);
+  const [communityCards, setCommunityCards] = useState([]);
+  const [phase, setPhase] = useState("En attente");
+  const [pot, setPot] = useState(0);
   const [gameMessage, setGameMessage] = useState("");
-  const [winner, setWinner] = useState(null);
-  const [loading, setLoading] = useState(true);
-
+  const [players, setPlayers] = useState([]);
+  const [isYourTurn, setIsYourTurn] = useState(false);
+  
   useEffect(() => {
-    // Créer la connexion Socket.IO
     const newSocket = io(SOCKET_SERVER_URL);
     setSocket(newSocket);
-
+    
     newSocket.on("connect", () => {
-      console.log("Connecté au serveur avec l'ID :", newSocket.id);
-      // Envoyer l'événement "joinGame" dès la connexion
-      newSocket.emit("joinGame", {});
+      console.log("Connecté avec l'ID:", newSocket.id);
+      newSocket.emit("joinGame");
     });
-
-    newSocket.on("roomUpdate", (data) => {
+    
+    newSocket.on("privateCards", data => {
+      console.log("Cartes privées reçues:", data.cards);
+      setPrivateCards(data.cards);
+    });
+    
+    newSocket.on("roomUpdate", data => {
       setPlayers(data.players);
     });
-
-    newSocket.on("gameStart", (data) => {
-      setGameMessage(data.message);
-      setLoading(false);
+    
+    newSocket.on("bettingRoundStart", data => {
+      setPhase(data.phase);
+      setPot(data.pot);
+      setGameMessage(`Round ${data.phase} commencé. Pot: ${data.pot}`);
+      // On remet à false jusqu'à ce que le serveur indique que c'est votre tour
+      setIsYourTurn(false);
     });
-
-    newSocket.on("gameResult", (data) => {
-      setWinner(data.winnerId);
-      setGameMessage(data.winnerId === newSocket.id ? "Vous avez gagné !" : "Vous avez perdu.");
-      newSocket.emit("gameResultAck", {
-        winnerId: data.winnerId,
-        playerId: newSocket.id,
-        wins: data.winnerId === newSocket.id ? 1 : 0,
-        losses: data.winnerId !== newSocket.id ? 1 : 0,
-      });
+    
+    newSocket.on("yourTurn", data => {
+      setGameMessage(`C'est votre tour ! Mise minimale: ${data.minimumBet}`);
+      setIsYourTurn(true);
     });
-
-    newSocket.on("playerStatsUpdate", (data) => {
-      console.log("Stats mises à jour :", data);
+    
+    newSocket.on("flop", data => {
+      setCommunityCards(prev => [...prev, ...data.cards]);
+      setPhase("Flop");
     });
-
-    // Nettoyage lors du démontage du composant
+    
+    newSocket.on("turn", data => {
+      setCommunityCards(prev => [...prev, data.card]);
+      setPhase("Turn");
+    });
+    
+    newSocket.on("river", data => {
+      setCommunityCards(prev => [...prev, data.card]);
+      setPhase("River");
+    });
+    
+    newSocket.on("showdown", data => {
+      setCommunityCards(data.communityCards);
+      setPot(data.pot);
+      setGameMessage("Showdown ! Vérifiez vos mains.");
+      setIsYourTurn(false);
+    });
+    
+    newSocket.on("gameResult", data => {
+      setGameMessage(`Résultat: Gagnant(s): ${data.winners.join(", ")} - Pot: ${data.pot}`);
+      setIsYourTurn(false);
+    });
+    
     return () => newSocket.disconnect();
   }, []);
-
+  
+  const sendAction = (action, amount = 0) => {
+    if (socket && isYourTurn) {
+      socket.emit("playerAction", { action, amount });
+      console.log(`Action envoyée: ${action} ${amount}`);
+      // Désactiver les boutons pour éviter d'envoyer plusieurs actions
+      setIsYourTurn(false);
+    }
+  };
+  
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Table de Poker Interactive</Text>
-      {loading ? (
-        <ActivityIndicator style={{ marginVertical: 20 }} />
-      ) : (
-        <Text style={styles.info}>Joueurs dans la salle : {players.join(", ")}</Text>
+    <div style={{ fontFamily: 'Arial, sans-serif', padding: 20, textAlign: 'center' }}>
+      <h1>Texas Hold'em Poker</h1>
+      <p><strong>Phase :</strong> {phase}</p>
+      <p><strong>Pot :</strong> {pot}</p>
+      <p><strong>Message :</strong> {gameMessage}</p>
+      
+      <h2>Vos cartes privées</h2>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 10 }}>
+        {privateCards.map((card, i) => (
+          <div key={i} style={{ border: '1px solid #ccc', borderRadius: 4, padding: 10, width: 50, textAlign: 'center' }}>
+            {card.rank}{card.suit}
+          </div>
+        ))}
+      </div>
+      
+      <h2>Cartes communes</h2>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 10 }}>
+        {communityCards.map((card, i) => (
+          <div key={i} style={{ border: '1px solid #ccc', borderRadius: 4, padding: 10, width: 50, textAlign: 'center' }}>
+            {card.rank}{card.suit}
+          </div>
+        ))}
+      </div>
+      
+      {/* Affichez les boutons d'action seulement si c'est votre tour */}
+      {isYourTurn && (
+        <>
+          <h2>Actions</h2>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 10 }}>
+            <button onClick={() => sendAction("bet", 10)}>Miser 10</button>
+            <button onClick={() => sendAction("call")}>Suivre</button>
+            <button onClick={() => sendAction("raise", 20)}>Relancer 20</button>
+            <button onClick={() => sendAction("fold")}>Se coucher</button>
+          </div>
+        </>
       )}
-      {gameMessage !== "" && <Text style={styles.message}>{gameMessage}</Text>}
-      {winner && <Text style={styles.winner}>Gagnant : {winner}</Text>}
-    </View>
+      
+      <h2>Joueurs connectés</h2>
+      <p>{players.join(", ")}</p>
+    </div>
   );
 };
-
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", alignItems: "center", padding: 20 },
-  header: { fontSize: 24, fontWeight: "bold", marginBottom: 20 },
-  info: { marginVertical: 10, fontSize: 16 },
-  message: { fontSize: 20, marginVertical: 10 },
-  winner: { fontSize: 18, fontWeight: "bold", color: "green" }
-});
 
 export default GameScreen;
