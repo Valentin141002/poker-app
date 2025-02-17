@@ -12,9 +12,11 @@ class PokerGame {
     this.currentPhase = "pre-flop"; // "pre-flop", "flop", "turn", "river", "showdown"
     this.actions = {}; // Actions recueillies pendant le round courant
     this.currentPlayerIndex = 0; // Pour l'ordre de passage des joueurs
-    this.timerDuration = 15000; // Durée d'un round en ms (ici 15 sec)
+    this.timerDuration = 60000; // Durée d'un round en ms (ici 60 sec)
     this.roundTimer = null;
     this.minimumBet = 10; // Mise minimale
+    // Ensemble pour suivre les joueurs prêts
+    this.readyPlayers = new Set();
   }
   
   createDeck() {
@@ -101,19 +103,32 @@ class PokerGame {
     
     // Avancer à l'ordre du joueur suivant
     this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
-    // Notifier le joueur suivant (s'il reste des joueurs qui doivent agir)
-    if (Object.keys(this.actions).length < this.players.length) {
-      this.notifyCurrentPlayer();
-    }
     
     // Si tous les joueurs ont agi, avancer immédiatement
     if (Object.keys(this.actions).length === this.players.length) {
       clearTimeout(this.roundTimer);
       this.advanceRound();
+    } else {
+      // Notifier le joueur suivant qui n'a pas encore agi
+      let notified = false;
+      for (let i = 0; i < this.players.length; i++) {
+        const nextPlayer = this.players[(this.currentPlayerIndex + i) % this.players.length];
+        if (!this.actions[nextPlayer.id]) {
+          this.currentPlayerIndex = (this.currentPlayerIndex + i) % this.players.length;
+          this.notifyCurrentPlayer();
+          notified = true;
+          break;
+        }
+      }
+      if (!notified) {
+        // Cas improbable où tous les joueurs auraient déjà agi
+        clearTimeout(this.roundTimer);
+        this.advanceRound();
+      }
     }
   }
   
-  // Avancer au round suivant (en fonction de la phase courante)
+  // Avancer au round suivant en fonction de la phase courante
   advanceRound() {
     console.log(`Round ${this.currentPhase} terminé. Actions recueillies:`, this.actions);
     
@@ -121,7 +136,7 @@ class PokerGame {
     for (let id in this.actions) {
       const act = this.actions[id];
       if (act.action === "bet" || act.action === "raise" || act.action === "call") {
-        this.pot += act.amount;
+        this.pot += act.amount || 0;
       }
     }
     
@@ -139,7 +154,7 @@ class PokerGame {
       this.io.in("gameRoom").emit("river", { card: this.communityCards[4] });
       this.startBettingRound("river", () => {});
     } else if (this.currentPhase === "river") {
-      // Showdown : Évaluer les mains et déterminer le gagnant
+      // Showdown : évaluer les mains et déterminer le gagnant
       const winners = this.evaluateHands();
       this.players.forEach(player => {
         player.socket.emit("showdown", {
@@ -160,18 +175,36 @@ class PokerGame {
       const hand = Hand.solve(cardStrings);
       return { playerId: player.id, hand };
     });
-    const winners = Hand.winners(evaluations.map(e => e.hand));
-    return evaluations.filter(e => winners.includes(e.hand));
+    const winningHands = Hand.winners(evaluations.map(e => e.hand));
+    return evaluations.filter(e => winningHands.includes(e.hand));
   }
   
+  // Méthode appelée lorsqu'un joueur est prêt
+  playerReady(playerId) {
+    this.readyPlayers.add(playerId);
+    console.log(`Le joueur ${playerId} est prêt. (${this.readyPlayers.size}/${this.players.length})`);
+    if (this.readyPlayers.size === this.players.length) {
+      console.log("Tous les joueurs sont prêts. Démarrage de la partie.");
+      this.startGame();
+    }
+  }
+  
+  // Démarrer la partie une fois que tous les joueurs sont prêts
   startGame() {
     this.shuffleDeck();
     this.dealPrivateCards();
+    // Envoyer les cartes privées à chaque joueur
     this.players.forEach(player => {
       player.socket.emit("privateCards", { cards: player.privateCards });
       console.log(`Cartes privées envoyées à ${player.id}`);
     });
-    // Commencer le round de mise pré-flop interactif
+    // Notifier tous les joueurs que la partie a commencé pour changer l'affichage côté client
+    this.io.in("gameRoom").emit("gameStarted", {
+      message: "La partie a commencé",
+      pot: this.pot,
+      communityCards: this.communityCards
+    });
+    // Démarrer le round de mise pré-flop interactif
     this.startBettingRound("pre-flop", () => {});
   }  
 }

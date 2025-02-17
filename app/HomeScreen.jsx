@@ -6,7 +6,13 @@ const HomeScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Bienvenue sur Poker App</Text>
-      <Button title="JOUER" onPress={() => navigation.navigate("Game")} />
+      <Button
+  title="JOUER"
+  onPress={() => {
+    console.log("Bouton JOUER pressé");
+    navigation.navigate("Game");
+  }}
+/>
     </View>
   );
 };
