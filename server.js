@@ -7,74 +7,83 @@ const PokerGame = require("./PokerGame");
 
 const app = express();
 
-// Servir les fichiers statiques depuis le dossier "build"
-app.use(express.static(path.join(__dirname, 'build')));
+// Sert les fichiers statiques depuis le dossier "build"
+app.use(express.static(path.join(__dirname, "build")));
 
-// Pour toute autre route, renvoyer index.html (pour une application SPA)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+// Pour toutes les routes non reconnues, renvoie index.html (pour l'application SPA)
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
-// Création du serveur HTTP et de Socket.io
+// Création du serveur HTTP
 const server = http.createServer(app);
-const io = socketIo(server);
 
-// Optionnel : Rendre io accessible globalement (utile pour PokerGame par exemple)
+// Initialisation de Socket.IO
+const io = socketIo(server, {
+  cors: {
+    origin: "*", // À ajuster selon vos besoins de sécurité
+    methods: ["GET", "POST"],
+  },
+});
+
+// Rendre io accessible globalement (optionnel, utile pour PokerGame)
 global.io = io;
 
-// Liste des joueurs en attente et variable pour la partie en cours
+// Variables pour gérer les joueurs et la partie en cours
 let waitingPlayers = [];
 let currentGame = null;
 
-// Gestion des connexions clients via Socket.io
+// Gestion des connexions clients via Socket.IO
 io.on("connection", (socket) => {
   console.log(`Client connecté : ${socket.id}`);
-  
-  // Événement pour rejoindre le jeu
+
+  // Lorsqu'un client envoie l'événement "joinGame"
   socket.on("joinGame", () => {
-    // Ajouter le joueur à la liste d'attente
+    // Ajoute le joueur à la liste d'attente
     waitingPlayers.push({ id: socket.id, socket });
-    
-    // Faire rejoindre la salle "gameRoom" pour faciliter la communication de groupe
     socket.join("gameRoom");
     console.log(`Le client ${socket.id} a rejoint la salle "gameRoom".`);
-    
-    // Notifier tous les membres de "gameRoom" avec la liste des joueurs en attente
-    io.in("gameRoom").emit("roomUpdate", { players: waitingPlayers.map(p => p.id) });
-    console.log(`Nombre de joueurs en attente: ${waitingPlayers.length}`);
-    
+
+    // Notifie tous les membres de "gameRoom" avec la liste actuelle des joueurs
+    io.in("gameRoom").emit("roomUpdate", {
+      players: waitingPlayers.map((p) => p.id),
+    });
+    console.log(`Nombre de joueurs en attente : ${waitingPlayers.length}`);
+
     // Démarrer la partie dès qu'il y a au moins 2 joueurs
     if (waitingPlayers.length >= 2) {
-      console.log("Deux joueurs connectés, démarrage de la partie...");
+      console.log("Démarrage de la partie avec les joueurs :", waitingPlayers.map((p) => p.id));
       currentGame = new PokerGame(waitingPlayers, io);
       currentGame.startGame();
-      
-      // Réinitialiser la liste d'attente pour la prochaine partie
+
+      // Réinitialise la liste d'attente pour la prochaine partie
       waitingPlayers = [];
     }
   });
-  
-  // Événement pour recevoir une action d'un joueur (bet, call, raise, fold, etc.)
+
+  // Réception des actions d'un joueur (bet, call, raise, fold, etc.)
   socket.on("playerAction", (actionData) => {
-    // actionData doit contenir par exemple { action: "bet" | "call" | "raise" | "fold", amount: number (optionnel) }
     if (currentGame) {
       currentGame.registerAction(socket.id, actionData);
     } else {
-      console.log("Aucune partie en cours pour traiter l'action.");
+      console.log(`Action reçue de ${socket.id} mais aucune partie n'est en cours.`);
     }
   });
-  
-  // Gérer la déconnexion d'un client
+
+  // Gestion de la déconnexion d'un client
   socket.on("disconnect", () => {
     console.log(`Client déconnecté : ${socket.id}`);
-    // Supprimer le joueur de la liste d'attente
-    waitingPlayers = waitingPlayers.filter(p => p.id !== socket.id);
-    io.in("gameRoom").emit("roomUpdate", { players: waitingPlayers.map(p => p.id) });
-    
-    // Ici, tu peux également ajouter une logique pour gérer les déconnexions durant une partie en cours
+    // Retire le joueur de la liste d'attente
+    waitingPlayers = waitingPlayers.filter((p) => p.id !== socket.id);
+    io.in("gameRoom").emit("roomUpdate", {
+      players: waitingPlayers.map((p) => p.id),
+    });
+    // Vous pouvez ajouter ici une logique supplémentaire pour gérer les déconnexions en cours de partie
   });
 });
 
-// Lancer le serveur sur le port défini ou 3000 par défaut
+// Lancer le serveur sur le port défini (par défaut 3000)
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Serveur lancé sur le port ${PORT}`));
+server.listen(PORT, () => {
+  console.log(`Serveur lancé sur le port ${PORT}`);
+});
