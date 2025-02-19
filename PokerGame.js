@@ -12,10 +12,12 @@ class PokerGame {
     this.currentPhase = "pre-flop"; // "pre-flop", "flop", "turn", "river", "showdown"
     this.actions = {}; // Actions recueillies pendant le round courant
     this.currentPlayerIndex = 0; // Pour l'ordre de passage des joueurs
-    this.timerDuration = 60000; // Durée d'un round en ms (ici 60 sec)
+    this.timerDuration = 120000; // Durée d'un round en ms (2 minutes)
     this.roundTimer = null;
+    this.timerInterval = null;
+    this.remainingTime = this.timerDuration;
     this.minimumBet = 10; // Mise minimale
-    // Ensemble pour suivre les joueurs prêts
+    // Ensemble pour suivre les joueurs prêts (optionnel pour une logique de ready)
     this.readyPlayers = new Set();
   }
   
@@ -63,17 +65,27 @@ class PokerGame {
   startBettingRound(phase, onRoundComplete) {
     this.currentPhase = phase;
     this.actions = {}; // Réinitialiser les actions du round
-    // Notifier tous les joueurs du début du round
-    this.io.in("gameRoom").emit("bettingRoundStart", { phase, pot: this.pot });
+
+    // Réinitialiser le timer et émettre l'info initiale
+    this.remainingTime = this.timerDuration;
+    this.io.in("gameRoom").emit("bettingRoundStart", { phase, pot: this.pot, timer: this.remainingTime });
     console.log(`Round ${phase} démarré. Pot actuel: ${this.pot}`);
-    
+
     // Initialiser l'ordre des joueurs pour ce round
     this.currentPlayerIndex = 0;
     this.notifyCurrentPlayer();
-    
-    // Démarrer le timer pour le round
+
+    // Démarrer l'intervalle pour mettre à jour le timer toutes les secondes
+    this.timerInterval = setInterval(() => {
+      this.remainingTime -= 1000;
+      // Envoyer l'update du timer à tous les joueurs
+      this.io.in("gameRoom").emit("timerUpdate", { remainingTime: this.remainingTime });
+    }, 1000);
+
+    // Démarrer le timer du round
     this.roundTimer = setTimeout(() => {
       console.log(`Timer écoulé pour le round ${phase}.`);
+      clearInterval(this.timerInterval);
       // Pour chaque joueur qui n'a pas agi, appliquer une action par défaut (fold)
       this.players.forEach(player => {
         if (!this.actions[player.id]) {
@@ -83,8 +95,6 @@ class PokerGame {
       });
       this.advanceRound();
     }, this.timerDuration);
-    
-    // onRoundComplete peut être appelé après l'avancement du round (optionnel ici)
   }
   
   // Notifier le joueur dont c'est le tour
@@ -100,16 +110,23 @@ class PokerGame {
   registerAction(playerId, actionData) {
     this.actions[playerId] = actionData;
     console.log(`Action de ${playerId}:`, actionData);
-    
+
+    // Mise à jour immédiate du pot pour bet, call ou raise
+    if (actionData.action === "bet" || actionData.action === "raise" || actionData.action === "call") {
+      this.pot += actionData.amount || 0;
+      this.io.in("gameRoom").emit("updatePot", { pot: this.pot });
+    }
+
     // Avancer à l'ordre du joueur suivant
     this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
     
     // Si tous les joueurs ont agi, avancer immédiatement
     if (Object.keys(this.actions).length === this.players.length) {
       clearTimeout(this.roundTimer);
+      clearInterval(this.timerInterval);
       this.advanceRound();
     } else {
-      // Notifier le joueur suivant qui n'a pas encore agi
+      // Notifier le prochain joueur qui n'a pas encore agi
       let notified = false;
       for (let i = 0; i < this.players.length; i++) {
         const nextPlayer = this.players[(this.currentPlayerIndex + i) % this.players.length];
@@ -121,8 +138,8 @@ class PokerGame {
         }
       }
       if (!notified) {
-        // Cas improbable où tous les joueurs auraient déjà agi
         clearTimeout(this.roundTimer);
+        clearInterval(this.timerInterval);
         this.advanceRound();
       }
     }
@@ -130,17 +147,10 @@ class PokerGame {
   
   // Avancer au round suivant en fonction de la phase courante
   advanceRound() {
+    clearInterval(this.timerInterval);
     console.log(`Round ${this.currentPhase} terminé. Actions recueillies:`, this.actions);
-    
-    // Mettre à jour le pot en fonction des actions
-    for (let id in this.actions) {
-      const act = this.actions[id];
-      if (act.action === "bet" || act.action === "raise" || act.action === "call") {
-        this.pot += act.amount || 0;
-      }
-    }
-    
-    // Passer à la phase suivante
+
+    // Transition vers la phase suivante
     if (this.currentPhase === "pre-flop") {
       this.dealFlop();
       this.io.in("gameRoom").emit("flop", { cards: this.communityCards.slice(0, 3) });
@@ -179,7 +189,7 @@ class PokerGame {
     return evaluations.filter(e => winningHands.includes(e.hand));
   }
   
-  // Méthode appelée lorsqu'un joueur est prêt
+  // Méthode appelée lorsqu'un joueur est prêt (optionnel)
   playerReady(playerId) {
     this.readyPlayers.add(playerId);
     console.log(`Le joueur ${playerId} est prêt. (${this.readyPlayers.size}/${this.players.length})`);
@@ -198,7 +208,7 @@ class PokerGame {
       player.socket.emit("privateCards", { cards: player.privateCards });
       console.log(`Cartes privées envoyées à ${player.id}`);
     });
-    // Notifier tous les joueurs que la partie a commencé pour changer l'affichage côté client
+    // Notifier tous les joueurs que la partie a commencé
     this.io.in("gameRoom").emit("gameStarted", {
       message: "La partie a commencé",
       pot: this.pot,
