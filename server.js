@@ -16,8 +16,6 @@ app.get("*", (req, res) => {
 });
 
 const server = http.createServer(app);
-
-// Initialisation de Socket.io avec une configuration CORS simple
 const io = socketIo(server, {
   cors: { origin: "*" },
 });
