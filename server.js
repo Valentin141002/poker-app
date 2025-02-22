@@ -20,7 +20,7 @@ const io = socketIo(server, {
   cors: { origin: "*" },
 });
 
-// Optionnel : exporter io globalement si nécessaire ailleurs
+// Exporter io globalement si nécessaire ailleurs
 global.io = io;
 
 // Variables globales pour la gestion des joueurs en attente et de la partie en cours
@@ -66,19 +66,24 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Gestion du chat : réception d'un message et diffusion à tous les clients dans la gameRoom
+  socket.on("chatMessage", (data) => {
+    // data doit contenir { sender, message }
+    console.log(`Message de ${data.sender}: ${data.message}`);
+    io.in("gameRoom").emit("chatMessage", data);
+  });
+
   // Gestion de la déconnexion d'un joueur
   socket.on("disconnect", () => {
     console.log(`Client déconnecté : ${socket.id}`);
-
-    // Retirer le joueur de la liste d'attente
     waitingPlayers = waitingPlayers.filter((p) => p.id !== socket.id);
     io.in("gameRoom").emit("roomUpdate", {
       players: waitingPlayers.map((p) => ({ id: p.id, name: p.name })),
     });
-    
-    // Si le joueur était en partie, le gérer dans la logique de jeu
     if (currentGame) {
       currentGame.handleDisconnect(socket.id);
+      // Notifier les autres joueurs de la déconnexion
+      io.in("gameRoom").emit("playerDisconnected", { playerId: socket.id });
     }
   });
 });
