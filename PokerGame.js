@@ -367,24 +367,22 @@ startGame() {
       player.socket.emit("privateCards", { cards: player.privateCards });
       console.log(`Cartes privées envoyées à ${player.id}`);
     });
-  
-    // Ajouter un délai avant d'émettre "gameStarted"
-    setTimeout(() => {
-      console.log("Emission de gameStarted avec:", {
+
+    console.log("Emission de gameStarted avec:", {
         message: "La partie a commencé",
         pot: this.pot,
         communityCards: []
       });
+
       this.io.in("gameRoom").emit("gameStarted", {
         message: "La partie a commencé",
         pot: this.pot,
         communityCards: [],
       });
-  
-      // Démarrer le round de mise pre-flop après l'émission
-      this.startBettingRound("pre-flop");
-    }, 1000);
-  }  
+
+  // Démarrer le round pre-flop
+  this.startBettingRound("pre-flop");
+}
   
   // Gère la déconnexion d'un joueur en cours de partie
   handleDisconnect(playerId) {

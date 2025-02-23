@@ -28,31 +28,41 @@ let waitingPlayers = [];
 let currentGame = null;
 
 io.on("connection", (socket) => {
-  console.log(`Client connecté : ${socket.id}`);
-
-  // Lorsqu'un joueur rejoint la partie
-  // On peut transmettre un pseudo en argument (ici playerName)
-  socket.on("joinGame", (playerName) => {
-    const newPlayer = { id: socket.id, socket, name: playerName || socket.id };
-    waitingPlayers.push(newPlayer);
-    socket.join("gameRoom");
-
-    // Mise à jour de la salle pour tous les clients
-    io.in("gameRoom").emit("roomUpdate", {
-      players: waitingPlayers.map((p) => ({ id: p.id, name: p.name })),
+    console.log(`Client connecté : ${socket.id}`);
+  
+    // Lorsqu'un joueur rejoint la partie
+    // On peut transmettre un pseudo en argument (ici playerName)
+    socket.on("joinGame", (playerName) => {
+      // Si une partie est déjà en cours, refuser la nouvelle connexion
+      if (currentGame) {
+        console.log(`Refus de connexion : partie déjà en cours (socket: ${socket.id})`);
+        socket.emit("gameInProgress", {
+          message: "La partie est déjà en cours. Veuillez attendre la prochaine partie.",
+        });
+        return;
+      }
+      
+      // Sinon, accepter le joueur
+      const newPlayer = { id: socket.id, socket, name: playerName || socket.id };
+      waitingPlayers.push(newPlayer);
+      socket.join("gameRoom");
+  
+      // Mise à jour de la salle pour tous les clients
+      io.in("gameRoom").emit("roomUpdate", {
+        players: waitingPlayers.map((p) => ({ id: p.id, name: p.name })),
+      });
+      console.log(`Nombre de joueurs en attente: ${waitingPlayers.length}`);
+  
+      // Démarrer la partie dès qu'il y a au moins 2 joueurs et qu'aucune partie n'est en cours
+      if (waitingPlayers.length >= 2 && !currentGame) {
+        console.log("Démarrage de la partie...");
+        currentGame = new PokerGame(waitingPlayers, io);
+        currentGame.startGame();
+        // Réinitialiser la liste d'attente après le lancement de la partie
+        waitingPlayers = [];
+      }
     });
-    console.log(`Nombre de joueurs en attente: ${waitingPlayers.length}`);
-
-    // Démarrer la partie dès qu'il y a au moins 2 joueurs et qu'aucune partie n'est en cours
-    if (waitingPlayers.length >= 2 && !currentGame) {
-      console.log("Démarrage de la partie...");
-      currentGame = new PokerGame(waitingPlayers, io);
-      currentGame.startGame();
-      // Réinitialiser la liste d'attente après le lancement de la partie
-      waitingPlayers = [];
-    }
-  });
-
+  
   // Gestion des actions des joueurs (fold, call, raise, etc.)
   socket.on("playerAction", (actionData) => {
     if (currentGame) {
