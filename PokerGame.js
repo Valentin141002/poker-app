@@ -350,8 +350,8 @@ class PokerGame {
     }
   }
   
-  // Démarre la partie : initialise les jetons, mélange le deck, distribue les cartes, etc.
-  startGame() {
+// Démarre la partie : initialise les jetons, mélange le deck, distribue les cartes, etc.
+startGame() {
     // Attribuer 10 000 jetons à chaque joueur et réinitialiser leur état
     this.players.forEach(player => {
       player.chips = 10000;
@@ -367,23 +367,24 @@ class PokerGame {
       player.socket.emit("privateCards", { cards: player.privateCards });
       console.log(`Cartes privées envoyées à ${player.id}`);
     });
-
-    console.log("Emission de gameStarted avec:", {
+  
+    // Ajouter un délai avant d'émettre "gameStarted"
+    setTimeout(() => {
+      console.log("Emission de gameStarted avec:", {
         message: "La partie a commencé",
         pot: this.pot,
         communityCards: []
       });
+      this.io.in("gameRoom").emit("gameStarted", {
+        message: "La partie a commencé",
+        pot: this.pot,
+        communityCards: [],
+      });
   
-    // Notifier tous les joueurs que la partie a commencé (les cartes communes restent cachées)
-    this.io.in("gameRoom").emit("gameStarted", {
-      message: "La partie a commencé",
-      pot: this.pot,
-      communityCards: [],
-    });
-  
-    // Démarrer le round de mise pre-flop
-    this.startBettingRound("pre-flop");
-  }
+      // Démarrer le round de mise pre-flop après l'émission
+      this.startBettingRound("pre-flop");
+    }, 1000);
+  }  
   
   // Gère la déconnexion d'un joueur en cours de partie
   handleDisconnect(playerId) {
