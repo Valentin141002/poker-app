@@ -368,19 +368,18 @@ class PokerGame {
       console.log(`Cartes privées envoyées à ${player.id}`);
     });
 
-  // Retarder l'émission de "gameStarted" d'1 seconde
-  setTimeout(() => {
     console.log("Emission de gameStarted avec:", {
-      message: "La partie a commencé",
-      pot: this.pot,
-      communityCards: []
-    });
+        message: "La partie a commencé",
+        pot: this.pot,
+        communityCards: []
+      });
+  
+    // Notifier tous les joueurs que la partie a commencé (les cartes communes restent cachées)
     this.io.in("gameRoom").emit("gameStarted", {
       message: "La partie a commencé",
       pot: this.pot,
       communityCards: [],
     });
-  }, 1000);
   
     // Démarrer le round de mise pre-flop
     this.startBettingRound("pre-flop");
