@@ -114,8 +114,8 @@ class PokerGame {
     }
   }
 
-  // Enregistre et traite l'action d'un joueur
-  registerAction(playerId, actionData) {
+// Dans PokerGame.js
+registerAction(playerId, actionData) {
     const player = this.players.find(p => p.id === playerId);
     if (!player || player.folded) {
       console.log(`Action ignorée pour ${playerId} (joueur introuvable ou déjà fold).`);
@@ -136,13 +136,15 @@ class PokerGame {
       case "fold":
         player.folded = true;
         break;
+  
       case "check":
         // Le joueur doit avoir déjà misé le montant maximum pour checker
-        if (player.currentBet < currentMaxBet) {
+        if ((player.currentBet || 0) < currentMaxBet) {
           console.log(`${player.id} ne peut pas checker, il doit call ou raise.`);
           return;
         }
         break;
+  
       case "call": {
         const callAmount = currentMaxBet - (player.currentBet || 0);
         if (callAmount > player.chips) {
@@ -153,10 +155,24 @@ class PokerGame {
           player.currentBet = (player.currentBet || 0) + callAmount;
           this.pot += callAmount;
         }
+        // Mettre à jour le pot pour tous
         this.io.in("gameRoom").emit("updatePot", { pot: this.pot });
         break;
       }
-      case "raise":
+  
+      case "raise": {
+        const amount = actionData.amount || 0;
+        if (amount > player.chips) {
+          console.log(`${player.id} n'a pas assez de jetons pour raise ${amount}.`);
+          return;
+        }
+        player.chips -= amount;
+        player.currentBet = (player.currentBet || 0) + amount;
+        this.pot += amount;
+        this.io.in("gameRoom").emit("updatePot", { pot: this.pot });
+        break;
+      }
+  
       case "bet": {
         const amount = actionData.amount || 0;
         const callAmount = currentMaxBet - (player.currentBet || 0);
@@ -176,6 +192,7 @@ class PokerGame {
         this.io.in("gameRoom").emit("updatePot", { pot: this.pot });
         break;
       }
+  
       case "all-in": {
         const amount = player.chips;
         player.currentBet = (player.currentBet || 0) + amount;
@@ -185,11 +202,17 @@ class PokerGame {
         this.io.in("gameRoom").emit("updatePot", { pot: this.pot });
         break;
       }
+  
       default:
         console.log(`Action non reconnue: ${actionData.action}`);
         break;
     }
   
+    // Mise à jour du solde de chaque joueur
+    this.io.in("gameRoom").emit("chipsUpdate", {
+      players: this.players.map(p => ({ id: p.id, chips: p.chips }))
+    });
+    
     // Passer au joueur suivant actif
     this.moveToNextPlayer();
   
@@ -248,21 +271,34 @@ class PokerGame {
     } else if (this.currentPhase === "river") {
       // Phase de showdown : évaluation des mains
       const winners = this.evaluateHands();
-      // Redistribution du pot aux gagnants
-      this.distributePot(winners);
-      this.io.in("gameRoom").emit("showdown", {
-        communityCards: this.communityCards,
-        pot: this.pot, // devrait être 0 après distribution
-        winners: winners.map(w => w.playerId),
-      });
-      console.log("Showdown terminé. Gagnants:", winners.map(w => w.playerId));
-      // Démarrer la prochaine main après un délai (ici 10 secondes)
-      setTimeout(() => {
-        this.resetHand();
-      }, 10000);
+
+      if (winners && winners.length > 0) {
+        // Redistribution du pot aux gagnants
+        this.distributePot(winners);
+        
+        // Émettre l'événement "showdown" pour afficher le résultat de la main
+        this.io.in("gameRoom").emit("showdown", {
+          communityCards: this.communityCards,
+          pot: this.pot, // Ce pot devrait être remis à 0 après distribution
+          winners: winners.map(w => w.playerId),
+        });
+        console.log("Showdown terminé. Gagnants:", winners.map(w => w.playerId));
+      
+        // Informer les joueurs qu'un nouveau round commencera bientôt
+        this.io.in("gameRoom").emit("newRound", {
+          message: "La main est terminée. Une nouvelle main démarre dans 10 secondes."
+        });
+        
+        // Après 10 secondes, réinitialiser l'état du round (mais conserver le solde de chaque joueur)
+        setTimeout(() => {
+          this.resetRoundState();
+        }, 10000);
+      } else {
+        console.log("Aucun gagnant détecté lors du showdown.");
+      }   
     }
   }
-  
+
   // Évalue les mains des joueurs actifs et retourne le(s) gagnant(s)
   evaluateHands() {
     const activePlayers = this.players.filter(p => !p.folded);
@@ -306,38 +342,30 @@ class PokerGame {
     });
   }
   
-  // Réinitialise uniquement la main (table, deck, cartes privées et communes)
-  // sans toucher aux jetons des joueurs. Les joueurs à court de jetons sont éliminés.
-  resetHand() {
-    // Éliminer les joueurs qui n'ont plus de jetons
-    this.players = this.players.filter(player => player.chips > 0);
-    // Réinitialiser l'état de chaque joueur pour la nouvelle main
+// Méthode de réinitialisation du round (ne réinitialise PAS le solde des joueurs)
+resetRoundState() {
+    // Réinitialiser uniquement l'état du round
+    this.communityCards = [];
+    this.pot = 0;
+    this.actions = {};
+    
+    // Réinitialiser les mises temporaires et les états de round pour chaque joueur, sans toucher aux "chips"
     this.players.forEach(player => {
       player.currentBet = 0;
-      player.privateCards = [];
       player.folded = false;
       player.allIn = false;
     });
-    // Remise à zéro du pot
-    this.pot = 0;
-    // Créer et mélanger un nouveau deck
+    
+    // Optionnel : préparer le deck pour le prochain round (mélanger, etc.)
     this.deck = this.createDeck();
     this.shuffleDeck();
-    // Pré-délivrer les 5 cartes communes pour la nouvelle main
-    this.communityCards = [];
-    this.preDealCommunityCards();
-    // Distribuer 2 cartes privées à chaque joueur
-    this.dealPrivateCards();
-  
-    // Notifier tous les joueurs qu'une nouvelle main commence
-    this.io.in("gameRoom").emit("newHand", {
-      message: "Nouvelle main, bonne chance !",
-      communityCards: [], // côté client, on affiche les cartes communes cachées
-      players: this.players.map(p => ({ id: p.id, chips: p.chips }))
+    
+    // Informer les clients que la nouvelle main commence
+    this.io.in("gameRoom").emit("resetRound", {
+      message: "La nouvelle main commence maintenant !",
+      pot: this.pot,
+      communityCards: this.communityCards,
     });
-  
-    // Démarrer le round de mise pre-flop pour la nouvelle main
-    this.startBettingRound("pre-flop");
   }
   
   // Marque un joueur comme prêt, puis démarre la partie dès que tous sont prêts
