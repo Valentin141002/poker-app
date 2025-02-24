@@ -382,9 +382,10 @@ resetRoundState() {
 startGame() {
     // Attribuer 10 000 jetons à chaque joueur et réinitialiser leur état
     this.players.forEach(player => {
-      player.chips = 10000;
-      player.folded = false;
-      player.allIn = false;
+        player.chips = 10000;
+        player.privateCards = []; // Initialiser à un tableau vide
+        player.folded = false;
+        player.allIn = false;      
     });
     this.shuffleDeck();
     this.dealPrivateCards();
