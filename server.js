@@ -20,81 +20,122 @@ const io = socketIo(server, {
   cors: { origin: "*" },
 });
 
-// Exporter io globalement si nécessaire ailleurs
+// Exporter io globalement si nécessaire
 global.io = io;
 
-// Variables globales pour la gestion des joueurs en attente et de la partie en cours
-let waitingPlayers = [];
-let currentGame = null;
+/**
+ * Gestionnaire de tables pour répartir les joueurs dans plusieurs parties.
+ */
+class TableManager {
+  constructor(io) {
+    this.io = io;
+    this.tables = []; // Array de tables (instances de PokerGame)
+    this.maxPlayersPerTable = 10;
+    this.tableIdCounter = 1;
+  }
+
+  createTable() {
+    const table = new PokerGame([], this.io);
+    // Affecte un identifiant unique à la table pour utiliser comme room
+    table.id = `table-${this.tableIdCounter++}`;
+    this.tables.push(table);
+    return table;
+  }
+
+  findAvailableTable() {
+    return this.tables.find(table => table.players.length < this.maxPlayersPerTable);
+  }
+
+  removeTable(table) {
+    this.tables = this.tables.filter(t => t !== table);
+  }
+
+  assignPlayerToTable(newPlayer) {
+    let table = this.findAvailableTable();
+    if (!table) {
+      table = this.createTable();
+    }
+    table.players.push(newPlayer);
+    // Rejoindre la room correspondant à la table
+    newPlayer.socket.join(table.id);
+    // Mettre à jour la salle pour tous les joueurs de cette table
+    this.io.to(table.id).emit("roomUpdate", {
+      players: table.players.map(p => ({ id: p.id, name: p.name }))
+    });
+    console.log(`Player ${newPlayer.id} assigned to ${table.id}. Total players: ${table.players.length}`);
+    if (table.players.length === this.maxPlayersPerTable) {
+      console.log(`Table ${table.id} is full. Starting game.`);
+      table.startGame();
+    }
+  }
+
+  removePlayer(socketId) {
+    for (let table of this.tables) {
+      const index = table.players.findIndex(p => p.id === socketId);
+      if (index !== -1) {
+        table.players.splice(index, 1);
+        // Mettre à jour la salle pour la table concernée
+        this.io.to(table.id).emit("roomUpdate", {
+          players: table.players.map(p => ({ id: p.id, name: p.name }))
+        });
+        // Si la table devient vide, on la supprime
+        if (table.players.length === 0) {
+          this.removeTable(table);
+        }
+        break;
+      }
+    }
+  }
+
+  handlePlayerAction(socketId, actionData) {
+    // Trouver la table contenant le joueur
+    for (let table of this.tables) {
+      if (table.players.find(p => p.id === socketId)) {
+        table.registerAction(socketId, actionData);
+        break;
+      }
+    }
+  }
+
+  handleDisconnect(socketId) {
+    this.removePlayer(socketId);
+    // Vous pouvez émettre un événement global si nécessaire
+    this.io.emit("playerDisconnected", { playerId: socketId });
+  }
+}
+
+const tableManager = new TableManager(io);
 
 io.on("connection", (socket) => {
-    console.log(`Client connecté : ${socket.id}`);
-  
-    // Lorsqu'un joueur rejoint la partie
-    // On peut transmettre un pseudo en argument (ici playerName)
-    socket.on("joinGame", (playerName) => {
-      // Si une partie est déjà en cours, refuser la nouvelle connexion
-      if (currentGame) {
-        console.log(`Refus de connexion : partie déjà en cours (socket: ${socket.id})`);
-        socket.emit("gameInProgress", {
-          message: "La partie est déjà en cours. Veuillez attendre la prochaine partie.",
-        });
-        return;
-      }
-      
-      // Sinon, accepter le joueur
-      const newPlayer = { id: socket.id, socket, name: playerName || socket.id };
-      waitingPlayers.push(newPlayer);
-      socket.join("gameRoom");
-  
-      // Mise à jour de la salle pour tous les clients
-      io.in("gameRoom").emit("roomUpdate", {
-        players: waitingPlayers.map((p) => ({ id: p.id, name: p.name })),
-      });
-      console.log(`Nombre de joueurs en attente: ${waitingPlayers.length}`);
-  
-      // Démarrer la partie dès qu'il y a au moins 2 joueurs et qu'aucune partie n'est en cours
-      if (waitingPlayers.length >= 10 && !currentGame) {
-        console.log("Démarrage de la partie...");
-        currentGame = new PokerGame(waitingPlayers, io);
-        currentGame.startGame();
-        // Réinitialiser la liste d'attente après le lancement de la partie
-        waitingPlayers = [];
-      }
-    });
-  
-  // Gestion des actions des joueurs (fold, call, raise, etc.)
-  socket.on("playerAction", (actionData) => {
-    if (currentGame) {
-      try {
-        currentGame.registerAction(socket.id, actionData);
-      } catch (err) {
-        console.error(`Erreur lors de l'action du joueur ${socket.id}: `, err);
-      }
-    } else {
-      console.log("Aucune partie en cours pour traiter l'action.");
-    }
+  console.log(`Client connecté : ${socket.id}`);
+
+  socket.on("joinGame", (playerName) => {
+    // Crée un nouvel objet joueur, initialisé avec 10000 chips et un tableau vide pour les cartes privées
+    const newPlayer = { 
+      id: socket.id, 
+      socket, 
+      name: playerName || socket.id,
+      chips: 10000,
+      privateCards: []
+    };
+    tableManager.assignPlayerToTable(newPlayer);
   });
 
-  // Gestion du chat : réception d'un message et diffusion à tous les clients dans la gameRoom
+  socket.on("playerAction", (actionData) => {
+    tableManager.handlePlayerAction(socket.id, actionData);
+  });
+
   socket.on("chatMessage", (data) => {
     // data doit contenir { sender, message }
     console.log(`Message de ${data.sender}: ${data.message}`);
-    io.in("gameRoom").emit("chatMessage", data);
+    // Vous pouvez choisir d'émettre ce message seulement pour la table du joueur,
+    // ici on l'envoie globalement pour simplifier.
+    io.emit("chatMessage", data);
   });
 
-  // Gestion de la déconnexion d'un joueur
   socket.on("disconnect", () => {
     console.log(`Client déconnecté : ${socket.id}`);
-    waitingPlayers = waitingPlayers.filter((p) => p.id !== socket.id);
-    io.in("gameRoom").emit("roomUpdate", {
-      players: waitingPlayers.map((p) => ({ id: p.id, name: p.name })),
-    });
-    if (currentGame) {
-      currentGame.handleDisconnect(socket.id);
-      // Notifier les autres joueurs de la déconnexion
-      io.in("gameRoom").emit("playerDisconnected", { playerId: socket.id });
-    }
+    tableManager.handleDisconnect(socket.id);
   });
 });
 
