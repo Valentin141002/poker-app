@@ -54,7 +54,7 @@ io.on("connection", (socket) => {
       console.log(`Nombre de joueurs en attente: ${waitingPlayers.length}`);
   
       // Démarrer la partie dès qu'il y a au moins 2 joueurs et qu'aucune partie n'est en cours
-      if (waitingPlayers.length >= 2 && !currentGame) {
+      if (waitingPlayers.length >= 10 && !currentGame) {
         console.log("Démarrage de la partie...");
         currentGame = new PokerGame(waitingPlayers, io);
         currentGame.startGame();
