@@ -80,7 +80,7 @@ class TableManager {
         this.io.to(table.id).emit("roomUpdate", {
           players: table.players.map(p => ({ id: p.id, name: p.name }))
         });
-        if (table.players.length === 0) {
+        if (table.players.length === 10) {
           this.removeTable(table);
         }
         break;
