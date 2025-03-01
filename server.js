@@ -10,7 +10,6 @@ const app = express();
 // Sert les fichiers statiques depuis le dossier "build" pour le front-end
 app.use(express.static(path.join(__dirname, "build")));
 
-// Pour toutes les autres routes, on envoie le fichier index.html
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "build", "index.html"));
 });
@@ -24,41 +23,45 @@ const io = socketIo(server, {
 global.io = io;
 
 /**
- * Gestionnaire de tables pour répartir les joueurs dans plusieurs parties.
+ * Gestionnaire de tables.
+ * Pour chaque table (salle privée), on limite le nombre de joueurs à 10.
  */
 class TableManager {
   constructor(io) {
     this.io = io;
-    this.tables = []; // Array de tables (instances de PokerGame)
+    this.tables = []; // Array d'instances de PokerGame
     this.maxPlayersPerTable = 10;
     this.tableIdCounter = 1;
   }
 
   createTable() {
     const table = new PokerGame([], this.io);
-    // Affecte un identifiant unique à la table pour utiliser comme room
+    // Affecte un identifiant unique à la table
     table.id = `table-${this.tableIdCounter++}`;
     this.tables.push(table);
     return table;
-  }
-
-  findAvailableTable() {
-    return this.tables.find(table => table.players.length < this.maxPlayersPerTable);
   }
 
   removeTable(table) {
     this.tables = this.tables.filter(t => t !== table);
   }
 
-  assignPlayerToTable(newPlayer) {
-    let table = this.findAvailableTable();
+  /**
+   * Ajoute un joueur à la table identifiée par tableId.
+   * Si la table n'existe pas, elle est créée.
+   */
+  assignPlayerToTable(newPlayer, tableId) {
+    let table = this.tables.find(t => t.id === tableId);
     if (!table) {
-      table = this.createTable();
+      // Crée une nouvelle table avec l'ID fourni
+      table = new PokerGame([], this.io);
+      table.id = tableId;
+      this.tables.push(table);
     }
     table.players.push(newPlayer);
-    // Rejoindre la room correspondant à la table
+    // Le joueur rejoint la room correspondant à la table
     newPlayer.socket.join(table.id);
-    // Mettre à jour la salle pour tous les joueurs de cette table
+    // Mise à jour de la salle pour tous les joueurs de cette table
     this.io.to(table.id).emit("roomUpdate", {
       players: table.players.map(p => ({ id: p.id, name: p.name }))
     });
@@ -74,11 +77,9 @@ class TableManager {
       const index = table.players.findIndex(p => p.id === socketId);
       if (index !== -1) {
         table.players.splice(index, 1);
-        // Mettre à jour la salle pour la table concernée
         this.io.to(table.id).emit("roomUpdate", {
           players: table.players.map(p => ({ id: p.id, name: p.name }))
         });
-        // Si la table devient vide, on la supprime
         if (table.players.length === 0) {
           this.removeTable(table);
         }
@@ -88,7 +89,6 @@ class TableManager {
   }
 
   handlePlayerAction(socketId, actionData) {
-    // Trouver la table contenant le joueur
     for (let table of this.tables) {
       if (table.players.find(p => p.id === socketId)) {
         table.registerAction(socketId, actionData);
@@ -99,18 +99,31 @@ class TableManager {
 
   handleDisconnect(socketId) {
     this.removePlayer(socketId);
-    // Vous pouvez émettre un événement global si nécessaire
     this.io.emit("playerDisconnected", { playerId: socketId });
   }
 }
 
 const tableManager = new TableManager(io);
 
+/**
+ * Route pour créer une table et obtenir son lien unique.
+ * Exemple d'URL généré : https://ton-domaine.com/table-1
+ */
+app.get("/createTable", (req, res) => {
+  const table = tableManager.createTable();
+  res.json({
+    tableId: table.id,
+    tableLink: `${req.protocol}://${req.get("host")}/${table.id}`
+  });
+});
+
 io.on("connection", (socket) => {
   console.log(`Client connecté : ${socket.id}`);
 
-  socket.on("joinGame", (playerName) => {
-    // Crée un nouvel objet joueur, initialisé avec 10000 chips et un tableau vide pour les cartes privées
+  /**
+   * L'événement "joinGame" reçoit un objet { playerName, tableId }
+   */
+  socket.on("joinGame", ({ playerName, tableId }) => {
     const newPlayer = { 
       id: socket.id, 
       socket, 
@@ -118,7 +131,7 @@ io.on("connection", (socket) => {
       chips: 10000,
       privateCards: []
     };
-    tableManager.assignPlayerToTable(newPlayer);
+    tableManager.assignPlayerToTable(newPlayer, tableId);
   });
 
   socket.on("playerAction", (actionData) => {
@@ -126,12 +139,21 @@ io.on("connection", (socket) => {
   });
 
   socket.on("chatMessage", (data) => {
-    // data doit contenir { sender, message }
     console.log(`Message de ${data.sender}: ${data.message}`);
-    // Vous pouvez choisir d'émettre ce message seulement pour la table du joueur,
-    // ici on l'envoie globalement pour simplifier.
     io.emit("chatMessage", data);
   });
+
+  socket.on("emojiReaction", (data) => {
+    // Recherche dans quelle table se trouve ce socket (joueur)
+    // Ici, on parcourt les tables du TableManager pour trouver la table contenant ce joueur
+    for (let table of tableManager.tables) {
+      if (table.players.find(p => p.id === socket.id)) {
+        // Émet l'emoji à tous les joueurs de cette table
+        io.to(table.id).emit("emojiReaction", data);
+        break;
+      }
+    }
+  });  
 
   socket.on("disconnect", () => {
     console.log(`Client déconnecté : ${socket.id}`);
