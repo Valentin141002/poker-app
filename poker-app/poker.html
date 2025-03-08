@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+   <title>The Poker Game</title>
+   <meta charset="utf-8" />
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <link rel="stylesheet" href="static/css/text.css" type="text/css">
+   <link rel="stylesheet" href="static/css/poker.css" type="text/css">
+   <link rel="stylesheet" href="static/css/phone.css" type="text/css" media="only screen and (max-width: 1400px)">
+   <link rel="shortcut icon" href="static/images/chip5.png" />
+
+   <!-- Créer globalement le conteneur "le_button" avant l'inclusion des autres scripts -->
+   <script>
+      // Crée l'élément et l'assigne à la variable globale window.le_button
+      window.le_button = document.createElement("div");
+      window.le_button.id = "le_button";
+      window.le_button.style.display = "none";
+      // Dès que le DOM est prêt, on l'ajoute au body
+      document.addEventListener("DOMContentLoaded", function(){
+         document.body.appendChild(window.le_button);
+      });
+   </script>
+
+   <!-- Inclusion des scripts du jeu -->
+   <script charset="UTF-8" src="static/js/jsholdem/poker.js"></script>
+   <script charset="UTF-8" src="static/js/jsholdem/hands.js"></script>
+   <script charset="UTF-8" src="static/js/jsholdem/bot.js"></script>
+   <script charset="UTF-8" src="static/js/gui_if.js"></script>
+</head>
+<body onload="parent.init()">
+    <!-- Table de Poker centrée et agrandie -->
+    <div id="poker_table" class="poker-table">
+        <!-- Seat 0 -->
+        <div id="seat0" class="seat">
+            <div class="holecards">
+                <div class="card holecard1"></div>
+                <div class="card holecard2"></div>
+            </div>
+            <div class="name-chips">
+                <div class="player-name"></div>
+                <div class="chips"></div>
+            </div>
+            <div class="bet"></div>
+        </div>
+        <!-- Seats 1 à 9 (à compléter ou copier depuis votre version) -->
+        <div id="seat1" class="seat"> ... </div>
+        <div id="seat2" class="seat"> ... </div>
+        <div id="seat3" class="seat"> ... </div>
+        <div id="seat4" class="seat"> ... </div>
+        <div id="seat5" class="seat"> ... </div>
+        <div id="seat6" class="seat"> ... </div>
+        <div id="seat7" class="seat"> ... </div>
+        <div id="seat8" class="seat"> ... </div>
+        <div id="seat9" class="seat"> ... </div>
+
+        <!-- Board (flop, turn, river, burn cards) -->
+        <div id="board">
+            <div id="flop1" class="card boardcard"></div>
+            <div id="flop2" class="card boardcard"></div>
+            <div id="flop3" class="card boardcard"></div>
+            <div id="turn" class="card boardcard"></div>
+            <div id="river" class="card boardcard"></div>
+            <div id="burn1" class="card boardcard"></div>
+            <div id="burn2" class="card boardcard"></div>
+            <div id="burn3" class="card boardcard"></div>
+        </div>
+        <!-- Pot (seulement current-pot affiché) -->
+        <div id="pot">
+            <div id="current-pot"></div>
+        </div>
+    </div>
+
+    <!-- Boutons d'action essentiels : Fold, Call, et Raise -->
+    <div id="action-options">
+        <div id="fold-button" class="action-button">Fold</div>
+        <div id="call-button" class="action-button">Call</div>
+        <div id="raise-button" class="action-button">Raise</div>
+    </div>
+
+    <!-- Zone d'alerte pour les winners -->
+    <div id="game-response" class="response-normal">Game response</div>
+
+    <!-- Conteneurs cachés pour éviter les erreurs JS -->
+    <div id="setup-options" style="display: none;"></div>
+    <div id="history" style="display: none;"></div>
+
+    <!-- Modal pour la calculatrice de Raise -->
+    <div id="raise-calculator" class="modal" style="display:none;">
+      <div class="calculator-content">
+        <h3>Enter your bet</h3>
+        <input type="number" id="raise-amount" placeholder="Amount" />
+        <button id="raise-ok-button">OK</button>
+        <button id="raise-cancel-button">Cancel</button>
+      </div>
+    </div>
+
+    <script>
+      // Gestion du bouton Raise et du modal
+      document.getElementById('raise-button').addEventListener('click', function(){
+          document.getElementById('raise-calculator').style.display = 'flex';
+      });
+
+      document.getElementById('raise-ok-button').addEventListener('click', function(){
+          var amount = document.getElementById('raise-amount').value;
+          console.log("Raise amount:", amount);
+          // Intégrer ici l'envoi de la mise via Socket.io ou la logique correspondante
+          document.getElementById('raise-calculator').style.display = 'none';
+      });
+
+      document.getElementById('raise-cancel-button').addEventListener('click', function(){
+          document.getElementById('raise-calculator').style.display = 'none';
+      });
+    </script>
+</body>
+</html>
