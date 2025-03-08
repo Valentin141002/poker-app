@@ -105,17 +105,15 @@ class TableManager {
 
 const tableManager = new TableManager(io);
 
-/**
- * Route pour créer une table et obtenir son lien unique.
- * Exemple d'URL généré : https://ton-domaine.com/table-1
- */
 app.get("/createTable", (req, res) => {
+  // Crée une nouvelle table via ton TableManager
   const table = tableManager.createTable();
   res.json({
-    tableId: table.id,
+    tableId: table.id, // par exemple "table-2"
     tableLink: `${req.protocol}://${req.get("host")}/${table.id}`
   });
 });
+
 
 io.on("connection", (socket) => {
   console.log(`Client connecté : ${socket.id}`);
