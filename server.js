@@ -1,163 +1,55 @@
-// server.js
-const express = require("express");
-const http = require("http");
-const socketIo = require("socket.io");
-const path = require("path");
-const PokerGame = require("./PokerGame");
+const express = require('express');
+const path = require('path');
+const http = require('http');
+const socketIo = require('socket.io');
 
+// Création de l'application Express
 const app = express();
 
-// Sert les fichiers statiques depuis le dossier "build" pour le front-end
-app.use(express.static(path.join(__dirname, "build")));
-
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "build", "index.html"));
-});
-
+// Création du serveur HTTP à partir d'Express
 const server = http.createServer(app);
-const io = socketIo(server, {
-  cors: { origin: "*" },
-});
 
-// Exporter io globalement si nécessaire
-global.io = io;
+// Initialisation de Socket.io sur le serveur
+const io = socketIo(server);
 
-/**
- * Gestionnaire de tables.
- * Pour chaque table (salle privée), on limite le nombre de joueurs à 10.
- */
-class TableManager {
-  constructor(io) {
-    this.io = io;
-    this.tables = []; // Array d'instances de PokerGame
-    this.maxPlayersPerTable = 10;
-    this.tableIdCounter = 1;
-  }
-
-  createTable() {
-    const table = new PokerGame([], this.io);
-    // Affecte un identifiant unique à la table
-    table.id = `table-${this.tableIdCounter++}`;
-    this.tables.push(table);
-    return table;
-  }
-
-  removeTable(table) {
-    this.tables = this.tables.filter(t => t !== table);
-  }
-
-  /**
-   * Ajoute un joueur à la table identifiée par tableId.
-   * Si la table n'existe pas, elle est créée.
-   */
-  assignPlayerToTable(newPlayer, tableId) {
-    let table = this.tables.find(t => t.id === tableId);
-    if (!table) {
-      // Crée une nouvelle table avec l'ID fourni
-      table = new PokerGame([], this.io);
-      table.id = tableId;
-      this.tables.push(table);
-    }
-    table.players.push(newPlayer);
-    // Le joueur rejoint la room correspondant à la table
-    newPlayer.socket.join(table.id);
-    // Mise à jour de la salle pour tous les joueurs de cette table
-    this.io.to(table.id).emit("roomUpdate", {
-      players: table.players.map(p => ({ id: p.id, name: p.name }))
-    });
-    console.log(`Player ${newPlayer.id} assigned to ${table.id}. Total players: ${table.players.length}`);
-    if (table.players.length === this.maxPlayersPerTable) {
-      console.log(`Table ${table.id} is full. Starting game.`);
-      table.startGame();
-    }
-  }
-
-  removePlayer(socketId) {
-    for (let table of this.tables) {
-      const index = table.players.findIndex(p => p.id === socketId);
-      if (index !== -1) {
-        table.players.splice(index, 1);
-        this.io.to(table.id).emit("roomUpdate", {
-          players: table.players.map(p => ({ id: p.id, name: p.name }))
-        });
-        if (table.players.length === 10) {
-          this.removeTable(table);
-        }
-        break;
-      }
-    }
-  }
-
-  handlePlayerAction(socketId, actionData) {
-    for (let table of this.tables) {
-      if (table.players.find(p => p.id === socketId)) {
-        table.registerAction(socketId, actionData);
-        break;
-      }
-    }
-  }
-
-  handleDisconnect(socketId) {
-    this.removePlayer(socketId);
-    this.io.emit("playerDisconnected", { playerId: socketId });
-  }
-}
-
-const tableManager = new TableManager(io);
-
-app.get("/createTable", (req, res) => {
-  // Crée une nouvelle table via ton TableManager
-  const table = tableManager.createTable();
-  res.json({
-    tableId: table.id, // par exemple "table-2"
-    tableLink: `${req.protocol}://${req.get("host")}/${table.id}`
-  });
-});
-
-
-io.on("connection", (socket) => {
-  console.log(`Client connecté : ${socket.id}`);
-
-  /**
-   * L'événement "joinGame" reçoit un objet { playerName, tableId }
-   */
-  socket.on("joinGame", ({ playerName, tableId }) => {
-    const newPlayer = { 
-      id: socket.id, 
-      socket, 
-      name: playerName || socket.id,
-      chips: 10000,
-      privateCards: []
-    };
-    tableManager.assignPlayerToTable(newPlayer, tableId);
-  });
-
-  socket.on("playerAction", (actionData) => {
-    tableManager.handlePlayerAction(socket.id, actionData);
-  });
-
-  socket.on("chatMessage", (data) => {
-    console.log(`Message de ${data.sender}: ${data.message}`);
-    io.emit("chatMessage", data);
-  });
-
-  socket.on("emojiReaction", (data) => {
-    // Recherche dans quelle table se trouve ce socket (joueur)
-    // Ici, on parcourt les tables du TableManager pour trouver la table contenant ce joueur
-    for (let table of tableManager.tables) {
-      if (table.players.find(p => p.id === socket.id)) {
-        // Émet l'emoji à tous les joueurs de cette table
-        io.to(table.id).emit("emojiReaction", data);
-        break;
-      }
-    }
-  });  
-
-  socket.on("disconnect", () => {
-    console.log(`Client déconnecté : ${socket.id}`);
-    tableManager.handleDisconnect(socket.id);
-  });
-});
-
+// Définition du port (utilise process.env.PORT pour Heroku)
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Serveur lancé sur le port ${PORT}`));
+
+// Middleware pour servir les fichiers statiques du dossier poker-app
+app.use(express.static(path.join(__dirname, 'poker-app')));
+
+// Pour toute autre route, renvoyer le fichier poker.html (point d'entrée de ton application)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'poker-app', 'poker.html'));
+});
+
+// Gestion des connexions Socket.io
+io.on('connection', (socket) => {
+  console.log(`Un utilisateur est connecté : ${socket.id}`);
+
+  // Exemple d'événement : rejoindre une salle (table de poker)
+  socket.on('joinRoom', (room) => {
+    socket.join(room);
+    console.log(`L'utilisateur ${socket.id} a rejoint la salle ${room}`);
+    // Ici, tu peux émettre un message de bienvenue ou informer les autres utilisateurs de la salle.
+    io.to(room).emit('message', `L'utilisateur ${socket.id} a rejoint la salle !`);
+  });
+
+  // Autres événements personnalisés, par exemple 'playerAction' ou 'updateGameState'
+  socket.on('playerAction', (data) => {
+    // Gère l'action du joueur et diffuse l'état mis à jour à tous les participants de la salle.
+    console.log(`Action du joueur ${socket.id} :`, data);
+    // Par exemple, émettre à tous les clients de la salle :
+    io.to(data.room).emit('gameStateUpdate', data);
+  });
+
+  // Déconnexion de l'utilisateur
+  socket.on('disconnect', () => {
+    console.log(`L'utilisateur s'est déconnecté : ${socket.id}`);
+  });
+});
+
+// Lancement du serveur
+server.listen(PORT, () => {
+  console.log(`Serveur en écoute sur le port ${PORT}`);
+});
