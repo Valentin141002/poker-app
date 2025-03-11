@@ -2,6 +2,10 @@ html {
     font-family: sans-serif;
 }
 
+body {
+    background: url('http://localhost:3000/static/images/outline.png') no-repeat center center fixed;
+    background-size: cover;
+  }  
 
 .poker-table {
     background-repeat: no-repeat;
@@ -96,10 +100,6 @@ html {
 #seat0 .bet {
     top: -20px;
 }
-
-#seat0 .holecards {
-    display: none !important;
-  }  
 
 #seat1 {
     left:  -50px;
@@ -277,16 +277,15 @@ html {
 }
 
 .action-button {
-    background-color: silver;
+    background-color: transparent;
     border-radius: 4px;
     color: white;
     cursor: pointer;
     font-size: 18px;
     height: 30px;
-    left: 0px;
     padding: 10px 5px 0 5px;
-    position: absolute;
-    top: 0px;
+    position: relative; /* Change absolute en relative */
+    margin: 10px; /* Ajoute de l'espace autour de chaque bouton */
 }
 
 #setup-options {
@@ -389,27 +388,19 @@ select {
     background-color: #FF0000;
 }
 
-#fold-button:hover {
-    box-shadow: 3px 3px 4px #000000;
-}
-
 #call-button {
     left: 80px;
 }
 
-#call-button:hover {
-    box-shadow: 3px 3px 4px #000000;
-}
-
 #quick-raises {
-    background-color: silver;
+    background-color: transparent;
     border-radius: 4px;
     font-size: 18px;
     height: 75px;
     left: 25px;
     position: absolute;
     text-align: center;
-    top: 515px;
+    top: 600px;
     width: 350px;
 }
 #quick-raises a:link {
@@ -461,19 +452,52 @@ select {
     background-size: cover; 
     cursor: pointer;
   }  
+  
+  #fold-button {
+    display: block;
+    width: 80px;
+    height: 80px;
+    margin: 10px;
+    background-image: url(http://localhost:3000/static/images/foldbutton.png
+    );
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    cursor: pointer;
+    right: 50px;
+  }
 
-  #cardI {
-    background-image: url('static/images/custom_I.png'); /* L'image "I" */
+  #fold-button:hover {
+    opacity: 0.8; /* Réduit légèrement l'opacité au survol */
+    /* Autres styles au survol */
   }
-  #cardM {
-    background-image: url('static/images/custom_M.png'); 
+  
+  #fold-button:active {
+    transform: scale(0.95); /* Réduit légèrement la taille au clic */
+    /* Autres styles au clic */
   }
-  #cardD {
-    background-image: url('static/images/custom_D.png'); 
+  
+  #call-button {
+    display: block;
+    width: 80px;
+    height: 80px;
+    margin: 10px;
+    background-image: url(http://localhost:3000/static/images/foldbutton.png
+    );
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    cursor: pointer;
+    right: 0px;
   }
-  #cardC {
-    background-image: url('static/images/custom_C.png'); 
+
+  #call-button:hover {
+    opacity: 0.8; /* Réduit légèrement l'opacité au survol */
+    /* Autres styles au survol */
   }
-  #cardX {
-    background-image: url('static/images/custom_X.png'); 
-  }  
+  
+  #call-button:active {
+    transform: scale(0.95); /* Réduit légèrement la taille au clic */
+    /* Autres styles au clic */
+  }
+  

@@ -382,7 +382,7 @@ function main () {
     players[current_bettor_index].status = "";
     if (current_bettor_index == 0) {
       var call_button_text = "<u>C</u>all";
-      var fold_button_text = "<font color=red><u>F</u>old</font>";
+      var fold_button_text = "";
       var to_call = current_bet_amount - players[0].subtotal_bet;
       if (to_call > players[0].bankroll) {
         to_call = players[0].bankroll;
@@ -1255,23 +1255,4 @@ function makeTimeString (milliseconds) {
   string = getTimeText(string, seconds, "second");
 
   return (string);
-}
-
-function next_player() {
-  currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
-  
-  if (currentPlayerIndex === 0) {
-    // C'est au joueur humain de jouer, on révèle ses cartes
-    reveal_player_cards();
-  }
-  // ... suite de la logique ...
-}
-
-function reveal_player_cards() {
-  // Suppose que internal_GetCardImageUrl(card) renvoie "url('chemin_image')"
-  var imageA = internal_GetCardImageUrl(userCardA).replace("url(","").replace(")","");
-  var imageB = internal_GetCardImageUrl(userCardB).replace("url(","").replace(")","");
-
-  document.getElementById("cardI").style.backgroundImage = "url('" + imageA + "')";
-  document.getElementById("cardM").style.backgroundImage = "url('" + imageB + "')";
 }

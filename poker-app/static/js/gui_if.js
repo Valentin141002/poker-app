@@ -99,7 +99,11 @@ function internal_clickin_helper(button, button_text, func_on_click) {
     button.style.visibility = 'hidden';
   } else {
     button.style.visibility = 'visible';
-    button.innerHTML = button_text;
+    if (button.id !== "fold-button") {
+      button.innerHTML = button_text;
+    } else {
+      console.log("Ne pas modifier innerHTML pour le fold-button");
+    }
     button.onclick = func_on_click;
   }
 }
@@ -167,40 +171,16 @@ function gui_set_bet(bet, seat) {
   betdiv.textContent = bet;
 }
 
-var userCardA = "";
-var userCardB = "";
-
 function gui_set_player_cards(card_a, card_b, seat, folded) {
-  // Si c'est le joueur humain (seat == 0)
-  if (seat === 0) {
-    // Stocke les cartes dans des variables globales
-    userCardA = card_a;
-    userCardB = card_b;
+  var table = document.getElementById('poker_table');
+  var current = 'seat' + seat;
+  var seatloc = table.children[current];
+  var cardsdiv = internal_get_a_class_named(seatloc, 'holecards');
+  var card1 = internal_get_a_class_named(cardsdiv, 'card holecard1');
+  var card2 = internal_get_a_class_named(cardsdiv, 'card holecard2');
 
-    // Optionnel : si tu veux gérer l'état "folded" 
-    // (ex. si le joueur s'est couché, on peut griser les cartes, etc.)
-    if (folded) {
-      // Gère éventuellement un style spécial si le joueur est couché
-      // Par exemple, un style "opacity: 0.5" sur tes cartes I et M
-    }
-
-    // Mets l'image de dos (I, M) sur les deux cartes 
-    // (ou laisse comme ça si tu as déjà défini en CSS)
-    document.getElementById("cardI").style.backgroundImage = "url('static/images/custom_I.png')";
-    document.getElementById("cardM").style.backgroundImage = "url('static/images/custom_M.png')";
-  
-  } else {
-    // Pour les bots, on conserve la logique d'affichage habituelle
-    var table = document.getElementById('poker_table');
-    var current = 'seat' + seat;
-    var seatloc = table.children[current];
-    var cardsdiv = internal_get_a_class_named(seatloc, 'holecards');
-    var card1 = internal_get_a_class_named(cardsdiv, 'card holecard1');
-    var card2 = internal_get_a_class_named(cardsdiv, 'card holecard2');
-    
-    internal_setCard(card1, card_a, folded);
-    internal_setCard(card2, card_b, folded);
-  }
+  internal_setCard(card1, card_a, folded);
+  internal_setCard(card2, card_b, folded);
 }
 
 function gui_lay_board_card(n, the_card) {
@@ -410,24 +390,3 @@ function gui_enable_shortcut_keys(func) {
 function gui_disable_shortcut_keys(func) {
   document.removeEventListener('keydown', func);
 }
-
-document.addEventListener('DOMContentLoaded', function() {
-  // “D” pour Drop / Fold
-  document.getElementById("cardD").onclick = function() {
-    do_fold();  // ou handle_human_bet(0) ou la fonction appropriée
-  };
-
-  // “C” pour Check / Call
-  document.getElementById("cardC").onclick = function() {
-    // Vérifie si c’est un check ou un call
-    // Souvent, dans ton code, tu as do_call() ou handle_human_bet(to_call)
-    do_call();
-  };
-
-  // “X” pour Raise
-  document.getElementById("cardX").onclick = function() {
-    // Ouvre ta logique de raise (quick raise, custom raise, etc.)
-    // handle_human_bet(montant) ou show_custom_raise() ...
-    show_custom_raise(); 
-  };
-});
