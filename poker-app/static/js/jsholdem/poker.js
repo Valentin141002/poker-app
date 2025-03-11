@@ -66,12 +66,10 @@ function init () {
   }
   gui_hide_poker_table();
   gui_hide_log_window();
-  gui_hide_setup_option_buttons();
   gui_hide_fold_call_click();
   gui_hide_guick_raise();
   gui_hide_dealer_button();
   gui_hide_game_response();
-  gui_initialize_theme_mode();
   make_deck();
   new_game();
 }
@@ -87,30 +85,18 @@ function make_deck () {
   }
 }
 
-function handle_how_many_reply (opponents) {
+function handle_how_many_reply(opponents) {
   gui_write_modal_box("");
   write_settings_frame();
   new_game_continues(opponents);
-  gui_initialize_css();         // Load background images
+  gui_initialize_css();         // Charge les images de fond
   gui_show_game_response();
 }
 
-function ask_how_many_opponents () {
-  var quick_values = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-  var asking = "<b><font size=+4 color=red>" +
-               "So, how many opponents do you want?" +
-               "</font></b><br>";
-  for (var i = 0; i < 9; i++) {
-    if (quick_values[i]) {
-      asking += "<font size=+4>" +
-                "<a href='javascript:parent.handle_how_many_reply(" +
-                quick_values[i] + ")'>" + quick_values[i] +
-                " </a></font>" + "&nbsp;&nbsp;&nbsp;";
-    }
-  }
-  var html9 = "<td><table align=center><tr><td align=center>";
-  var html10 = asking + "</td></tr></table></td></tr></table></body></html>";
-  gui_write_modal_box(html9 + html10);
+// Remplace complètement l'ancienne fonction ask_how_many_opponents par une version qui force le nombre d'adversaires
+function ask_how_many_opponents() {
+  // Ici, on force le nombre d'adversaires à 9 (ce qui donne 10 joueurs au total)
+  handle_how_many_reply(9);
 }
 
 function initialize_game () {
@@ -138,19 +124,18 @@ function new_game () {
   ask_how_many_opponents();
 }
 
-function new_game_continues (req_no_opponents) {
+function new_game_continues(req_no_opponents) {
   var my_players = [
-                    new player("惠辰國", 0, "", "", "", 0, 0),
-                    new player("Jani Sointula", 0, "", "", "", 0, 0),
-                    new player("Annette Obrestad", 0, "", "", "", 0, 0),
-                    new player("Ricardo Chauriye", 0, "", "", "", 0, 0),
-                    new player("Jennifer Shahade", 0, "", "", "", 0, 0),
-                    new player("Theo Jørgensen", 0, "", "", "", 0, 0),
-                    new player("Marek Židlický", 0, "", "", "", 0, 0),
-                    //  Żółć - Grzegorz Brzęczyszczykiewicz
-                    new player("Brzęczyszczykiewicz", 0, "", "", "", 0, 0),
-                    new player("Chris Moneymaker", 0, "", "", "", 0, 0)
-                   ];
+    new player("惠辰國", 0, "", "", "", 0, 0),
+    new player("Jani Sointula", 0, "", "", "", 0, 0),
+    new player("Annette Obrestad", 0, "", "", "", 0, 0),
+    new player("Ricardo Chauriye", 0, "", "", "", 0, 0),
+    new player("Jennifer Shahade", 0, "", "", "", 0, 0),
+    new player("Theo Jørgensen", 0, "", "", "", 0, 0),
+    new player("Marek Židlický", 0, "", "", "", 0, 0),
+    new player("Brzęczyszczykiewicz", 0, "", "", "", 0, 0),
+    new player("Chris Moneymaker", 0, "", "", "", 0, 0)
+  ];
 
   players = new Array(req_no_opponents + 1);
   var player_name = getLocalStorage("playername");
@@ -167,7 +152,8 @@ function new_game_continues (req_no_opponents) {
   reset_player_statuses(0);
   clear_bets();
   for (i = 0; i < players.length; i++) {
-    players[i].bankroll = STARTING_BANKROLL;
+    // Affectation d'un bankroll de 20 000 jetons à chaque joueur
+    players[i].bankroll = 20000;
   }
   button_index = Math.floor(Math.random() * players.length);
   new_round();
@@ -488,12 +474,16 @@ function main () {
                         "&nbsp;&nbsp;&nbsp;";
         }
       }
+      // Ajoutez le lien Custom Raise
+      quick_bets += "<a href='javascript:parent.show_custom_raise()'>Custom Raise</a>&nbsp;&nbsp;&nbsp;";
+      // Puis le All In
       quick_bets += "<a href='javascript:parent.handle_human_bet(" +
                     players[0].bankroll + ")'>All In!</a>";
+      
       var html9 = "<td><table align=center><tr><td align=center>";
       var html10 = quick_bets +
                    "</td></tr></table></td></tr></table></body></html>";
-      gui_write_guick_raise(html9 + html10);
+      gui_write_guick_raise(html9 + html10);       
 
       var hi_lite_color = gui_get_theme_mode_highlite_color();
       var message = "<tr><td><font size=+2><b>Current raise: " +
@@ -1150,11 +1140,6 @@ function write_settings_frame () {
     speed_i = default_speed;
   }
   set_speed(speed_i);
-  gui_setup_option_buttons(change_name,
-                           set_raw_speed,
-                           help_func,
-                           update_func,
-                           gui_toggle_the_theme_mode);
 }
 
 function index2speed (index) {
@@ -1165,7 +1150,6 @@ function index2speed (index) {
 function set_speed (index) {
   global_speed = index2speed(index);
   setLocalStorage("gamespeed", index);
-  gui_set_selected_speed_option(index);
 }
 
 function set_raw_speed (selector_index) {
@@ -1271,4 +1255,23 @@ function makeTimeString (milliseconds) {
   string = getTimeText(string, seconds, "second");
 
   return (string);
+}
+
+function next_player() {
+  currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+  
+  if (currentPlayerIndex === 0) {
+    // C'est au joueur humain de jouer, on révèle ses cartes
+    reveal_player_cards();
+  }
+  // ... suite de la logique ...
+}
+
+function reveal_player_cards() {
+  // Suppose que internal_GetCardImageUrl(card) renvoie "url('chemin_image')"
+  var imageA = internal_GetCardImageUrl(userCardA).replace("url(","").replace(")","");
+  var imageB = internal_GetCardImageUrl(userCardB).replace("url(","").replace(")","");
+
+  document.getElementById("cardI").style.backgroundImage = "url('" + imageA + "')";
+  document.getElementById("cardM").style.backgroundImage = "url('" + imageB + "')";
 }

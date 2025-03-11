@@ -97,6 +97,10 @@ html {
     top: -20px;
 }
 
+#seat0 .holecards {
+    display: none !important;
+  }  
+
 #seat1 {
     left:  -50px;
     top: 155px;
@@ -441,3 +445,35 @@ select {
     text-shadow: 3px 3px 4px #000000;
 }
 
+#user-bar {
+    position: absolute; 
+    bottom: 20px;        /* Ajuste la hauteur selon ton interface */
+    left: 50px;          /* Ajuste selon la largeur de ta table */
+    width: 600px;        /* Ajuste à la largeur voulue */
+    height: 120px;       /* Ajuste la hauteur voulue */
+  }
+  
+  .user-card {
+    float: left;
+    width: 80px;         /* Largeur d’une “carte” */
+    height: 120px;       /* Hauteur d’une “carte” */
+    margin-right: 10px;
+    background-size: cover; 
+    cursor: pointer;
+  }  
+
+  #cardI {
+    background-image: url('static/images/custom_I.png'); /* L'image "I" */
+  }
+  #cardM {
+    background-image: url('static/images/custom_M.png'); 
+  }
+  #cardD {
+    background-image: url('static/images/custom_D.png'); 
+  }
+  #cardC {
+    background-image: url('static/images/custom_C.png'); 
+  }
+  #cardX {
+    background-image: url('static/images/custom_X.png'); 
+  }  
