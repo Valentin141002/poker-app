@@ -7,18 +7,22 @@ body {
     background-size: cover;
   }  
 
-.poker-table {
-    background-repeat: no-repeat;
-    left: 100px;
+  .poker-table {
     position: absolute;
-    height: 411px;
+    left: 50%;
+    top: 100%;
+    transform: translate(-50%, -100%);
     width: 745px;
-}
-
+    height: 411px;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain; /* ou 'cover' selon l'effet désiré */
+  }
+  
 .seat {
-    height: 150px;
+    height: 120px;
     position: absolute;
-    width: 150px;
+    width: 120px;
 }
 
 #button {
@@ -28,18 +32,36 @@ body {
     height: 19px;
     position: absolute;
     width: 24px;
+    z-index: 2;            /* Au-dessus des placeholders */
+}
+
+.name-chips1 {
+  background-color: gray;
+  border-radius: 4px;
+  color: white;
+  font-size: 12px;
+  height: 33px;
+  position: absolute;
+  text-align: center;
+  top: 65px;
+  width: 100px;
 }
 
 .name-chips {
-    background-color: gray;
-    border-radius: 4px;
-    color: white;
-    font-size: 14px;
-    height: 33px;
-    position: absolute;
-    text-align: center;
-    top: 65px;
-    width: 140px;
+  background: linear-gradient(135deg, #555, #222);
+  border-radius: 10px;
+  color: white;
+  font-family: 'Roboto', sans-serif;
+  font-size: 12px;
+  line-height: 33px;   /* Pour centrer le texte verticalement */
+  letter-spacing: 0.5px;
+  height: 100px;
+  position: absolute;
+  text-align: center;
+  top: 65px;
+  width: 80px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  z-index: 1;            /* Au-dessus des placeholders */
 }
 
 .player-name {
@@ -47,189 +69,358 @@ body {
 }
 
 .card {
+    width: 70px;
+    height: 100px;
     background-image: url('../images/cardback.png');
     background-size: 100%;
     border-radius: 4px;
-    height: 73px;
-    width: 50px;
-}
-
-.card:hover {
-    scale: 1.5;
-    translate: 0% -40%
-}
+    z-index: 2;            /* Au-dessus des placeholders */
+    /* ... */
+  }  
 
 .holecards {
     float: left;
-    height: 73px;
-    left: 20px;
     position: absolute;
-    top: 3px;
-    width: 102px;
+    top: 50px;
+    z-index: 3;            /* Au-dessus des placeholders */
 }
 
 .holecard1 {
-    left: 0px;
-    position: absolute;
+  position: absolute;
+  left: 0px;
+  top: -25px;    /* Position initiale */
+  z-index: 3;            /* Au-dessus des placeholders */
+  width: 80px;
+  height: 115px;
 }
 
 .holecard2 {
-    left: 50px;
-    position: absolute;
+  position: absolute;
+  left: 0px;   /* Même position horizontale */
+  top: 90px;   /* Décalage vertical pour qu'elles soient l'une sous l'autre */
+  z-index: 3;            /* Au-dessus des placeholders */
+  width: 80px;
+  height: 115px;
 }
+
 
 
 .bet {
-    color: white;
+    color: rgb(255, 170, 100);
     font-size: 12px;
-    left: 40px;
+    left: 5px;
     position: absolute;
-    top: 0px;
-    text-shadow: -1px 0     black, 0 1px     black, 1px 0     black, 0 -1px     black;
+    z-index: 2;            /* Au-dessus des placeholders */
+    top: 100px;
+    bottom: 100px;   text-shadow: -1px 0     black, 0 1px     black, 1px 0     black, 0 -1px     black;
     text-shadow: -1px 0 1px black, 0 1px 1px black, 1px 0 1px black, 0 -1px 1px black;
 }
 
+/* ---------------------- */
+/* 5 joueurs sur la rangée du haut : seats 0 à 4 */
+/* ---------------------- */
+/* ---------------------- */
+/* 5 joueurs sur la rangée du haut : seats 0 à 4 */
+/* ---------------------- */
+/* 5 joueurs sur la rangée du haut : seats 0 à 4 */
 #seat0 {
-    left: 0px;
-    top:  330px;
-}
-.seat0-button {
-    left: 235px;
-    top:  410px;
-}
-#seat0 .bet {
-    top: -20px;
+    left: 72px;
+    top: -50px;
+    overflow: visible;
+  }
+  .seat0-button {
+    left: 85px; /* anciennement 80 => 80 + 72 = 152 */
+    top: 290px;
+  }
+  #seat0 .bet {
+    top: 135px;
+  }
+  
+  #seat1 {
+    left: 192px; /* 120 + 72 */
+    top: -50px;
+  }
+  .seat1-button {
+    left: 205px; /* 200 + 72 */
+    top: 290px;
+  }
+  #seat1 .bet {
+    top: 135px;
+  }
+  
+  #seat2 {
+    left: 312px; /* 240 + 72 */
+    top: -50px;
+  }
+  .seat2-button {
+    left: 325px; /* 320 + 72 */
+    top: 290px;
+  }
+  #seat2 .bet {
+    top: 135px;
+  }
+  
+  #seat3 {
+    left: 432px; /* 360 + 72 */
+    top: -50px;
+  }
+  .seat3-button {
+    left: 445px; /* 440 + 72 */
+    top: 290px;
+  }
+  #seat3 .bet {
+    top: 135px;
+  }
+  
+  #seat4 {
+    left: 552px; /* 480 + 72 */
+    top: -50px;
+  }
+  .seat4-button {
+    left: 565px; /* 560 + 72 */
+    top: 290px;
+  }
+  #seat4 .bet {
+    top: 135px;
+  }
+  
+  /* 5 joueurs sur la rangée du bas : seats 5 à 9 */
+  #seat9 {
+    left: 72px;
+    top: 225px;
+  }
+  .seat9-button {
+    left: 95px;
+    top: 570px;
+  }
+  #seat9 .bet {
+    top: 140px;
+  }
+  
+  #seat8 {
+    left: 192px;
+    top: 225px;
+  }
+  .seat8-button {
+    left: 215px;
+    top: 570px;
+  }
+  #seat8 .bet {
+    top: 140px;
+  }
+  
+  #seat7 {
+    left: 312px;
+    top: 225px;
+  }
+  .seat7-button {
+    left: 335px;
+    top: 570px;
+  }
+  #seat7 .bet {
+    top: 140px;
+  }
+  
+  #seat6 {
+    left: 432px;
+    top: 225px;
+  }
+  .seat6-button {
+    left: 455px;
+    top: 570px;
+  }
+  #seat6 .bet {
+    top: 140px;
+  }
+  
+  #seat5 {
+    left: 552px;
+    top: 225px;
+  }
+  .seat5-button {
+    left: 575px;
+    top: 570px;
+  }
+  #seat5 .bet {
+    top: 140px !important;
+  }   
+
+/* Extrait de code pour seat0 */
+
+/* Le conteneur des 2 cartes du seat0 */
+#seat0 .holecards {
+  position: absolute; /* Pour pouvoir placer en bas à gauche ou ailleurs */
+  left: -150px;         /* Ajuste la position horizontale */
+  bottom: 20px;       /* Ajuste la position verticale */
+  width: 200px;       /* Assez large pour 2 cartes + espacement */
+  height: 160px;      /* Ajuste selon la hauteur d’une carte */
+  overflow: visible;
+  box-sizing: border-box;
 }
 
-#seat1 {
-    left:  -50px;
-    top: 155px;
-}
-.seat1-button {
-    left: 185px;
-    top:  235px;
-}
-#seat1 .bet {
-    top: 100px;
-}
-
-#seat2 {
-    left: 0px;
-    top:  0px;
-}
-.seat2-button {
-    left: 235px;
-    top:   80px;
-}
-#seat2 .bet {
-    top: 100px;
+/* Style générique des cartes */
+#seat0 .holecards .card {
+  position: relative; /* Permet de positionner chaque carte individuellement */
+  width: 145px;        /* Largeur de la carte, par ex. */
+  height: 210px;       /* Hauteur de la carte, par ex. ratio ~2:3 */
+  background-size: 100%;
+  border-radius: 4px;
+  top: 500px;             /* Les cartes démarrent en haut du conteneur .holecards */
+  display: block;
+  position: relative;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  opacity: 0;
+  transition: opacity 1.5s ease;
 }
 
-#seat3 {
-    left: 200px;
-    top:    0px;
+#seat0 .holecards .card.visible {
+  opacity: 1;
 }
 
-.seat3-button {
-    left: 280px;
-    top:   80px;
-}
-#seat3 .bet {
-    top: 100px;
-}
-
-#seat4 {
-    left: 400px;
-    top:    0px;
-}
-
-.seat4-button {
-    left: 480px;
-    top:   80px;
-}
-#seat4 .bet {
-    top: 100px;
+#seat0 .holecards .card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* On définit l'image de la face via une variable CSS */
+  background-image: var(--front-image);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0;                   /* Initialement caché */
+  transform: rotateY(-180deg);  /* Commence inversé */
+  transition: transform 0.6s ease, opacity 0.6s ease;
 }
 
-#seat5 {
-    left: 600px;
-    top:    0px;
+#seat0 .holecards .card.revealed::after {
+  opacity: 1;
+  transform: rotateY(0deg);
 }
 
-.seat5-button {
-    left: 680px;
-    top:   80px;
-}
-#seat5 .bet {
-    top: 100px;
-}
-
-#seat6 {
-    left: 650px;
-    top:  155px;
-}
-.seat6-button {
-    left: 730px;
-    top:  235px;
-}
-#seat6 .bet {
-    top: 100px;
+/* La première carte, à gauche */
+#seat0 .holecards .holecard1 {
+  position: absolute;
+  top: 470px !important;
+  left: 137px !important;
+  width: 120px !important;
 }
 
-#seat7 {
-    left: 600px;
-    top:  330px;
+/* La seconde carte, décalée de 70px pour créer un espace */
+#seat0 .holecards .holecard2 {
+  position: absolute;
+  top: 390px !important;
+  left: 263px !important;
+  height: 370px !important;
+  width: 120px !important;
 }
-.seat7-button {
-    left: 680px;
-    top:  410px;
-}
-#seat7 .bet {
-    top: -20px;
-}
-
-#seat8 {
-    left: 400px;
-    top:  330px;
-}
-.seat8-button {
-    left: 480px;
-    top:  410px;
-}
-#seat8 .bet {
-    top: -20px;
-}
-
-#seat9 {
-    left: 200px;
-    top:  330px;
-}
-.seat9-button {
-    left: 280px;
-    top:  410px;
-}
-#seat9 .bet {
-    top: -20px;
-}
-
 
 #board {
-    left: 250px;
-    position: absolute;
-    top:  168px;
+    left: 800px;
+    position: relative;
+    top:  -170px;
+    width: 600px;
+    height: 170px;
+    left: 50%;
+    transform: translateX(-60%);
+    z-index: 2;            /* Au-dessus des placeholders */
+}
+
+/* Emplacement de carte : le placeholder */
+.board1-slot {
+  position: relative;
+  width: 100px;          /* Ajustez selon la taille désirée */
+  height: 140px;         /* Ajustez selon la taille désirée */
+  background-image: url('/static/images/placeholder.png'); /* Photo ou design de l'emplacement */
+  background-size: cover;
+  background-position: center;
+  border: 2px dashed #aaa; /* Indique un emplacement vide */
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.5);
+  /* Optionnel : une transition pour le placeholder */
+  transition: background-color 0.3s ease;
+}
+
+#board-placeholders {
+  position: absolute;
+  top: -183px;             /* Ajustez selon vos besoins */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 550px;          /* Largeur totale souhaitée */
+  height: 150px;         /* Hauteur totale */
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 1;            /* En dessous des cartes réelles */
+}
+
+.board-placeholder {
+  width: 100px;          
+  height: 145px;
+  background-size: cover;
+  background-position: center;
+  border: 2px solid #aaa;  /* Cadre pour indiquer l'emplacement */
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.5);
+  opacity: 0;
+  animation: fadeIn 1.5s ease forwards;
+}
+
+#ph-flop1 {
+  background-image: url('/static/images/chip1.png');
+}
+#ph-flop2 {
+  background-image: url('/static/images/chip1.png');
+}
+#ph-flop3 {
+  background-image: url('/static/images/chip1.png');
+}
+#ph-turn {
+  background-image: url('/static/images/chip1.png');
+}
+#ph-river {
+  background-image: url('/static/images/chip1.png');
+}
+
+/* L'overlay qui affichera la carte réelle */
+.card-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;                   /* Caché par défaut */
+  transition: opacity 0.3s ease; /* Fade-in */
+  background-size: cover;
+  background-position: center;
+  border-radius: 8px;           /* Pour s'aligner sur le parent */
+}
+
+
+#board .card {
+  margin-right: 50px;  /* Ajuste la valeur selon l'espacement désiré */
+}
+
+#board .card:not(:last-child) {
+  margin-right: 50px;
 }
 
 #pot {
     color: white;
-    font-size: 16px;
-    left: 325px;
+    font-size: 35px;
+    left: 270px;
     position: absolute;
     text-align: center;
-    top: 245px;
+    top: 195px;
 }
 
 .boardcard {
-    height: 73px;
+    height: 90px;
     left: 0px;
     background-repeat: no-repeat;
     position: absolute;
@@ -237,47 +428,70 @@ body {
     width: 50px;
 }
 
+.card.boardcard {
+  width: 100px;
+  height: 145px;
+  background-size: cover; /* Ou contain */
+  border-radius: 4px;
+  right: 400px;
+}
+
 #flop1 {
+  position: absolute;
+  left: 90px;
 }
 
 #flop2 {
-    left: 52px;
+  position: absolute;
+    left: 200px;
 }
 
 #flop3 {
-    left: 104px;
+    left: 310px;
+    position: absolute;
 }
 
 #turn {
-    left: 156px;
+    left: 420px;
+    position: absolute;
 }
 
 #river {
-    left: 208px;
+    left: 530px;
+    position: absolute;
 }
 
 #burn1 {
-    left: 280px;
+    left: 600px;
     rotate: -18deg;
 }
 #burn2 {
-    left: 290px;
+    left: 610px;
 }
 #burn3 {
-    left: 300px;
+    left: 620px;
     rotate: 15deg;
 }
 
-#action-options {
-    height: 100px;
-    left: 110px;
+#game-container {
+    position: relative;   /* Les positions absolues des enfants seront relatives à ce conteneur */
+    width: 800px;         /* Largeur fixe à adapter selon ton design */
+    margin: 0 auto;       /* Centre horizontalement */
+    height: 600px;        /* Hauteur fixe, à ajuster selon ton design */
+  }
+
+  #action-options {
     position: absolute;
-    top: 450px;
-    width: 500px;
-}
+    bottom: 20px;            /* 20px du bas du conteneur */
+    right: 20px;             /* 20px du côté droit */
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    opacity: 1 !important;
+    transition: opacity 1.5s ease;
+  }  
 
 .action-button {
-    background-color: transparent;
     border-radius: 4px;
     color: white;
     cursor: pointer;
@@ -286,6 +500,40 @@ body {
     padding: 10px 5px 0 5px;
     position: relative; /* Change absolute en relative */
     margin: 10px; /* Ajoute de l'espace autour de chaque bouton */
+    transition: opacity 1.5s ease; /* Durée et easing du fondu */
+    opacity: 1;
+    display: block !important;
+    right: 50px;
+}
+
+/* Animation fadeIn */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Classe pour l'effet fade-in initial */
+.initial-fade {
+  animation: fadeIn 1s forwards;
+}
+
+.action-button.fade-in {
+  opacity: 1;
+}
+
+#action-options.visible {
+  opacity: 1;
+}
+
+.action-button:not(.disabled):hover {
+  opacity: 1;    /* Opacité maximale */
+  transform: scale(1.05); /* Légère augmentation de taille */
+}
+
+.action-button.disabled {
+  opacity: 0.4;           /* Bouton grisé */
+  pointer-events: none;   /* Désactive les clics */
+  cursor: default;        /* Curseur standard */
 }
 
 #setup-options {
@@ -388,10 +636,6 @@ select {
     background-color: #FF0000;
 }
 
-#call-button {
-    left: 80px;
-}
-
 #quick-raises {
     background-color: transparent;
     border-radius: 4px;
@@ -400,6 +644,7 @@ select {
     left: 25px;
     position: absolute;
     text-align: center;
+    z-index: 9999;
     top: 600px;
     width: 350px;
 }
@@ -410,21 +655,6 @@ select {
 #quick-raises a:hover {
     color: white;
     text-shadow: 3px 3px 4px #000000;
-}
-
-
-#modal-box {
-    background-color: silver;
-    display: none;
-    font-size: 12px;
-    height: 100%;
-    left: 0px;
-    overflow: auto; /* Enable scroll */
-    position: fixed;
-    text-align: center;
-    top: 0px;
-    width: 100%;
-    z-index: 1;  /* Stay on top */
 }
 
 #modal-box a:link {
@@ -455,17 +685,36 @@ select {
   
   #fold-button {
     display: block;
-    width: 80px;
-    height: 80px;
+    width: 200px;
+    height: 160px;
     margin: 10px;
-    background-image: url(http://localhost:3000/static/images/foldbutton.png
+    background-image: url(http://localhost:3000/static/images/custom_D.png
     );
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
     cursor: pointer;
-    right: 50px;
+    top: 279px;
+    z-index: 9999;
+    right: 25px;
   }
+
+  #custom-raise {
+    display: none;
+    width: 200px;
+    height: 160px;
+    margin: 10px;
+    background-image: url(http://localhost:3000/static/images/custom_X.png);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    cursor: pointer;
+    left: 230px;
+    top: 279px;
+    z-index: 9999;
+    position: absolute;
+  }
+
 
   #fold-button:hover {
     opacity: 0.8; /* Réduit légèrement l'opacité au survol */
@@ -479,17 +728,25 @@ select {
   
   #call-button {
     display: block;
-    width: 80px;
-    height: 80px;
+    width: 200px;
+    height: 160px;
     margin: 10px;
-    background-image: url(http://localhost:3000/static/images/foldbutton.png
-    );
+    background-image: url(http://localhost:3000/static/images/custom_C.png );
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
     cursor: pointer;
-    right: 0px;
+    right: 138px;
+    top: 279px;
+    bottom: 50px;
+    z-index: 9999;
   }
+
+  @keyframes fadeInCustomRaise {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
 
   #call-button:hover {
     opacity: 0.8; /* Réduit légèrement l'opacité au survol */
@@ -501,3 +758,272 @@ select {
     /* Autres styles au clic */
   }
   
+/* Conteneur modal */
+/* La modal box toujours en bas, fond noir, etc. */
+#modal-box {
+  position: fixed;
+  bottom: -100%;  
+  left: 0;
+  width: 100%;
+  background-color: black;
+  border-top: 1px solid #666;
+  box-shadow: 0 -4px 8px rgba(0,0,0,0.3);
+  z-index: 10000;
+  max-height: 165px; 
+  overflow-y: auto;
+  display: none;
+  transition: bottom 0.4s ease;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+/* Disposition horizontale principale, 
+   align-items: stretch pour forcer la même hauteur de colonnes */
+.calc-horizontal-layout {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: stretch; /* clé pour remplir la hauteur */
+  gap: 5px;  
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Chaque colonne .calc-col a un fond sombre, s'étire en hauteur */
+.calc-col {
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* ou space-evenly / space-around selon l'effet voulu */
+  align-items: stretch;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+.calc-col-display   { flex: 1;   }
+.calc-col-actions   { flex: 0.5; }
+.calc-col-presets   { flex: 0.5; }
+.calc-col-digits    { flex: 1.3; }
+
+/* Titre */
+.calc-title {
+  margin: 2px 0 4px 0;
+  font-size: 12px;
+  color: #fff;
+  text-align: center;
+}
+
+/* Affichage du montant */
+.calc-display {
+  background: #222;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 4px;
+  font-size: 14px;
+  min-height: 24px;
+  color: #fff;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+/* Bouton générique */
+.calc-btn {
+  background: linear-gradient(to bottom, #e66d35, #e66d35);
+  border: 1px solid #aa5425;
+  color: #fff;
+  border-radius: 4px;
+  padding: 3px;
+  font-size: 12px;
+  margin: 2px;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* Survol */
+.calc-btn:hover {
+  background: linear-gradient(to bottom, #d85c27, #c54d19);
+}
+
+/* 
+   Pour la colonne ALL-IN / CALL : 
+   on veut 2 boutons qui occupent chacun 50% de la hauteur. 
+   On peut imposer un "flex: 1" sur chaque bouton
+*/
+.calc-col-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.calc-col-actions .half-btn {
+  flex: 1; /* Chaque bouton occupe la moitié du container */
+}
+
+/* Pour la colonne PRESETS (50, 100, 200) : 3 boutons à 1/3 de la hauteur chacun */
+.calc-col-presets {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.calc-col-presets .third-btn {
+  flex: 1; /* Chaque bouton occupe 1/3 du container */
+}
+
+/* Pavé numérique en grille */
+.calc-col-digits {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.calc-digit-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-gap: 3px;
+  flex: 1; /* Remplit verticalement */
+}
+
+/* Bouton close */
+.calc-row-close {
+  width: 100%;
+  text-align: center;
+  margin-top: 5px;
+  box-sizing: border-box;
+}
+
+.calc-close-btn {
+  width: 90%;
+  background: #e66d35;
+  border: 1px solid #e66d35;
+}
+
+/* Animation click */
+.calc-btn:active {
+  transform: scale(0.97);
+}
+  
+  @keyframes fadeInCustomRaise {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+
+  #raise-button.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+    cursor: default;
+  }  
+  
+  
+#common-cards {
+        position: absolute;      /* ou fixed si vous voulez qu'il reste en haut lors du scroll */
+        top: 20px;               /* Distance du haut de la page */
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;              /* Ou une largeur fixe, par exemple 800px */
+        display: flex;
+        flex-direction: row;
+        justify-content: center; /* Centre les cartes horizontalement */
+        align-items: center;
+        gap: 20px;               /* Espacement entre le deck et les cartes communes */
+      }
+
+
+/* La barre noire permanente */
+#top-black-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 40px !important; /* Hauteur de la barre */
+  background-color: black;
+  z-index: 1; /* Au-dessus du reste */
+  text-align: center; /* Centre le contenu horizontalement */
+  padding-top: 50px; /* Décale le contenu interne de la barre */
+}
+
+/* Zone de message dans la barre noire */
+#end-game-message {
+  position: fixed;
+  top: 0px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-block;
+  color: rgb(255, 124, 48);
+  font-size: 15px;
+  padding: 5px 15px 15px 15px; /* Réduction du padding en haut uniquement */
+  border-radius: 10px;
+}
+
+
+/* Décalage du contenu principal vers le bas */
+#game-container {
+  margin-top: 80px !important;
+}
+
+/* Modal de fin de partie */
+#end-game-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,1);
+  z-index: 10000;
+  display: none; /* Caché par défaut */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+}
+
+/* Conteneur du contenu du modal */
+.end-game-content {
+  background: #333;
+  padding: 20px;
+  border-radius: 10px;
+  width: 400px;
+}
+
+/* Le message de fin */
+.end-game-text {
+  font-size: 1.5em;
+  margin-bottom: 20px;
+  color: white;
+}
+
+/* Bouton OK amélioré */
+.end-game-ok-btn {
+  padding: 10px 20px;
+  background-color: #ffa600;
+  border: none;
+  border-radius: 5px;
+  color: white;
+  font-size: 1.2em;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  display: block;  /* Pour occuper une ligne complète */
+  margin: 0 auto;  /* Centrer horizontalement */
+}
+
+.end-game-ok-btn:hover {
+  background-color: #0056b3;
+}
+
+/* S'applique aux cartes dans tout siège qui a la classe "winning-hand" */
+.winning-hand .holecards .card {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 3px solid yellow;
+  box-shadow: 0 0 8px yellow;
+  transition: border 0.3s ease, box-shadow 0.3s ease;
+}
+
+#seat0.winning-hand .holecards .card {
+  border: none !important;
+  box-shadow: none !important;
+}

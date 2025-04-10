@@ -1,51 +1,73 @@
+// server.js
 const express = require('express');
 const path = require('path');
 const http = require('http');
 const socketIo = require('socket.io');
+const Table = require('./table'); // Importation du module Table
 
 // Création de l'application Express
 const app = express();
 
-// Création du serveur HTTP à partir d'Express
-const server = http.createServer(app);
-
-// Initialisation de Socket.io sur le serveur
-const io = socketIo(server);
-
-// Définition du port (utilise process.env.PORT pour Heroku)
-const PORT = process.env.PORT || 3000;
-
-// Middleware pour servir les fichiers statiques du dossier poker-app
+// Servir les fichiers statiques depuis poker-app (poker.html, CSS, JS, images, etc.)
 app.use(express.static(path.join(__dirname, 'poker-app')));
 
-// Pour toute autre route, renvoyer le fichier poker.html (point d'entrée de ton application)
+// Pour toute route, renvoyer le fichier poker.html
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'poker-app', 'poker.html'));
 });
 
-// Gestion des connexions Socket.io
+// Création du serveur HTTP
+const server = http.createServer(app);
+
+// Initialisation de Socket.IO
+const io = socketIo(server);
+
+// Définition du port
+const PORT = process.env.PORT || 3000;
+
+// Mode multijoueur activé
+const modeMultiplayer = true;
+
+// Création d'une instance de Table
+const table = new Table(10);
+
+// Gestion des connexions Socket.IO
 io.on('connection', (socket) => {
-  console.log(`Un utilisateur est connecté : ${socket.id}`);
+  console.log(`Un joueur est connecté : ${socket.id}`);
 
-  // Exemple d'événement : rejoindre une salle (table de poker)
-  socket.on('joinRoom', (room) => {
-    socket.join(room);
-    console.log(`L'utilisateur ${socket.id} a rejoint la salle ${room}`);
-    // Ici, tu peux émettre un message de bienvenue ou informer les autres utilisateurs de la salle.
-    io.to(room).emit('message', `L'utilisateur ${socket.id} a rejoint la salle !`);
+  // Quand un joueur rejoint le jeu
+  socket.on('joinGame', (playerData) => {
+    if (modeMultiplayer) {
+      const seat = table.assignSeat(playerData);
+      if (seat === -1) {
+        socket.emit('tableFull', { message: 'La table est complète.' });
+        return;
+      }
+      socket.playerSeat = seat;
+      console.log(`${playerData.name} a rejoint la table au siège ${seat}`);
+      // On émet l'état actuel de la table à tous les clients
+      io.emit('updateTable', table.getState());
+    }
+    // Brancher le mode solo ou la gestion des bots ici le cas échéant
   });
 
-  // Autres événements personnalisés, par exemple 'playerAction' ou 'updateGameState'
+  // Gérer les actions des joueurs (Call, Raise, Fold, etc.)
   socket.on('playerAction', (data) => {
-    // Gère l'action du joueur et diffuse l'état mis à jour à tous les participants de la salle.
-    console.log(`Action du joueur ${socket.id} :`, data);
-    // Par exemple, émettre à tous les clients de la salle :
-    io.to(data.room).emit('gameStateUpdate', data);
+    console.log(`Action du joueur ${socket.id} (siège ${socket.playerSeat}) :`, data);
+    // Ici, intégrez la logique de jeu pour traiter l'action du joueur
+    // Mise à jour du pot, vérification de la validité de l'action, etc.
+    // Par simplicité, on réémet l'état de la table pour l'instant
+    io.emit('updateTable', table.getState());
   });
 
-  // Déconnexion de l'utilisateur
+  // Gestion de la déconnexion
   socket.on('disconnect', () => {
-    console.log(`L'utilisateur s'est déconnecté : ${socket.id}`);
+    const seat = socket.playerSeat;
+    if (seat !== undefined && seat !== null) {
+      table.removePlayer(seat);
+      console.log(`Le joueur au siège ${seat} s'est déconnecté.`);
+      io.emit('updateTable', table.getState());
+    }
   });
 });
 

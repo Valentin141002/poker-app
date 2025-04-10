@@ -31,25 +31,31 @@ if everyone's going all in then maybe i shouldn't
 
 "use strict";
 
+// Variables globales utilisées par le bot
 var P, HCONF, ID_CONF, CALL_LEVEL, BET_LEVEL, POT_LEVEL, BANKROLL;
 var CALL, SMALL, MED, BIG, ALLIN;
 var RANKA, RANKB;
 var FOLD = 0;
 
-// PREFLOP
+// PREFLOP : Fonction de décision préflop
 function bot_get_preflop_bet () {
   var num_players_playing_the_hand = internal_setup();
 
-  if ((HUMAN_GOES_ALL_IN || HUMAN_WINS_AGAIN > 1) && (HCONF > 60 || RANKA == RANKB || RANKA > 13 || RANKB > 13)) {
-    var other_making_stand = 0;
-    for (var i = 1; i < players.length; i++) {
-      // Has she gone all-in ?
-      if (players[i].bankroll < 1 && players[i].status != "BUST") {
-        other_making_stand = 1;
-//      break;  <-- mistake ?
-      }
+  // Dans un mode multijoueur, on va ignorer le joueur humain (mySeat)
+  // dans la boucle suivante, afin d'évaluer uniquement le comportement des bots.
+  var other_making_stand = 0;
+  for (var i = 0; i < players.length; i++) {
+    if (i === mySeat) continue;
+    // Si un adversaire a une bankroll insuffisante et n'est pas "BUST"
+    if (players[i].bankroll < 1 && players[i].status != "BUST") {
+      other_making_stand = 1;
+      break;
     }
-    if (other_making_stand < 1) { // should really check to see if bet_level is big and anyone has called...that's taking a stand too...
+  }
+
+  if ((HUMAN_GOES_ALL_IN || HUMAN_WINS_AGAIN > 1) &&
+      (HCONF > 60 || RANKA === RANKB || RANKA > 13 || RANKB > 13)) {
+    if (!other_making_stand) {
       if (BET_LEVEL > 70) {
         return internal_what_do_x("40:CALL,60:ALLIN");
       }
@@ -72,7 +78,7 @@ function bot_get_preflop_bet () {
   }
   if (HCONF > 80) {
     if (POT_LEVEL > 50) {
-      if (ID_CONF == "LO") return internal_what_do_x("100:ALLIN");
+      if (ID_CONF === "LO") return internal_what_do_x("100:ALLIN");
       return internal_what_do_x("100:CALL");
     }
     return internal_what_do_x("5:ALLIN,15:BIG,15:MED,30:SMALL,35:CALL");
@@ -84,11 +90,11 @@ function bot_get_preflop_bet () {
 
   if (HCONF > 70) {
     if (POT_LEVEL > 75) {
-      if (ID_CONF == "LO") return internal_what_do_x("100:ALLIN");
+      if (ID_CONF === "LO") return internal_what_do_x("100:ALLIN");
       return internal_what_do_x("100:CALL");
     }
     if (POT_LEVEL > 50) {
-      if (ID_CONF == "LO") return internal_what_do_x("50:ALLIN,50:BIG");
+      if (ID_CONF === "LO") return internal_what_do_x("50:ALLIN,50:BIG");
       return internal_what_do_x("100:CALL");
     }
     if (num_players_playing_the_hand > 3) return internal_what_do_x("5:ALLIN,15:BIG,30:MED,30:SMALL,20:CALL");
@@ -96,13 +102,13 @@ function bot_get_preflop_bet () {
   }
   if (HCONF > 60) {
     if (POT_LEVEL > 75) {
-      if (ID_CONF == "LO") return internal_what_do_x("100:ALLIN");
+      if (ID_CONF === "LO") return internal_what_do_x("100:ALLIN");
       if (CALL_LEVEL < 70) return CALL;
-      if (ID_CONF == "HI") return internal_what_do_x("25:CALL");
+      if (ID_CONF === "HI") return internal_what_do_x("25:CALL");
       return internal_what_do_x("34:CALL");
     }
     if (POT_LEVEL > 50) {
-      if (ID_CONF == "LO") return internal_what_do_x("75:ALLIN,25:BIG");
+      if (ID_CONF === "LO") return internal_what_do_x("75:ALLIN,25:BIG");
       if (CALL_LEVEL < 70) return CALL;
       return internal_what_do_x("65:CALL");
     }
@@ -127,7 +133,7 @@ function bot_get_preflop_bet () {
     }
     if (BET_LEVEL > 30) {
       if (CALL_LEVEL < 30) return CALL;
-      if (ID_CONF == "LO") return internal_what_do_x("24:CALL");
+      if (ID_CONF === "LO") return internal_what_do_x("24:CALL");
       return internal_what_do_x("37:CALL");
     }
     return internal_what_do_x("1:ALLIN,1:BIG,19:SMALL,79:CALL");
@@ -139,7 +145,7 @@ function bot_get_preflop_bet () {
     }
     if (BET_LEVEL > 30) {
       if (CALL_LEVEL < 30) return internal_what_do_x("15:SMALL,85:CALL");
-      if (ID_CONF == "LO") return internal_what_do_x("1:CALL");
+      if (ID_CONF === "LO") return internal_what_do_x("1:CALL");
       return internal_what_do_x("20:CALL");
     }
     return internal_what_do_x("1:ALLIN,1:BIG,9:SMALL,89:CALL");
@@ -151,33 +157,36 @@ function bot_get_preflop_bet () {
     }
     if (BET_LEVEL > 20) {
       if (CALL_LEVEL < 20) return CALL;
-      if (ID_CONF == "LO") return internal_what_do_x("1:CALL");
+      if (ID_CONF === "LO") return internal_what_do_x("1:CALL");
       return internal_what_do_x("20:CALL");
     }
     return internal_what_do_x("1:ALLIN,99:CALL");
   }
   if (CALL_LEVEL > 20) return FOLD;
   if (CALL_LEVEL > 10) {
-    if (ID_CONF == "LO") return internal_what_do_x("20:CALL");
+    if (ID_CONF === "LO") return internal_what_do_x("20:CALL");
     return internal_what_do_x("1:MED,40:CALL");
   }
   if (CALL_LEVEL > 5) {
-    if (ID_CONF == "LO") return internal_what_do_x("1:BIG,15:CALL");
+    if (ID_CONF === "LO") return internal_what_do_x("1:BIG,15:CALL");
     return internal_what_do_x("35:CALL");
   }
-  if (ID_CONF == "LO") return internal_what_do_x("1:ALLIN,79:CALL");
+  if (ID_CONF === "LO") return internal_what_do_x("1:ALLIN,79:CALL");
   return CALL;
 }
+
+// --- Fonction de classement des mains initiales (préflop) ---
 var hole_rankings =
   "AA:100,KK:96,QQ:95,JJ:93,AKs:94," +
   "TT:86,AQs:85,AJs:84,KQs:84,AK:85," +
   "99:76,JTs:75,QJs:75,KJs:74,ATs:74,AQ:73," +
-  "T9s:66,KQ:66,88:66,QTs:65,98s:64,J9s:65,AJ:65,KTs:65," +                          // THIS & ABOVE: EARLY POSITION
-  "77:56,87s:55,Q9s:55,T8s:54,KJ:55,QJ:54,JT:54,76s:53,97s:53,Axs:54,65s:53," +      // THIS & ABOVE: LATE POSITION
+  "T9s:66,KQ:66,88:66,QTs:65,98s:64,J9s:65,AJ:65,KTs:65," +
+  "77:56,87s:55,Q9s:55,T8s:54,KJ:55,QJ:54,JT:54,76s:53,97s:53,Axs:54,65s:53," +
   "66:46,AT:46,55:45,86s:44,KT:45,QT:44,54s:45,K9s:45,J8s:44,75s:43," +
-  "44:36,J9:35,64s:33,T9:34,53s:33,33:35,98:34,43s:34,22:34,Kxs:34,T7s:33,Q8s:33," + // THIS & ABOVE: BUTTON
+  "44:36,J9:35,64s:33,T9:34,53s:33,33:35,98:34,43s:34,22:34,Kxs:34,T7s:33,Q8s:33," +
   "87:26,A9:26,Q9:25,76:25,42s:23,32s:23,96s:23,85s:22,J8:22,J7s:22,65:22,54:22,74s:21,K9:22,T8:21,";
 
+// Calcule le classement initial des cartes privées pour le joueur en cours (bot).
 function internal_get_hole_ranking () {
   var player = players[current_bettor_index];
   var a = player.carda;
@@ -193,10 +202,12 @@ function internal_get_hole_ranking () {
   var r_rank_a = internal_my_make_readable_rank(n_rank_a);
   var r_rank_b = internal_my_make_readable_rank(n_rank_b);
   var suited = "";
-  if (get_suit(a) == get_suit(b)) suited = "s";
+  if (get_suit(a) === get_suit(b)) suited = "s";
   var h = "";
-  if (n_rank_a == n_rank_b) h = "" + r_rank_a + "" + r_rank_b;
-  else h = "" + r_rank_a + "" + r_rank_b + suited;
+  if (n_rank_a === n_rank_b)
+    h = "" + r_rank_a + r_rank_b;
+  else
+    h = "" + r_rank_a + r_rank_b + suited;
   var q = internal_lookup_hole_ranking(h);
   if (!q) {
     h = "" + r_rank_a + "x" + suited;
@@ -207,7 +218,7 @@ function internal_get_hole_ranking () {
 
 function internal_my_make_readable_rank (r) {
   var rank = make_readable_rank(r);
-  if (rank == 10) rank = "T";
+  if (rank === 10) rank = "T";
   return rank;
 }
 
@@ -219,14 +230,14 @@ function internal_lookup_hole_ranking (h) {
   return r - 0;
 }
 
-// POSTFLOP
+// --- POSTFLOP : Fonction de décision postflop ---
 function bot_get_postflop_bet () {
   var dummy = internal_setup();
   var ROUND = 3;
   if (board[4]) ROUND = 5;
   else if (board[3]) ROUND = 4;
 
-  if (P.subtotal_bet > 0) { // so no check-raising!!!!!!!!
+  if (P.subtotal_bet > 0) { // pas de check-raising
     if (HCONF > 20 || RANKA > 10 || RANKB > 10) {
       if ((CALL_LEVEL < 40 && ROUND < 4) || (CALL_LEVEL < 30 && ROUND < 5)) return CALL;
     }
@@ -244,161 +255,109 @@ function bot_get_postflop_bet () {
   var FLUSH_DRAW = 0;
 
   if (ROUND < 5) {
-    if (FLUSH["num_needed"] == 1) {
+    if (FLUSH["num_needed"] === 1) {
       var suit = FLUSH["suit"];
-      if (P.carda.substring(0, 1) == suit || P.cardb.substring(0, 1) == suit) FLUSH_DRAW = 1;
+      if (P.carda.substring(0,1) === suit || P.cardb.substring(0,1) === suit) FLUSH_DRAW = 1;
     }
   }
 
   if (STRAIGHT_FLUSH["num_needed"] < 1) {
-    if (STRAIGHT_FLUSH["num_mine"] > 0) VERDICT = "GREAT";
-    else VERDICT = "PLAY BOARD";
+    VERDICT = (STRAIGHT_FLUSH["num_mine"] > 0) ? "GREAT" : "PLAY BOARD";
   }
-  if (VERDICT == "" && FOUR_OF_A_KIND["num_needed"] < 1) {
-    if (FOUR_OF_A_KIND["num_mine"] > 0) VERDICT = "GREAT";
-    else {
-      VERDICT = "PLAY BOARD"; // SHOULD CHECK MY KICKER!!!!!!!................
-    }
+  if (VERDICT === "" && FOUR_OF_A_KIND["num_needed"] < 1) {
+    VERDICT = (FOUR_OF_A_KIND["num_mine"] > 0) ? "GREAT" : "PLAY BOARD";
   }
-  if (VERDICT == "" && FULL_HOUSE["num_needed"] < 1) { // consider 2 or 3 on the board, (higher full house, 4 of a kind)
-    if (FULL_HOUSE["num_mine"] > 0) VERDICT = "GREAT";
-    else VERDICT = "PLAY BOARD";
+  if (VERDICT === "" && FULL_HOUSE["num_needed"] < 1) {
+    VERDICT = (FULL_HOUSE["num_mine"] > 0) ? "GREAT" : "PLAY BOARD";
   }
-  if (VERDICT == "" && FLUSH["num_needed"] < 1) { // look for full house, etc.
+  if (VERDICT === "" && FLUSH["num_needed"] < 1) {
     var num_mine = FLUSH["num_mine"];
     if (num_mine > 1) VERDICT = "GREAT";
     else if (num_mine > 0) {
-      var rank = 0;
-      if (P.carda.substring(0, 1) == FLUSH["suit"]) rank = RANKA;
-      else rank = RANKB;
-      if (rank < 11) VERDICT = "GOOD"; // 12???????
-      else VERDICT = "GREAT";
-    } else VERDICT = "MAYBE"; // could look @ board & decide if person was tryin' for flush...FACTOR: ANALYZE BETTING PATTERNS!...
+      var rank = (P.carda.substring(0,1) === FLUSH["suit"]) ? RANKA : RANKB;
+      VERDICT = (rank < 11) ? "GOOD" : "GREAT";
+    } else VERDICT = "MAYBE";
   }
-  if (VERDICT == "" && STRAIGHT["num_needed"] < 1) { // look for flush, etc.
-    if (STRAIGHT["num_mine"] > 0) VERDICT = "GREAT";
-    else VERDICT = "PLAY BOARD";
-    if (internal_exists_flush_potential() < 3) VERDICT = "MAYBE"; // //////////POTENTIALLY BAD!!!!!!unless i can get it...!!!!!!!!!!!!!!!!!!
+  if (VERDICT === "" && STRAIGHT["num_needed"] < 1) {
+    VERDICT = (STRAIGHT["num_mine"] > 0) ? "GREAT" : "PLAY BOARD";
+    if (internal_exists_flush_potential() < 3) VERDICT = "MAYBE";
   }
-  if (VERDICT == "" && THREE_OF_A_KIND["num_needed"] < 1) { // look for straight, etc.
+  if (VERDICT === "" && THREE_OF_A_KIND["num_needed"] < 1) {
     if (THREE_OF_A_KIND["num_mine"] > 0) VERDICT = "GREAT";
     else {
       var k1 = THREE_OF_A_KIND["kicker_1"];
       var k2 = THREE_OF_A_KIND["kicker_2"];
-      if ((k1 == RANKA && k2 == RANKB) || (k1 == RANKB && k2 == RANKA)) VERDICT = "GREAT";
-      else if (k1 == RANKA || k1 == RANKB) VERDICT = "GOOD";
+      if ((k1 === RANKA && k2 === RANKB) || (k1 === RANKB && k2 === RANKA)) VERDICT = "GREAT";
+      else if (k1 === RANKA || k1 === RANKB) VERDICT = "GOOD";
       else if (k1 > 11 && k2 > 9) VERDICT = "GOOD";
-      else VERDICT = "MAYBE"; // should really bet "POTENTIALLY BAD".............but can i get it?...............!!!!!!!!!!!!!
+      else VERDICT = "MAYBE";
     }
-    if (internal_exists_flush_potential() < 3) {
-      VERDICT = "MAYBE"; // //////////POTENTIALLY BAD!!!!!!!!!unless i can get it...!!!!!!!!!!
-    }
-    if (internal_exists_straight_potential() < 2) {
-      VERDICT = "MAYBE"; // //////////"POTENTIALLY BAD!!!!!!!unless i can get it...!!!!!!!!!!!!
-    }
+    if (internal_exists_flush_potential() < 3) VERDICT = "MAYBE";
+    if (internal_exists_straight_potential() < 2) VERDICT = "MAYBE";
   }
-  if (VERDICT == "" && TWO_PAIR["num_needed"] < 1) {
-    num_mine = TWO_PAIR["num_mine"];
+  if (VERDICT === "" && TWO_PAIR["num_needed"] < 1) {
+    var num_mine = TWO_PAIR["num_mine"];
     if (num_mine > 1) {
-      if (RANKA == RANKB) {
-        VERDICT = "GOOD";
-      } else {
-        VERDICT = "GREAT";
-      }
+      VERDICT = (RANKA === RANKB) ? "GOOD" : "GREAT";
     } else if (num_mine > 0) {
       if (ROUND < 4) {
-        VERDICT = "GREAT"; // hmmmmmmmm........
+        VERDICT = "GREAT";
       } else {
-        rank = TWO_PAIR["rank_1"];
-        if (rank != RANKA && rank != RANKB) {
-          rank = TWO_PAIR["rank_2"];
-        }
-        if (rank < 10) {
-          VERDICT = "MAYBE"; // 11??????
-        } else {
-          VERDICT = "GOOD";
-        }
+        var rank = TWO_PAIR["rank_1"];
+        if (rank !== RANKA && rank !== RANKB) rank = TWO_PAIR["rank_2"];
+        VERDICT = (rank < 10) ? "MAYBE" : "GOOD";
       }
     } else {
       var kick = TWO_PAIR["kicker"];
-      if (kick == RANKA || kick == RANKB || kick > 10) {
-        VERDICT = "PLAY BOARD";
-      } else {
-        VERDICT = "MAYBE"; // "POTENTIALLY BAD"????????................................!!!!unless i can get it...!!!!
-      }
+      VERDICT = (kick === RANKA || kick === RANKB || kick > 10) ? "PLAY BOARD" : "MAYBE";
     }
-    if (internal_exists_flush_potential() < 3) {
-      VERDICT = "MAYBE"; // ///////////"POTENTIALLY BAD!!!!!!!!unless i can get it...!!!!!!!!!!!!!!!!
-    }
-    if (internal_exists_straight_potential() < 2) {
-      VERDICT = "MAYBE"; // //////////"POTENTIALLY BAD!!!!!!unless i can get it...!!!!!!!!!!!!!
-    }
+    if (internal_exists_flush_potential() < 3) VERDICT = "MAYBE";
+    if (internal_exists_straight_potential() < 2) VERDICT = "MAYBE";
   }
-  if (VERDICT == "" && ONE_PAIR["num_needed"] < 1) {
+  if (VERDICT === "" && ONE_PAIR["num_needed"] < 1) {
     if (ONE_PAIR["num_mine"] > 0) {
       var my_rank = ONE_PAIR["rank"];
       var num_overcards = 0;
       for (var i = 0; i < board.length; i++) {
         if (board[i] && get_rank(board[i]) > my_rank) num_overcards++;
       }
-      if (num_overcards < 1) {
-        VERDICT = "GOOD";       // Moved from (Comment1) below
-        if (my_rank > 11) {
-          VERDICT = "GREAT";
-        }
-        // (Comment1) VERDICT = "GOOD";       // <-- What is this ?  overwriting VERDICT
-      } else if (num_overcards < 2) {
-        VERDICT = "MAYBE";      // Moved from (Comment2) below
-        if (my_rank > 7) {
-          VERDICT = "GOOD";
-        }
-        // (Comment2) VERDICT = "MAYBE";      // <-- What is this ?  overwriting VERDICT
-      } else {
-        VERDICT = "MAYBE";
-      }
-      if (internal_exists_flush_potential() < 3) {
-        VERDICT = "MAYBE"; // ///////////"POTENTIALLY BAD!!!!!!!!!unless i can get it...!!!!!!!!!!!!!!!
-      }
-      if (internal_exists_straight_potential() < 2) {
-        VERDICT = "MAYBE"; // //////////"POTENTIALLY BAD!!!!!!!unless i can get it...!!!!!!!!!!!!
-      }
+      if (num_overcards < 1) VERDICT = (my_rank > 11) ? "GREAT" : "GOOD";
+      else if (num_overcards < 2) VERDICT = (my_rank > 7) ? "GOOD" : "MAYBE";
+      else VERDICT = "MAYBE";
+      if (internal_exists_flush_potential() < 3) VERDICT = "MAYBE";
+      if (internal_exists_straight_potential() < 2) VERDICT = "MAYBE";
     }
-    // add verdict "POTENTIALLY BAD" here, for example, for when the board looks dangerous?
-    // but what if i can get it!?!?!!!!!!!!!!!!!!!!!!!!!!!!!
   }
 
-  // special case if verdict is MAYBE AND i have a draw...tend not to fold
-  // special case where verdict is good & i have a draw...tend not to fold
-  if ((HUMAN_GOES_ALL_IN || HUMAN_WINS_AGAIN > 1) && (VERDICT == "GREAT" || VERDICT == "GOOD" || VERDICT == "MAYBE" || RANKA == RANKB)) {
+  // Cas particulier : si le verdict est MAYBE (ou similaire) et que la situation de draw est favorable,
+  // ne pas se coucher immédiatement.
+  if ((HUMAN_GOES_ALL_IN || HUMAN_WINS_AGAIN > 1) &&
+      (VERDICT === "GREAT" || VERDICT === "GOOD" || VERDICT === "MAYBE" || RANKA === RANKB)) {
     var other_making_stand = 0;
-    for (var index = 1; index < players.length; index++) {
+    for (var index = 0; index < players.length; index++) {
+      if (index === mySeat) continue;
       if (players[index].bankroll < 1 && players[index].status != "BUST") {
         other_making_stand = 1;
+        break;
       }
-      break;
     }
-    if (other_making_stand < 1) { // should really check to see if bet_level is big and anyone has called...that's taking a stand too...
-      if (BET_LEVEL > 70) {
-        return internal_what_do_x("40:CALL,60:ALLIN");
-      }
+    if (!other_making_stand) {
+      if (BET_LEVEL > 70) return internal_what_do_x("40:CALL,60:ALLIN");
       return internal_what_do_x("10:MED,40:SMALL,50:CALL");
     }
-    // Don't let the human get away too easy
-    if (VERDICT == "GREAT" || VERDICT == "GOOD") {
+    if (VERDICT === "GREAT" || VERDICT === "GOOD") {
       return internal_what_do_x("10:MED,40:SMALL,50:CALL");
     }
   }
 
-  if (VERDICT == "GREAT") {
-    if (ROUND < 5) {
-      return internal_what_do_x("5:ALLIN,5:BIG,25:MED,45:SMALL,20:CALL");
-    }
+  if (VERDICT === "GREAT") {
+    if (ROUND < 5) return internal_what_do_x("5:ALLIN,5:BIG,25:MED,45:SMALL,20:CALL");
     return internal_what_do_x("30:ALLIN,40:BIG,30:MED");
   }
-  if (VERDICT == "GOOD") {
+  if (VERDICT === "GOOD") {
     if (ROUND < 4) {
       if (BET_LEVEL > 79) {
-        if (CALL_LEVEL < 70 || FLUSH_DRAW) return CALL;
+        if (CALL_LEVEL < 70) return CALL;
         return internal_what_do_x("59:CALL");
       }
       if (P.subtotal_bet > 0) return internal_what_do_x("1:ALLIN,2:BIG,5:MED,20:SMALL,72:CALL");
@@ -410,13 +369,13 @@ function bot_get_postflop_bet () {
     }
     if (BET_LEVEL < 80) {
       if (CALL_LEVEL < 50) return CALL;
-      return internal_what_do_x("65:CALL"); // SOME THINGS DEPEND ON THE BOARD,POT ODDS,CONFIDENCE!!!!!!!!!!!!!!!!!!!!!!!
+      return internal_what_do_x("65:CALL");
     }
     if (CALL_LEVEL < 70) return CALL;
     if (ROUND < 5) return internal_what_do_x("35:CALL");
     return internal_what_do_x("25:CALL");
   }
-  if (VERDICT == "MAYBE") {
+  if (VERDICT === "MAYBE") {
     if (BET_LEVEL < 50) {
       if (CALL > 0) return internal_what_do_x("5:MED,15:SMALL,80:CALL");
       return internal_what_do_x("5:BIG,20:MED,50:SMALL,25:CALL");
@@ -424,7 +383,7 @@ function bot_get_postflop_bet () {
     if (BET_LEVEL < 70) {
       if (ROUND < 4 && FLUSH_DRAW) return CALL;
       if (CALL_LEVEL < 40) return CALL;
-      if (ID_CONF == "LO") {
+      if (ID_CONF === "LO") {
         if (ROUND < 4) return internal_what_do_x("35:CALL");
         if (ROUND < 5) return internal_what_do_x("65:CALL");
         return internal_what_do_x("89:CALL");
@@ -445,24 +404,12 @@ function bot_get_postflop_bet () {
     if (ROUND < 5) {
       if (CALL < 1) return internal_what_do_x("10:MED,90:SMALL");
       if (CALL_LEVEL < 40) return CALL;
-      return internal_what_do_x("33:CALL"); // depends on how good my cards are!!!!
+      return internal_what_do_x("33:CALL");
     }
-    // otherwise, cleanup process handles it
   }
-  if (VERDICT == "PLAY BOARD") {
-    return CALL;
-  }
+  if (VERDICT === "PLAY BOARD") return CALL;
 
-  // perhaps use the ranking to come up w/ a preliminary strategy & then modify that strategy:
-  // bluff
-  // slow play
-  // take a stand...human wins 4 in a row & human still playing & num players is 2 & i have good/maybe cards then call!
-  // play straight
-
-  var hi_rank = RANKA;
-  if (RANKA < RANKB) {
-    hi_rank = RANKB;
-  }
+  var hi_rank = (RANKA > RANKB) ? RANKA : RANKB;
   if (HCONF > 80) {
     if (CALL < 1) {
       if (ROUND < 5) return internal_what_do_x("10:MED,80:SMALL,10:CALL");
@@ -508,9 +455,13 @@ function internal_exists_flush_potential () {
 function internal_exists_straight_potential () {
   var the_hash = test_straight(new player());
   return the_hash["num_needed"];
-} // BUT inside draws!!!!!!!!!!!!!!!!!!!
+}
 
-// ETC.
+// --- Configuration et utilitaires de mise du bot ---
+//
+// Cette fonction prépare le bot pour le calcul des paris.
+// Elle définit P comme le joueur courant (players[current_bettor_index]),
+// calcule CALL, RANKA, RANKB, HCONF et d'autres niveaux utilisés dans la prise de décision.
 function internal_setup () {
   P = players[current_bettor_index];
   CALL = current_bet_amount - P.subtotal_bet;
@@ -518,7 +469,7 @@ function internal_setup () {
   RANKB = get_rank(P.cardb);
   HCONF = internal_get_hole_ranking();
   CALL_LEVEL = internal_get_bet_level(CALL);
-  BET_LEVEL = internal_get_bet_level(current_bet_amount); // feed function data we calc here so we don't gotta doubl do it!..
+  BET_LEVEL = internal_get_bet_level(current_bet_amount);
   POT_LEVEL = internal_get_pot_level();
   BANKROLL = P.bankroll;
   var total_bankrolls = get_pot_size();
@@ -528,49 +479,34 @@ function internal_setup () {
     total_bankrolls += players[i].bankroll;
     if (players[i].status != "BUST") {
       number_of_players_in_game++;
-      if (players[i].status != "FOLD") {
-        num_players_playing_the_hand++;
-      }
+      if (players[i].status != "FOLD") num_players_playing_the_hand++;
     }
   }
   ID_CONF = "MID";
   var avg_bankroll = total_bankrolls / number_of_players_in_game;
   if (BANKROLL < avg_bankroll / 2) ID_CONF = "LO";
   if (BANKROLL > avg_bankroll * 1.5) ID_CONF = "HI";
-  SMALL = CALL + BIG_BLIND * 2; // consider MINIMUM RAISE here & below!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  SMALL = CALL + BIG_BLIND * 2;
   if (POT_LEVEL > 40) SMALL += 5;
   if (number_of_players_in_game > 3) {
     MED = CALL + BIG_BLIND * 4;
     BIG = CALL + BIG_BLIND * 10;
   } else {
     SMALL += 5;
-    MED = internal_round5(CALL + 0.1 * BANKROLL); // consider minimum raise!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    BIG = internal_round5(CALL + 0.2 * BANKROLL); // consider minimum raise!
+    MED = internal_round5(CALL + 0.1 * BANKROLL);
+    BIG = internal_round5(CALL + 0.2 * BANKROLL);
   }
   ALLIN = BANKROLL;
-
   return num_players_playing_the_hand;
 }
 
 function internal_tokenize_string (string) {
-  if (string === 'FOLD') {
-    return FOLD;
-  }
-  if (string === 'CALL') {
-    return CALL;
-  }
-  if (string === 'SMALL') {
-    return SMALL;
-  }
-  if (string === 'MED') {
-    return MED;
-  }
-  if (string === 'BIG') {
-    return BIG;
-  }
-  if (string === 'ALLIN') {
-    return ALLIN;
-  }
+  if (string === 'FOLD') return FOLD;
+  if (string === 'CALL') return CALL;
+  if (string === 'SMALL') return SMALL;
+  if (string === 'MED') return MED;
+  if (string === 'BIG') return BIG;
+  if (string === 'ALLIN') return ALLIN;
   alert("internal_tokenize_string() cannot tokenize " + string);
 }
 
@@ -581,18 +517,13 @@ function internal_what_do_x (q, r) {
   while (1) {
     var a = q.indexOf(":");
     var b = q.indexOf(",", a);
-    if (a < 0 || b < 0) {
-      return FOLD;
-    }
+    if (a < 0 || b < 0) return FOLD;
     var probability = (q.substring(0, a) - 0) / 100;
     var action = q.substring(a + 1, b);
     q = q.substring(b + 1);
     p += probability;
-    if (r <= p) {
-      return internal_tokenize_string(action);
-    }
+    if (r <= p) return internal_tokenize_string(action);
   }
-  // Never reached
 }
 
 function internal_round5 (n) {
@@ -621,11 +552,7 @@ function internal_get_bet_level (b) {
 function internal_get_pot_level () {
   var p = get_pot_size();
   var b = players[current_bettor_index].bankroll;
-  if (p > 0.5 * b) {
-    return 100;
-  }
-  if (p > 0.25 * b) {
-    return 51;
-  }
+  if (p > 0.5 * b) return 100;
+  if (p > 0.25 * b) return 51;
   return 1;
 }

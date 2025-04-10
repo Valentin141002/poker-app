@@ -1,156 +1,209 @@
 <!doctype html>
 <html lang="en">
 <head>
-   <title>The Poker Game</title>
-   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
-   <link rel="stylesheet" href="static/css/text.css" type="text/css">
-   <!-- -->
-   <link rel="stylesheet" href="static/css/poker.css" type="text/css">
-
-   <link rel="shortcut icon" href="static/images/chip5.png" />
-   <link rel="stylesheet" href="static/css/phone.css" type="text/css"
-         media="only screen and (max-width: 1400px)">
-    <script charset="UTF-8" src=static/js/gui_if.js></script>
-   <script charset="UTF-8" src=static/js/jsholdem/poker.js></script>
-   <script charset="UTF-8" src=static/js/jsholdem/hands.js></script>
-   <script charset="UTF-8" src=static/js/jsholdem/bot.js></script>
+  <title>The Poker Game</title>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" href="static/css/text.css" type="text/css">
+  <link rel="stylesheet" href="static/css/poker.css" type="text/css">
+  <link rel="shortcut icon" href="static/images/chip5.png" />
+  <link rel="stylesheet" href="static/css/phone.css" type="text/css" media="only screen and (max-width: 1400px)">
+  <!-- Scripts de l'interface et de la logique du jeu -->
+  <script charset="UTF-8" src="static/js/gui_if.js"></script>
+  <script charset="UTF-8" src="static/js/jsholdem/poker.js"></script>
+  <script charset="UTF-8" src="static/js/jsholdem/hands.js"></script>
+  <script charset="UTF-8" src="static/js/jsholdem/bot.js"></script>
+  <style>
+    /* Barre noire permanente en haut de la page */
+    #top-black-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 60px; /* Hauteur de la barre */
+      background-color: black;
+      z-index: 1000;
+      text-align: center;
+      padding-top: 10px; /* Espace interne pour centrer verticalement */
+    }
+    /* Zone de message dans la barre noire */
+    #end-game-message {
+      display: inline-block;
+      color: rgb(255, 124, 48);
+      font-size: 20px;
+      padding: 15px;
+      border-radius: 10px;
+    }
+    /* Décalage du contenu principal pour éviter que la barre ne le recouvre */
+    #game-container {
+      margin-top: 70px; /* Hauteur de la barre + marge */
+    }
+  </style>
 </head>
-<body onload="parent.init()">
+<body onload="initGame()">
+  <!-- Barre noire permanente pour afficher les messages (ex. : "It's Your Turn") -->
+  <div id="top-black-bar">
+    <div id="end-game-message"></div>
+  </div>
+  
+  <!-- Contenu principal de la table -->
+  <div id="game-container">
     <div id="poker_table" class="poker-table" data-uid="">
-        <div id="seat0" class="seat">
-            <div class="holecards">
-                <div class="card holecard1"></div>
-                <div class="card holecard2"></div>
-            </div>
-            <div class="name-chips">
-                <div class="player-name"></div>
-                <div class="chips"></div>
-            </div>
-            <div class="bet"></div>
+      <!-- Les sièges de la table (10 places) -->
+      <div id="seat0" class="seat">
+        <div class="holecards">
+          <div class="card holecard1"></div>
+          <div class="card holecard2"></div>
         </div>
-        <div id="seat1" class="seat">
-            <div class="holecards">
-                <div class="card holecard1"></div>
-                <div class="card holecard2"></div>
-            </div>
-            <div class="name-chips">
-                <div class="player-name"></div>
-                <div class="chips"></div>
-            </div>
-            <div class="bet"></div>
+        <div class="name-chips">
+          <div class="player-name"></div>
+          <div class="chips"></div>
         </div>
-        <div id="seat2" class="seat">
-            <div class="holecards">
-                <div class="card holecard1"></div>
-                <div class="card holecard2"></div>
-            </div>
-            <div class="name-chips">
-                <div class="player-name"></div>
-                <div class="chips"></div>
-            </div>
-            <div class="bet"></div>
+        <div class="bet"></div>
+      </div>
+      <div id="seat1" class="seat">
+        <div class="holecards">
+          <div class="card holecard1"></div>
+          <div class="card holecard2"></div>
         </div>
-        <div id="seat3" class="seat">
-            <div class="holecards">
-                <div class="card holecard1"></div>
-                <div class="card holecard2"></div>
-            </div>
-            <div class="name-chips">
-                <div class="player-name"></div>
-                <div class="chips"></div>
-            </div>
-            <div class="bet"></div>
+        <div class="name-chips">
+          <div class="player-name"></div>
+          <div class="chips"></div>
         </div>
-        <div id="seat4" class="seat">
-            <div class="holecards">
-                <div class="card holecard1"></div>
-                <div class="card holecard2"></div>
-            </div>
-            <div class="name-chips">
-                <div class="player-name"></div>
-                <div class="chips"></div>
-            </div>
-            <div class="bet"></div>
+        <div class="bet"></div>
+      </div>
+      <div id="seat2" class="seat">
+        <div class="holecards">
+          <div class="card holecard1"></div>
+          <div class="card holecard2"></div>
         </div>
-        <div id="seat5" class="seat">
-            <div class="holecards">
-                <div class="card holecard1"></div>
-                <div class="card holecard2"></div>
-            </div>
-            <div class="name-chips">
-                <div class="player-name"></div>
-                <div class="chips"></div>
-            </div>
-            <div class="bet"></div>
+        <div class="name-chips">
+          <div class="player-name"></div>
+          <div class="chips"></div>
         </div>
-        <div id="seat6" class="seat">
-            <div class="holecards">
-                <div class="card holecard1"></div>
-                <div class="card holecard2"></div>
-            </div>
-            <div class="name-chips">
-                <div class="player-name"></div>
-                <div class="chips"></div>
-            </div>
-            <div class="bet"></div>
+        <div class="bet"></div>
+      </div>
+      <div id="seat3" class="seat">
+        <div class="holecards">
+          <div class="card holecard1"></div>
+          <div class="card holecard2"></div>
         </div>
-        <div id="seat7" class="seat">
-            <div class="holecards">
-                <div class="card holecard1"></div>
-                <div class="card holecard2"></div>
-            </div>
-            <div class="name-chips">
-                <div class="player-name"></div>
-                <div class="chips"></div>
-            </div>
-            <div class="bet"></div>
+        <div class="name-chips">
+          <div class="player-name"></div>
+          <div class="chips"></div>
         </div>
-        <div id="seat8" class="seat">
-            <div class="holecards">
-                <div class="card holecard1"></div>
-                <div class="card holecard2"></div>
-            </div>
-            <div class="name-chips">
-                <div class="player-name"></div>
-                <div class="chips"></div>
-            </div>
-            <div class="bet"></div>
+        <div class="bet"></div>
+      </div>
+      <div id="seat4" class="seat">
+        <div class="holecards">
+          <div class="card holecard1"></div>
+          <div class="card holecard2"></div>
         </div>
-        <div id="seat9" class="seat">
-            <div class="holecards">
-                <div class="card holecard1"></div>
-                <div class="card holecard2"></div>
-            </div>
-            <div class="name-chips">
-                <div class="player-name"></div>
-                <div class="chips"></div>
-            </div>
-            <div class="bet"></div>
+        <div class="name-chips">
+          <div class="player-name"></div>
+          <div class="chips"></div>
         </div>
-        <div id="board">
-            <div id="flop1" class="card boardcard"></div>
-            <div id="flop2" class="card boardcard"></div>
-            <div id="flop3" class="card boardcard"></div>
-            <div id="turn" class="card boardcard"></div>
-            <div id="river" class="card boardcard"></div>
-            <div id="burn1" class="card boardcard"></div>
-            <div id="burn2" class="card boardcard"></div>
-            <div id="burn3" class="card boardcard"></div>
+        <div class="bet"></div>
+      </div>
+      <div id="seat5" class="seat">
+        <div class="holecards">
+          <div class="card holecard1"></div>
+          <div class="card holecard2"></div>
         </div>
-        <div id="pot">
-            <div id="current-pot"></div>
-            <div id="total-pot"></div>
+        <div class="name-chips">
+          <div class="player-name"></div>
+          <div class="chips"></div>
         </div>
+        <div class="bet"></div>
+      </div>
+      <div id="seat6" class="seat">
+        <div class="holecards">
+          <div class="card holecard1"></div>
+          <div class="card holecard2"></div>
+        </div>
+        <div class="name-chips">
+          <div class="player-name"></div>
+          <div class="chips"></div>
+        </div>
+        <div class="bet"></div>
+      </div>
+      <div id="seat7" class="seat">
+        <div class="holecards">
+          <div class="card holecard1"></div>
+          <div class="card holecard2"></div>
+        </div>
+        <div class="name-chips">
+          <div class="player-name"></div>
+          <div class="chips"></div>
+        </div>
+        <div class="bet"></div>
+      </div>
+      <div id="seat8" class="seat">
+        <div class="holecards">
+          <div class="card holecard1"></div>
+          <div class="card holecard2"></div>
+        </div>
+        <div class="name-chips">
+          <div class="player-name"></div>
+          <div class="chips"></div>
+        </div>
+        <div class="bet"></div>
+      </div>
+      <div id="seat9" class="seat">
+        <div class="holecards">
+          <div class="card holecard1"></div>
+          <div class="card holecard2"></div>
+        </div>
+        <div class="name-chips">
+          <div class="player-name"></div>
+          <div class="chips"></div>
+        </div>
+        <div class="bet"></div>
+      </div>
+
+      <!-- Emplacements pour les cartes du board -->
+      <div id="board-placeholders">
+        <div id="ph-flop1" class="board-placeholder"></div>
+        <div id="ph-flop2" class="board-placeholder"></div>
+        <div id="ph-flop3" class="board-placeholder"></div>
+        <div id="ph-turn"  class="board-placeholder"></div>
+        <div id="ph-river" class="board-placeholder"></div>
+      </div>
+      <div id="board">
+        <div id="flop1" class="card boardcard"></div>
+        <div id="flop2" class="card boardcard"></div>
+        <div id="flop3" class="card boardcard"></div>
+        <div id="turn" class="card boardcard"></div>
+        <div id="river" class="card boardcard"></div>
+        <div id="burn1" class="card boardcard"></div>
+        <div id="burn2" class="card boardcard"></div>
+        <div id="burn3" class="card boardcard"></div>
+      </div>
+      <!-- Zone d'affichage du pot -->
+      <div id="pot">
+        <div id="current-pot"></div>
+        <div id="total-pot"></div>
+      </div>
     </div>
+    <!-- Bouton dealer -->
     <div id="button" class="seat6-button"></div>
+    <!-- Zone d'historique des actions -->
     <div id="history"></div>
+    <!-- Boutons d'action du joueur -->
     <div id="action-options">
-        <div id="fold-button" class="action-button"></div>
-        <div id="call-button" class="action-button"></div>
+      <div id="fold-button" class="action-button"></div>
+      <div id="call-button" class="action-button"></div>
+      <a id="custom-raise" class="action-button" href="javascript:show_custom_raise()"></a>
     </div>
-    <div id="quick-raises">Quick Raises</div> 
-    <div id="game-response" class="response-normal">Game response</div>
+    <!-- Zones complémentaires -->
+    <div id="quick-raises"></div>
+    <div id="game-response" class="response-normal"></div>
     <div id="modal-box"></div>
-    <div id="user-bar">    
+    <div id="end-game-modal"></div>
+    <div id="user-bar"></div>
+  </div>
+  
+  <!-- Inclusion du script Socket.IO (fourni par le serveur) et du client -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="static/js/client.js"></script>
 </body>
 </html>
