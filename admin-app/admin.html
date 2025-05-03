@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Poker</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    input { width: 200px; margin-bottom: 8px; }
+    label, select, button { display: block; margin: 10px 0; }
+    #result a { color: blue; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <h1>Création de table (10 joueurs)</h1>
+  <form id="table-form">
+    <fieldset>
+      <legend>Joueurs</legend>
+      <div id="players-list"></div>
+    </fieldset>
+    <label>
+      Mode de jeu
+      <select id="mode">
+        <option value="beginner">Beginner (5/10)</option>
+        <option value="normal">Normal (50/100)</option>
+        <option value="turbo">Turbo (500/1000)</option>
+        <option value="highroller">Highroller (5000/10000)</option>
+        <option value="hyper">Hyper-fast (one-shot)</option>
+      </select>
+    </label>
+    <button type="submit">Générer le lien de la table</button>
+  </form>
+  <div id="result"></div>
+  <script src="admin.js"></script>
+</body>
+</html>
