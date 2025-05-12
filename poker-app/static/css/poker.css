@@ -14,10 +14,26 @@ body {
     transform: translate(-50%, -100%);
     width: 745px;
     height: 411px;
+    background-image: url('../images/poker_table.png') !important;
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain; /* ou 'cover' selon l'effet désiré */
+    border: none !important;
+    box-shadow: none !important; /* au cas où c’est un ombrage */
   }
+
+  .table-container,
+.poker-table-wrapper {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* remplace "#poker_table .deck" par le sélecteur réel utilisé dans ton DOM :
+   inspecte avec les outils devtools pour trouver l’élément à masquer */
+   #poker_table .deck,
+   #poker_table #deck {
+     display: none !important;
+   }   
   
 .seat {
     height: 120px;
@@ -32,7 +48,7 @@ body {
     height: 19px;
     position: absolute;
     width: 24px;
-    z-index: 2;            /* Au-dessus des placeholders */
+    z-index: 0 !important;            /* Au-dessus des placeholders */
 }
 
 .name-chips1 {
@@ -248,77 +264,101 @@ body {
 /* Extrait de code pour seat0 */
 
 /* Le conteneur des 2 cartes du seat0 */
-#seat0 .holecards {
-  position: absolute; /* Pour pouvoir placer en bas à gauche ou ailleurs */
-  left: -150px;         /* Ajuste la position horizontale */
-  bottom: 20px;       /* Ajuste la position verticale */
-  width: 200px;       /* Assez large pour 2 cartes + espacement */
-  height: 160px;      /* Ajuste selon la hauteur d’une carte */
-  overflow: visible;
-  box-sizing: border-box;
-}
+/* 1) Déclaration des variables pour le dos et la face des cartes */
 
-/* Style générique des cartes */
-#seat0 .holecards .card {
-  position: relative; /* Permet de positionner chaque carte individuellement */
-  width: 145px;        /* Largeur de la carte, par ex. */
-  height: 210px;       /* Hauteur de la carte, par ex. ratio ~2:3 */
-  background-size: 100%;
-  border-radius: 4px;
-  top: 500px;             /* Les cartes démarrent en haut du conteneur .holecards */
-  display: block;
-  position: relative;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  transform-style: preserve-3d;
-  backface-visibility: hidden;
+
+/* Holecards « normales » dans chaque siège */
+/* ─────────────────────────────────────────────
+   1) Cartes autour de la table (seat1→seat9)
+   ───────────────────────────────────────────── */
+/* ── Perspective & préparation 3D ── */
+.seat .holecards {
+  perspective: 800px;
+}
+.seat .holecards .card {
   opacity: 0;
   transition: opacity 1.5s ease;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  position: relative;
+  z-index: 1 !important;
 }
 
-#seat0 .holecards .card.visible {
+/* fade-in du back */
+.seat .holecards .card.visible {
   opacity: 1;
 }
 
-#seat0 .holecards .card::after {
+/* front face, initialement derrière */
+.seat .holecards .card::after {
   content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  /* On définit l'image de la face via une variable CSS */
-  background-image: var(--front-image);
+  position: absolute; top:0; left:0;
+  width:100%; height:100%;
   background-size: contain;
-  background-repeat: no-repeat;
   background-position: center;
-  opacity: 0;                   /* Initialement caché */
-  transform: rotateY(-180deg);  /* Commence inversé */
+  background-repeat: no-repeat;
+  opacity: 0;
+  transform: rotateY(-180deg);
   transition: transform 0.6s ease, opacity 0.6s ease;
+  backface-visibility: hidden;
+  z-index: 1 !important;
 }
 
-#seat0 .holecards .card.revealed::after {
+/* au reveal, on tourne la face devant */
+.seat .holecards .card.revealed::after {
   opacity: 1;
   transform: rotateY(0deg);
+  z-index: 1 !important;
 }
-
-/* La première carte, à gauche */
-#seat0 .holecards .holecard1 {
-  position: absolute;
-  top: 470px !important;
-  left: 137px !important;
-  width: 120px !important;
-}
-
-/* La seconde carte, décalée de 70px pour créer un espace */
-#seat0 .holecards .holecard2 {
-  position: absolute;
-  top: 390px !important;
-  left: 263px !important;
-  height: 370px !important;
-  width: 120px !important;
-}
+  
+  /* positionnement des deux cartes dans chaque siège */
+  .seat .holecards .holecard1 {
+    position: absolute;
+    top: -20px;
+    left: 0px;
+    width: 80px;
+  }
+  .seat .holecards .holecard2 {
+    position: absolute;
+    top: 95px;
+    left: 0px;
+    width: 80px;
+  }
+  
+  /* ─────────────────────────────────────────────
+     2) Zone bottom-left (ton propre siège)
+     ───────────────────────────────────────────── */
+  /* Assigne la class .my-seat à ton <div id="seatX"> */
+  .seat.my-seat .holecards {
+    position: fixed !important;
+    left: 120px !important;
+    top: 470px !important;
+    width: 500px !important;
+    height: 300px !important;
+  }
+  
+  /* dos de carte personnalisé en bottom-left */
+  .seat.my-seat .holecards .holecard1 .card {
+    background-image: url('static/images/custom_I.png') !important;
+  }
+  .seat.my-seat .holecards .holecard2 .card {
+    background-image: url('static/images/custom_M.png') !important;
+  }
+  
+  /* ajustements de position/taille pour ton affichage bottom-left */
+  .seat.my-seat .holecards .holecard1 {
+    top: 20px !important;
+    left: -63px !important;
+    width: 118px !important;
+    height: 170px !important;
+  }
+  .seat.my-seat .holecards .holecard2 {
+    top: 20px !important;
+    left: 65px !important;
+    width: 118px !important;
+    height: 170px !important;
+  }
+  
 
 #board {
     left: 800px;
@@ -411,12 +451,21 @@ body {
 }
 
 #pot {
-    color: white;
-    font-size: 35px;
-    left: 270px;
-    position: absolute;
-    text-align: center;
-    top: 195px;
+  position: absolute;
+  /* Centre horizontalement */
+  left: 50%;
+  transform: translateX(-50%);
+  /* Tu peux aussi centrer verticalement : */
+  /* top: 50%; transform: translate(-50%, -50%); */
+  top: 185px;            /* Garde ta valeur verticale actuelle */
+  
+  color: white;
+  font-size: 35px;
+  text-align: center;
+  /* largeur auto pour s’adapter dynamiquement au contenu */
+  width: auto;
+  /* si besoin d’un minimum ou maximum : */
+  /* min-width: 100px; max-width: 300px; */
 }
 
 .boardcard {
@@ -464,13 +513,19 @@ body {
 #burn1 {
     left: 600px;
     rotate: -18deg;
+    display: none !important;
+    visibility: hidden !important;
 }
 #burn2 {
     left: 610px;
+    display: none !important;
+    visibility: hidden !important;
 }
 #burn3 {
     left: 620px;
     rotate: 15deg;
+    display: none !important;
+    visibility: hidden !important;
 }
 
 #game-container {
@@ -525,16 +580,12 @@ body {
   opacity: 1;
 }
 
-.action-button:not(.disabled):hover {
-  opacity: 1;    /* Opacité maximale */
-  transform: scale(1.05); /* Légère augmentation de taille */
+/* Quand on ne doit pas pouvoir cliquer : grisé + pas de pointer-events */
+.action-button.disabled {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
-.action-button.disabled {
-  opacity: 0.4;           /* Bouton grisé */
-  pointer-events: none;   /* Désactive les clics */
-  cursor: default;        /* Curseur standard */
-}
 
 #setup-options {
     height: 400px;
@@ -589,19 +640,6 @@ select {
 
 #check-button {
     top: 200px;
-}
-
-#history {
-    border-color: black;
-    border-radius: 4px;
-    border-style: solid;
-    border-width: 1px;
-    font-size: 10px;
-    height: 600px;
-    left: 50px;
-    position: absolute;
-    top: 600px;
-    width: 400px;
 }
 
 #game-response {
@@ -695,7 +733,7 @@ select {
     background-size: contain;
     cursor: pointer;
     top: 279px;
-    z-index: 9999;
+    z-index: 3;
     right: 25px;
   }
 
@@ -711,7 +749,7 @@ select {
     cursor: pointer;
     left: 230px;
     top: 279px;
-    z-index: 9999;
+    z-index: 3;
     position: absolute;
   }
 
@@ -739,7 +777,7 @@ select {
     right: 138px;
     top: 279px;
     bottom: 50px;
-    z-index: 9999;
+    z-index: 3;
   }
 
   @keyframes fadeInCustomRaise {
@@ -988,10 +1026,9 @@ select {
   border-radius: 10px;
   width: 400px;
 }
-
 /* Le message de fin */
 .end-game-text {
-  font-size: 1.5em;
+  font-size: 5rem;
   margin-bottom: 20px;
   color: white;
 }
@@ -1026,4 +1063,278 @@ select {
 #seat0.winning-hand .holecards .card {
   border: none !important;
   box-shadow: none !important;
+}
+
+/* Dans ton CSS principal, ou dans poker-app/style.css, ajoute : */
+#deck,
+.deck {
+  display: none !important;
+  visibility: hidden !important;
+  perspective: 800px; /* ou une valeur qui te convient */
+}
+
+/* ============================================= */
+/* Override du flip sur le reveal : on n’anime que l’opacité */
+/* ============================================= */
+
+/* ──────────────── */
+/* 1) Flip 3D au DEAL seulement */
+/* ──────────────── */
+/* On définit ici la position initiale (dos) */
+.seat .holecards .card.deal-flip::after {
+  transform: rotateY(-180deg);
+  opacity: 0;
+  backface-visibility: hidden;
+}
+
+/* Quand on ajoute .revealed ET .deal-flip, on joue la rotation */
+.seat .holecards .card.deal-flip.revealed::after {
+  transition: transform 0.6s ease, opacity 0.6s ease;
+  transform: rotateY(0deg);
+  opacity: 1;
+}
+
+/* ─────────────────────────── */
+/* 2) Fade-in / reveal “simple” */
+/* ─────────────────────────── */
+/* Par défaut on n’anime que l’opacité du back */
+.seat .holecards .card {
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+
+/* fade-in du back et du front en reveal phase */
+.seat .holecards .card.visible {
+  opacity: 1;
+}
+
+/* On écrase toute animation 3D si on n’a PAS la classe .deal-flip */
+.seat .holecards .card.revealed:not(.deal-flip)::after {
+  /* passe direct face sans mouvement */
+  transform: rotateY(0deg) !important;
+  transition: opacity 0.6s ease !important;
+  opacity: 1 !important;
+}
+
+/* ── Overlay Victoire ── */
+#victory-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.5s ease-out;
+  z-index: 10000;
+}
+#victory-overlay.show {
+  opacity: 1;
+}
+
+#victory-text {
+  color: #fff;
+  font-size: 4rem;
+  text-transform: uppercase;
+  text-shadow: 0 0 8px gold, 0 0 16px orange;
+  animation: pop 1s cubic-bezier(.5,1.5,.5,1) forwards,
+             glow 2s ease-in-out infinite alternate;
+}
+
+/* Pop initial */
+@keyframes pop {
+  0%   { transform: scale(0.2); opacity: 0; }
+  60%  { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+/* Lueur continue */
+@keyframes glow {
+  from { text-shadow: 0 0 8px gold, 0 0 16px orange; }
+  to   { text-shadow: 0 0 24px gold, 0 0 32px orange; }
+}
+
+/* Overlay défaite (losing) */
+#losing-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  z-index: 10001;
+}
+#losing-overlay.show {
+  opacity: 1;
+}
+
+/* Boîte de texte centrale */
+#losing-text {
+  text-align: center;
+  font-family: 'Montserrat', sans-serif !important;
+}
+#losing-text p {
+  margin: 0;
+}
+
+/* Optionnel : pour garantir la taille */
+#losing-text p:first-child {
+  font-size: 3rem !important;
+  color: #ff9100 !important;
+  font-weight: 700;   /* gras */
+  margin: 0.5em 0;
+}
+#losing-text p:last-child {
+  font-size: 2rem !important;
+  color: #fff !important;
+  margin-top: 3rem !important;
+  font-weight: 400;
+}
+
+/* ── Glow autour des cartes de la main gagnante ── */
+.seat.winning-hand .holecards .card {
+  box-shadow: 0 0 12px 4px yellow !important;
+  border-radius: 4px;
+  transition: box-shadow 0.3s ease;
+}
+
+.mode-selector {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.mode-option {
+  position: relative;
+  padding: 8px 12px;
+  border: 2px solid #ccc;
+  border-radius: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  user-select: none;
+  font-size: 0.9rem;
+}
+.mode-option small {
+  display: block;
+  font-size: 0.7rem;
+  color: #666;
+}
+.mode-option input {
+  position: absolute;
+  opacity: 0;
+}
+.mode-option:hover {
+  border-color: #888;
+}
+.mode-option.selected {
+  background: #1976d2;
+  border-color: #1976d2;
+  color: #fff;
+}
+.mode-option.selected small {
+  color: #e0e0e0;
+}
+
+/* Tableau des joueurs plus aéré */
+#players-list {
+  width: 100%;
+  border-collapse: separate;     /* IMPORTANT pour border-spacing */
+  border-spacing: 0 12px;        /* 12px d’écart vertical entre les lignes */
+}
+#players-list td {
+  padding: 16px 12px;            /* plus de padding haut/bas */
+  border-bottom: none;           /* on peut virer la ligne si on veut */
+}
+#players-list tr {
+  background: #2e2e44;           /* couleur de fond pour chaque ligne */
+  border-radius: 6px;
+}
+#players-list input {
+  width: 100%;
+  padding: 14px;                 /* champ bien épais */
+  font-size: 1rem;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background: #1e1e2f;
+  color: #e0e0e0;
+}
+
+.copy-feedback {
+  margin-left: 8px;
+  font-size: 0.9em;
+  color: #2a9d8f;
+  opacity: 0;
+  animation: fadeinout 2s ease forwards;
+}
+
+@keyframes fadeinout {
+  0%   { opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Highlight animation pour une nouvelle ligne */
+@keyframes highlightNew {
+  from { background-color: #3f8ed8; }
+  to   { background-color: transparent; }
+}
+.new-row {
+  animation: highlightNew 2s ease-out;
+}
+
+/* Conteneur de l’historique */
+.history-details .history-container {
+  max-height: 240px;
+  overflow-y: auto;
+  background: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  padding: 12px;
+  margin-top: 8px;
+}
+
+/* Liste sans puces */
+.history-details .history-container ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Chaque entrée */
+.history-details .history-container li {
+  display: flex;
+  align-items: flex-start;
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+}
+
+/* Supprimer la bordure sur le dernier élément */
+.history-details .history-container li:last-child {
+  border-bottom: none;
+}
+
+/* Date à gauche, monospace, gris pâle */
+.history-details .history-date {
+  font-family: monospace;
+  font-size: 0.85em;
+  color: #888;
+  margin-right: 12px;
+  flex-shrink: 0;
+  width: 140px;
+}
+
+/* Texte de l’action, plus visible */
+.history-details .history-action {
+  font-size: 0.95em;
+  color: #333;
+  line-height: 1.4;
 }

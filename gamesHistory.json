@@ -1,0 +1,2411 @@
+[
+  {
+    "tableID": "1667c22b",
+    "mode": "hyper",
+    "winner": "aa",
+    "timestamp": "2025-05-05T20:14:34.044Z"
+  },
+  {
+    "tableID": "1667c22b",
+    "mode": "hyper",
+    "winner": "aa",
+    "timestamp": "2025-05-05T20:14:36.078Z"
+  },
+  {
+    "tableID": "1667c22b",
+    "mode": "hyper",
+    "winner": "aaaa",
+    "timestamp": "2025-05-05T20:15:04.349Z"
+  },
+  {
+    "tableID": "1667c22b",
+    "mode": "hyper",
+    "winner": "aaaa",
+    "timestamp": "2025-05-05T20:15:05.454Z"
+  },
+  {
+    "tableID": "d5a3c2b0",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-05T20:16:25.714Z"
+  },
+  {
+    "tableID": "1667c22b",
+    "mode": "hyper",
+    "winner": "zzzz",
+    "timestamp": "2025-05-05T20:25:49.707Z"
+  },
+  {
+    "tableID": "d5a3c2b0",
+    "mode": "hyper",
+    "winner": "zz",
+    "timestamp": "2025-05-05T20:25:49.719Z"
+  },
+  {
+    "tableID": "1667c22b",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-05T20:26:12.614Z"
+  },
+  {
+    "tableID": "d5a3c2b0",
+    "mode": "hyper",
+    "winner": "aa",
+    "timestamp": "2025-05-05T20:26:12.622Z"
+  },
+  {
+    "tableID": "1667c22b",
+    "mode": "hyper",
+    "winner": "aa",
+    "timestamp": "2025-05-05T20:36:29.865Z"
+  },
+  {
+    "tableID": "1667c22b",
+    "mode": "hyper",
+    "winner": "aa",
+    "timestamp": "2025-05-05T20:36:29.870Z"
+  },
+  {
+    "tableID": "d5a3c2b0",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-05T20:36:29.873Z"
+  },
+  {
+    "tableID": "1667c22b",
+    "mode": "hyper",
+    "winner": "aa",
+    "timestamp": "2025-05-05T20:36:36.863Z"
+  },
+  {
+    "tableID": "1667c22b",
+    "mode": "hyper",
+    "winner": "aa",
+    "timestamp": "2025-05-05T20:36:37.554Z"
+  },
+  {
+    "tableID": "1667c22b",
+    "mode": "hyper",
+    "winner": "aa",
+    "timestamp": "2025-05-05T20:36:39.629Z"
+  },
+  {
+    "tableID": "1667c22b",
+    "mode": "hyper",
+    "winner": "aa",
+    "timestamp": "2025-05-05T20:36:40.640Z"
+  },
+  {
+    "tableID": "1667c22b",
+    "mode": "hyper",
+    "winner": "aa",
+    "timestamp": "2025-05-05T20:36:41.635Z"
+  },
+  {
+    "tableID": "d2090292",
+    "mode": "hyper",
+    "winner": "aaaaa",
+    "timestamp": "2025-05-06T06:56:11.213Z"
+  },
+  {
+    "tableID": "d2090292",
+    "mode": "hyper",
+    "winner": "anais",
+    "timestamp": "2025-05-06T06:56:47.755Z"
+  },
+  {
+    "tableID": "d2090292",
+    "mode": "hyper",
+    "winner": "anais",
+    "timestamp": "2025-05-06T06:56:48.846Z"
+  },
+  {
+    "type": "table",
+    "tableID": "29e2be7c",
+    "mode": "hyper",
+    "winner": "aa",
+    "timestamp": "2025-05-06T09:44:35.229Z"
+  },
+  {
+    "type": "table",
+    "tableID": "64072423",
+    "mode": "hyper",
+    "winner": "aaaa",
+    "timestamp": "2025-05-06T09:47:42.022Z"
+  },
+  {
+    "type": "table",
+    "tableID": "f1bf7663",
+    "mode": "hyper",
+    "winner": "aaaa",
+    "timestamp": "2025-05-06T09:52:04.063Z"
+  },
+  {
+    "type": "table",
+    "tableID": "f1bf7663",
+    "mode": "hyper",
+    "winner": "aaa",
+    "timestamp": "2025-05-06T09:55:15.998Z"
+  },
+  {
+    "type": "table",
+    "tableID": "3dedfa9f",
+    "mode": "hyper",
+    "winner": "anais",
+    "timestamp": "2025-05-06T09:55:45.361Z"
+  },
+  {
+    "type": "table",
+    "tableID": "3dedfa9f",
+    "mode": "hyper",
+    "winner": "aaa",
+    "timestamp": "2025-05-06T09:57:03.668Z"
+  },
+  {
+    "type": "table",
+    "tableID": "f1bf7663",
+    "mode": "hyper",
+    "winner": "aaaa",
+    "timestamp": "2025-05-06T09:57:03.678Z"
+  },
+  {
+    "type": "table",
+    "tableID": "a79a2618",
+    "mode": "hyper",
+    "winner": "aaaaa",
+    "timestamp": "2025-05-06T09:58:00.127Z"
+  },
+  {
+    "type": "table",
+    "tableID": "f36cd5e0",
+    "mode": "hyper",
+    "winner": "anais",
+    "timestamp": "2025-05-06T10:02:22.541Z"
+  },
+  {
+    "type": "table",
+    "tableID": "e635a216",
+    "mode": "hyper",
+    "winner": "zz",
+    "timestamp": "2025-05-06T10:02:44.962Z"
+  },
+  {
+    "type": "table",
+    "tableID": "f36cd5e0",
+    "mode": "hyper",
+    "winner": "anais",
+    "timestamp": "2025-05-06T18:13:57.304Z"
+  },
+  {
+    "type": "table",
+    "tableID": "e635a216",
+    "mode": "hyper",
+    "winner": "zzz",
+    "timestamp": "2025-05-06T18:13:57.325Z"
+  },
+  {
+    "type": "table",
+    "tableID": "188adf1e",
+    "mode": "hyper",
+    "winner": "zzzz",
+    "timestamp": "2025-05-06T18:16:07.971Z"
+  },
+  {
+    "type": "table",
+    "tableID": "6f6b5dab",
+    "mode": "hyper",
+    "winner": "aaaa",
+    "timestamp": "2025-05-06T19:44:38.890Z"
+  },
+  {
+    "type": "table",
+    "tableID": "8cfb2467",
+    "mode": "hyper",
+    "winner": "aa",
+    "timestamp": "2025-05-06T19:47:53.333Z"
+  },
+  {
+    "type": "table",
+    "tableID": "8aaa8de1",
+    "mode": "hyper",
+    "winner": "zz",
+    "timestamp": "2025-05-06T19:53:19.724Z"
+  },
+  {
+    "type": "table",
+    "tableID": "8cfb2467",
+    "mode": "hyper",
+    "winner": "zz",
+    "timestamp": "2025-05-06T19:57:17.653Z"
+  },
+  {
+    "type": "table",
+    "tableID": "8aaa8de1",
+    "mode": "hyper",
+    "winner": "zzzZ",
+    "timestamp": "2025-05-06T19:57:17.659Z"
+  },
+  {
+    "type": "table",
+    "tableID": "188adf1e",
+    "mode": "hyper",
+    "winner": "aa",
+    "timestamp": "2025-05-06T19:57:40.155Z"
+  },
+  {
+    "type": "table",
+    "tableID": "6f6b5dab",
+    "mode": "hyper",
+    "winner": "aaaaa",
+    "timestamp": "2025-05-06T19:58:11.679Z"
+  },
+  {
+    "type": "table",
+    "tableID": "6f6b5dab",
+    "mode": "hyper",
+    "winner": "aaaa",
+    "timestamp": "2025-05-06T20:06:38.055Z"
+  },
+  {
+    "type": "table",
+    "tableID": "8aaa8de1",
+    "mode": "hyper",
+    "winner": "aa",
+    "timestamp": "2025-05-06T20:06:41.997Z"
+  },
+  {
+    "type": "table",
+    "tableID": "188adf1e",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-06T20:06:42.223Z"
+  },
+  {
+    "type": "table",
+    "tableID": "8cfb2467",
+    "mode": "hyper",
+    "winner": "zzzz",
+    "timestamp": "2025-05-06T20:06:43.306Z"
+  },
+  {
+    "type": "table",
+    "tableID": "10f593b5",
+    "mode": "hyper",
+    "winner": "aaaa",
+    "timestamp": "2025-05-06T20:45:09.137Z"
+  },
+  {
+    "type": "table",
+    "tableID": "6a580ad0",
+    "mode": "hyper",
+    "winner": "aaaaa",
+    "timestamp": "2025-05-07T13:16:55.046Z"
+  },
+  {
+    "type": "table",
+    "tableID": "6a580ad0",
+    "mode": "hyper",
+    "winner": "zzzZ",
+    "timestamp": "2025-05-07T13:18:19.441Z"
+  },
+  {
+    "type": "table",
+    "tableID": "70cbede5",
+    "mode": "hyper",
+    "winner": "zzzz",
+    "timestamp": "2025-05-07T13:19:03.893Z"
+  },
+  {
+    "type": "table",
+    "tableID": "dcc67a79",
+    "mode": "hyper",
+    "winner": "zzzZ",
+    "timestamp": "2025-05-07T13:21:22.375Z"
+  },
+  {
+    "type": "table",
+    "tableID": "0a06663f",
+    "mode": "hyper",
+    "winner": "anais",
+    "timestamp": "2025-05-07T13:22:46.600Z"
+  },
+  {
+    "type": "table",
+    "tableID": "a84abe47",
+    "mode": "hyper",
+    "winner": "zzzz",
+    "timestamp": "2025-05-07T13:26:57.656Z"
+  },
+  {
+    "type": "table",
+    "tableID": "145025fb",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-07T13:30:26.139Z"
+  },
+  {
+    "type": "table",
+    "tableID": "d67655ed",
+    "mode": "hyper",
+    "winner": "zzzz",
+    "timestamp": "2025-05-07T13:33:21.143Z"
+  },
+  {
+    "type": "table",
+    "tableID": "d67655ed",
+    "mode": "hyper",
+    "winner": "anais",
+    "timestamp": "2025-05-07T17:08:49.915Z"
+  },
+  {
+    "type": "table",
+    "tableID": "d67655ed",
+    "mode": "hyper",
+    "winner": "aaaaa",
+    "timestamp": "2025-05-07T17:10:14.279Z"
+  },
+  {
+    "type": "table",
+    "tableID": "d67655ed",
+    "mode": "hyper",
+    "winner": "aa",
+    "timestamp": "2025-05-07T17:34:57.336Z"
+  },
+  {
+    "type": "table",
+    "tableID": "d67655ed",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-07T17:54:18.501Z"
+  },
+  {
+    "type": "table",
+    "tableID": "a8638121",
+    "mode": "hyper",
+    "winner": "zzz",
+    "timestamp": "2025-05-07T19:20:20.263Z"
+  },
+  {
+    "type": "table",
+    "tableID": "a8638121",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-07T20:05:42.394Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "860ff69e",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T10:14:17.271Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "bfc4ad0a",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T10:14:17.673Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "ac1b1eed",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T10:14:21.555Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a1a1761e",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T10:14:22.583Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "59e30c80",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T10:14:40.361Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "41f73ad3",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T10:15:00.149Z"
+  },
+  {
+    "type": "table",
+    "tableID": "7ea3df65",
+    "mode": "hyper",
+    "winner": "zz",
+    "timestamp": "2025-05-08T10:15:57.755Z"
+  },
+  {
+    "type": "table",
+    "tableID": "7ea3df65",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T10:24:02.127Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "25361a7c",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T10:40:25.514Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "25361a7c",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T10:58:17.488Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "90000dae",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T10:58:17.512Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "daa7befc",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T10:58:22.675Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "daa7befc",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T11:07:15.158Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "25361a7c",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T11:07:15.592Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "90000dae",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T11:07:25.675Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "89fb82af",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T11:07:32.987Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "daa7befc",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T11:11:17.259Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "89fb82af",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T11:11:17.299Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "25361a7c",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T11:11:39.360Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "90000dae",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T11:11:39.364Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "83dc3c33",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T11:11:56.961Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "940599f3",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T11:12:07.971Z"
+  },
+  {
+    "type": "table",
+    "tableID": "67d53ea0",
+    "mode": "hyper",
+    "winner": "zz",
+    "timestamp": "2025-05-08T11:13:09.746Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "7dc7ac27",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T11:15:32.192Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "34526f46",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T11:16:05.862Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "34526f46",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T17:09:07.231Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "34526f46",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T17:15:40.962Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "c0a86a4a",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T17:16:02.521Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "c0a86a4a",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T17:16:57.938Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "c0a86a4a",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T17:17:14.433Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "c0a86a4a",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T17:22:01.551Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "34526f46",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T17:22:01.768Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "d8cd5066",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T17:22:12.266Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "d8cd5066",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T17:38:17.496Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "34526f46",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T17:38:17.565Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "c0a86a4a",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T17:38:17.572Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "34526f46",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T17:42:10.486Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "c0a86a4a",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T17:42:11.898Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "d8cd5066",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T17:42:30.296Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "498b64e0",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T17:48:28.619Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "498b64e0",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T17:48:52.239Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "d8cd5066",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T17:48:52.254Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "c0a86a4a",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T17:49:22.783Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "34526f46",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T17:49:23.145Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "498b64e0",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T17:49:23.407Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "d8cd5066",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T17:49:23.417Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "498b64e0",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T17:49:23.561Z"
+  },
+  {
+    "type": "table",
+    "tableID": "ea5abd0f",
+    "mode": "hyper",
+    "winner": "anais",
+    "timestamp": "2025-05-08T17:50:00.681Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "6e6f8ad5",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T17:52:14.621Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "c0a86a4a",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T17:59:49.957Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "34526f46",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T17:59:49.964Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "498b64e0",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T17:59:49.970Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "498b64e0",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T18:00:13.140Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "6c71636f",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T18:00:23.568Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "3e606c0c",
+    "mode": "turbo",
+    "winner": "a",
+    "timestamp": "2025-05-08T18:09:02.643Z"
+  },
+  {
+    "type": "table",
+    "tableID": "daa838f6",
+    "mode": "hyper",
+    "winner": "zz",
+    "timestamp": "2025-05-08T18:10:44.396Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "bd7aa707",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T18:18:59.691Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "bd7aa707",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T18:19:32.562Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "6c71636f",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T18:19:33.043Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "6c71636f",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T18:19:33.739Z"
+  },
+  {
+    "type": "table",
+    "tableID": "7c46c177",
+    "mode": "hyper",
+    "winner": "zzzZ",
+    "timestamp": "2025-05-08T18:19:41.181Z"
+  },
+  {
+    "type": "table",
+    "tableID": "daa838f6",
+    "mode": "hyper",
+    "winner": "aaaaa",
+    "timestamp": "2025-05-08T18:19:41.370Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "6c71636f",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T18:20:25.744Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "b46bc5e7",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T18:20:45.404Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "b46bc5e7",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T18:32:21.700Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "6f8a396a",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T18:32:43.101Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "6f8a396a",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T19:32:16.261Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "b46bc5e7",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T19:32:16.336Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a7c0d467",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T19:34:03.695Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "d34ba68c",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T19:35:26.658Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "d34ba68c",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T19:38:29.815Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a7c0d467",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T19:38:29.821Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a331d43c",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T19:38:40.383Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a7c0d467",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T19:57:24.382Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "d34ba68c",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T19:57:24.384Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a331d43c",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T19:57:24.386Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a7c0d467",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T20:04:01.523Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a331d43c",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T20:04:01.527Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "d34ba68c",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T20:04:01.529Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a331d43c",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-08T20:22:59.246Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "6ce752e5",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-08T20:22:59.333Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "72fb66f7",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T07:40:57.193Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "ecead4dd",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T07:40:57.199Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "2e049888",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T07:41:06.387Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "eb9ea02c",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T07:41:52.288Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "7e5287a1",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T07:42:31.314Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "7e5287a1",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T07:47:20.853Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "72fb66f7",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T07:47:20.864Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "2e049888",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T07:47:20.879Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "ecead4dd",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T07:47:20.886Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "eb9ea02c",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T07:47:20.890Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "7df9d0ca",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T07:47:58.335Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "7df9d0ca",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T07:48:41.706Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "eb9ea02c",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T07:48:41.719Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "72fb66f7",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T07:48:41.723Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "2e049888",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T07:48:41.782Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "ecead4dd",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T07:48:41.792Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "7e5287a1",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T07:48:41.810Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "dcc643bb",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T07:49:50.449Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "eb9ea02c",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T07:54:36.275Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "ecead4dd",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T07:54:36.280Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "7e5287a1",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T07:54:36.284Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "3e88e2c4",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T07:54:36.289Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "7df9d0ca",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T07:55:00.594Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "9e5f6f16",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T07:55:00.599Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "72fb66f7",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T07:55:00.888Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "2e049888",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T07:55:22.931Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "dcc643bb",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T07:55:22.993Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "4e6d2ea2",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T07:55:47.036Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "4e6d2ea2",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T08:00:52.766Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "ced6ba25",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T08:01:13.067Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a8eb446e",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T08:02:09.557Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "345c9745",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T08:09:42.290Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "9740e71c",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T08:10:43.844Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a8eb446e",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T08:11:10.838Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "9740e71c",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T08:11:10.862Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "345c9745",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T08:11:10.876Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "ed1abfcf",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T08:11:53.026Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "ed1abfcf",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T08:23:33.010Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "4349d626",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T08:23:50.587Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "ed1abfcf",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T08:29:47.373Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "4349d626",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T08:29:48.107Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "4362a405",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T08:30:02.687Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "4362a405",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T09:07:04.491Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "ed1abfcf",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T09:07:07.514Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "4349d626",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T09:07:07.591Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a74b5bf9",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T09:07:20.474Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "4349d626",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T09:11:09.032Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "4362a405",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T09:11:23.135Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a74b5bf9",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T09:11:23.139Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "ed1abfcf",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T09:11:23.211Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "2d01a420",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T09:11:27.474Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "c28000e8",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T09:12:26.601Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "c28000e8",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T09:23:23.686Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "cb7a6a18",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T09:24:02.121Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "af2bcea5",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T09:26:13.067Z"
+  },
+  {
+    "type": "table",
+    "tableID": "99bc9ae6",
+    "mode": "hyper",
+    "winner": "zzzZ",
+    "timestamp": "2025-05-09T09:27:42.780Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "cb7a6a18",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T09:34:12.491Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "af2bcea5",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T09:34:37.392Z"
+  },
+  {
+    "type": "table",
+    "tableID": "99bc9ae6",
+    "mode": "hyper",
+    "winner": "aaaaa",
+    "timestamp": "2025-05-09T09:34:45.387Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "d0f23297",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T09:35:20.777Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a98b02d3",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T09:42:03.805Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a98b02d3",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T09:42:52.107Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a98b02d3",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T09:52:09.572Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a98b02d3",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T09:52:42.570Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "3e5c957f",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T09:53:02.953Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a98b02d3",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T10:21:51.058Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "3e5c957f",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T10:21:51.487Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "52549e9c",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T10:22:03.256Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "3e5c957f",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T10:22:38.019Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "52549e9c",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T10:22:38.022Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a98b02d3",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T10:22:38.024Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a98b02d3",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T10:40:51.402Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "52549e9c",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T10:40:56.196Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "3e5c957f",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T10:40:57.439Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "ea7e111b",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T10:41:12.728Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "52549e9c",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T18:36:45.870Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a98b02d3",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T18:36:45.878Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "ea7e111b",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T18:36:47.376Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "3e5c957f",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T18:36:47.383Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "e43d72ce",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T18:37:09.187Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a98b02d3",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T19:08:51.870Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "3e5c957f",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T19:08:51.914Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "e43d72ce",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T19:08:52.069Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "ea7e111b",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T19:08:52.075Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "52549e9c",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T19:08:52.080Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "ea7e111b",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T19:10:13.542Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "52549e9c",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T19:10:13.550Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "e43d72ce",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T19:10:13.556Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a98b02d3",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T19:10:13.560Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "3e5c957f",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T19:10:24.341Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "ea7e111b",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T19:34:05.608Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "3e5c957f",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T19:34:06.036Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "52549e9c",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T19:34:06.040Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a98b02d3",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T19:34:06.043Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "e43d72ce",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T19:34:06.206Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a98b02d3",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T19:47:39.850Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "52549e9c",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T19:47:42.283Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "e43d72ce",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T19:47:42.288Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "ea7e111b",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T19:47:42.735Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "3e5c957f",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T19:47:44.326Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a98b02d3",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T20:06:39.584Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "ea7e111b",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T20:06:39.593Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "3e5c957f",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-09T20:06:40.231Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "52549e9c",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T20:06:40.591Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "e43d72ce",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T20:06:40.594Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "5098a346",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-09T20:07:00.081Z"
+  },
+  {
+    "type": "table",
+    "tableID": "0712a6ef",
+    "mode": "hyper",
+    "winner": "aaaaa",
+    "timestamp": "2025-05-09T20:08:19.317Z"
+  },
+  {
+    "type": "table",
+    "tableID": "97f5a1b3",
+    "mode": "hyper",
+    "winner": "aa",
+    "timestamp": "2025-05-09T20:09:36.453Z"
+  },
+  {
+    "type": "table",
+    "tableID": "7e81b8d7",
+    "mode": "hyper",
+    "winner": "zzzZ",
+    "timestamp": "2025-05-10T15:27:16.901Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a033c121",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-10T15:28:15.858Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a033c121",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-10T17:11:14.240Z"
+  },
+  {
+    "type": "table",
+    "tableID": "7e81b8d7",
+    "mode": "hyper",
+    "winner": "anais",
+    "timestamp": "2025-05-10T17:11:22.407Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a033c121",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-10T18:54:18.840Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a033c121",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-10T18:58:14.897Z"
+  },
+  {
+    "type": "table",
+    "tableID": "7e81b8d7",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-10T18:58:35.842Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a033c121",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-10T19:00:04.219Z"
+  },
+  {
+    "type": "table",
+    "tableID": "7e81b8d7",
+    "mode": "hyper",
+    "winner": "zzz",
+    "timestamp": "2025-05-10T19:00:12.596Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "d0f77ca0",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-10T19:01:56.206Z"
+  },
+  {
+    "type": "table",
+    "tableID": "0a3743ac",
+    "mode": "hyper",
+    "winner": "zzzZ",
+    "timestamp": "2025-05-10T19:03:37.675Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "d0f77ca0",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-10T20:41:54.796Z"
+  },
+  {
+    "type": "table",
+    "tableID": "fe6f239c",
+    "mode": "hyper",
+    "winner": "aaaaa",
+    "timestamp": "2025-05-10T20:43:07.975Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "d0f77ca0",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-10T20:56:41.567Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "d0f77ca0",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-10T20:59:40.899Z"
+  },
+  {
+    "type": "table",
+    "tableID": "fe6f239c",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-10T20:59:53.338Z"
+  },
+  {
+    "type": "table",
+    "tableID": "51d7e60c",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-10T21:00:13.213Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "cad75441",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-10T21:08:19.398Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "cad75441",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-10T21:18:17.425Z"
+  },
+  {
+    "type": "table",
+    "tableID": "671c41a1",
+    "mode": "hyper",
+    "winner": "zz",
+    "timestamp": "2025-05-10T21:18:26.816Z"
+  },
+  {
+    "type": "table",
+    "tableID": "ab485775",
+    "mode": "hyper",
+    "winner": "zz",
+    "timestamp": "2025-05-10T21:19:23.313Z"
+  },
+  {
+    "type": "table",
+    "tableID": "29b8a19b",
+    "mode": "hyper",
+    "winner": "zzz",
+    "timestamp": "2025-05-10T21:31:47.943Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "cad75441",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-11T03:22:54.434Z"
+  },
+  {
+    "type": "table",
+    "tableID": "ab485775",
+    "mode": "hyper",
+    "winner": "zzzz",
+    "timestamp": "2025-05-11T03:23:02.348Z"
+  },
+  {
+    "type": "table",
+    "tableID": "671c41a1",
+    "mode": "hyper",
+    "winner": "zzz",
+    "timestamp": "2025-05-11T03:23:02.463Z"
+  },
+  {
+    "type": "table",
+    "tableID": "29b8a19b",
+    "mode": "hyper",
+    "winner": "zzzz",
+    "timestamp": "2025-05-11T03:23:03.201Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "cad75441",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-11T06:31:35.687Z"
+  },
+  {
+    "type": "table",
+    "tableID": "671c41a1",
+    "mode": "hyper",
+    "winner": "aaaa",
+    "timestamp": "2025-05-11T06:31:46.401Z"
+  },
+  {
+    "type": "table",
+    "tableID": "29b8a19b",
+    "mode": "hyper",
+    "winner": "aa",
+    "timestamp": "2025-05-11T06:31:46.412Z"
+  },
+  {
+    "type": "table",
+    "tableID": "ab485775",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-11T06:31:46.416Z"
+  },
+  {
+    "type": "table",
+    "tableID": "d352040f",
+    "mode": "hyper",
+    "winner": "anais",
+    "timestamp": "2025-05-11T06:43:36.153Z"
+  },
+  {
+    "type": "table",
+    "tableID": "d352040f",
+    "mode": "hyper",
+    "winner": "zzz",
+    "timestamp": "2025-05-11T06:45:48.389Z"
+  },
+  {
+    "type": "table",
+    "tableID": "15e7fb9e",
+    "mode": "hyper",
+    "winner": "zz",
+    "timestamp": "2025-05-11T06:46:26.695Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "632ffba6",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-11T06:46:59.500Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "632ffba6",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-11T07:06:01.990Z"
+  },
+  {
+    "type": "table",
+    "tableID": "d352040f",
+    "mode": "hyper",
+    "winner": "zzz",
+    "timestamp": "2025-05-11T07:06:51.118Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "b3713ccf",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-11T07:07:03.663Z"
+  },
+  {
+    "type": "table",
+    "tableID": "99e2488a",
+    "mode": "hyper",
+    "winner": "zz",
+    "timestamp": "2025-05-11T07:08:12.962Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "b3713ccf",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-11T07:09:24.170Z"
+  },
+  {
+    "type": "table",
+    "tableID": "99e2488a",
+    "mode": "hyper",
+    "winner": "aaaa",
+    "timestamp": "2025-05-11T07:09:32.189Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "b3713ccf",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-11T07:25:47.498Z"
+  },
+  {
+    "type": "table",
+    "tableID": "99e2488a",
+    "mode": "hyper",
+    "winner": "anais",
+    "timestamp": "2025-05-11T07:25:55.542Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "b3713ccf",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-11T07:37:00.041Z"
+  },
+  {
+    "type": "table",
+    "tableID": "99e2488a",
+    "mode": "hyper",
+    "winner": "anais",
+    "timestamp": "2025-05-11T07:37:08.000Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "b3713ccf",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-11T07:50:25.395Z"
+  },
+  {
+    "type": "table",
+    "tableID": "99e2488a",
+    "mode": "hyper",
+    "winner": "zzz",
+    "timestamp": "2025-05-11T07:50:33.466Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "b3713ccf",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-11T08:08:38.894Z"
+  },
+  {
+    "type": "table",
+    "tableID": "99e2488a",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-11T08:09:14.503Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "8eec011f",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-11T08:09:55.282Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "826a57fb",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-11T08:10:59.039Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "8eec011f",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-11T08:14:59.141Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "b3713ccf",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-11T08:14:59.262Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "826a57fb",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-11T08:14:59.293Z"
+  },
+  {
+    "type": "table",
+    "tableID": "99e2488a",
+    "mode": "hyper",
+    "winner": "zzz",
+    "timestamp": "2025-05-11T08:15:07.176Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "f9ee0afc",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-11T08:16:12.008Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "f9cafc83",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-11T08:16:59.669Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "72e403d8",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-11T08:17:40.549Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "88e36241",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-11T09:04:04.375Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "113a981e",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-11T09:06:36.927Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "113a981e",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-11T09:21:38.484Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "113a981e",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-11T09:21:38.492Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "88e36241",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-11T09:21:38.496Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "113a981e",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-11T09:35:22.570Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "113a981e",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-11T09:42:56.556Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "88e36241",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-11T09:42:58.155Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "113a981e",
+    "mode": "hyper",
+    "winner": "a",
+    "timestamp": "2025-05-11T14:02:13.024Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "88e36241",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-11T14:02:36.536Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "113a981e",
+    "mode": "hyper",
+    "winner": "z",
+    "timestamp": "2025-05-11T14:02:36.548Z"
+  },
+  {
+    "type": "table",
+    "tableID": "97a13541",
+    "mode": "hyper",
+    "winner": "22",
+    "timestamp": "2025-05-12T12:09:41.671Z"
+  },
+  {
+    "type": "table",
+    "tableID": "97a13541",
+    "mode": "hyper",
+    "winner": "3",
+    "timestamp": "2025-05-12T12:11:05.994Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "c2d0dc5a",
+    "mode": "hyper",
+    "winner": "Anna",
+    "timestamp": "2025-05-12T12:30:50.780Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "c2d0dc5a",
+    "mode": "hyper",
+    "winner": "Valentin",
+    "timestamp": "2025-05-12T12:33:54.138Z"
+  },
+  {
+    "type": "table",
+    "tableID": "97a13541",
+    "mode": "hyper",
+    "winner": "4",
+    "timestamp": "2025-05-12T12:34:02.154Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "8788e2a3",
+    "mode": "hyper",
+    "winner": "Valentin",
+    "timestamp": "2025-05-12T12:34:58.717Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "a6f397f7",
+    "mode": "hyper",
+    "winner": "Valentin",
+    "timestamp": "2025-05-12T12:40:50.153Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "9bb6a9b2",
+    "mode": "hyper",
+    "winner": "Anna",
+    "timestamp": "2025-05-12T13:00:14.592Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "63fd8b5c",
+    "mode": "hyper",
+    "winner": "Valentin",
+    "timestamp": "2025-05-12T13:00:32.941Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "062fce8f",
+    "mode": "hyper",
+    "winner": "Valentin",
+    "timestamp": "2025-05-12T17:28:41.127Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "63fd8b5c",
+    "mode": "hyper",
+    "winner": "Valentin",
+    "timestamp": "2025-05-12T17:29:08.872Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "9bb6a9b2",
+    "mode": "hyper",
+    "winner": "Anna",
+    "timestamp": "2025-05-12T17:29:08.894Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "062fce8f",
+    "mode": "hyper",
+    "winner": "Valentin",
+    "timestamp": "2025-05-12T17:29:08.901Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "991fa121",
+    "mode": "hyper",
+    "winner": "Anna",
+    "timestamp": "2025-05-12T17:29:22.071Z"
+  },
+  {
+    "type": "table",
+    "tableID": "f707d1d5",
+    "mode": "hyper",
+    "winner": "45",
+    "timestamp": "2025-05-12T17:30:03.163Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "5fd6946b",
+    "mode": "hyper",
+    "winner": "Anna",
+    "timestamp": "2025-05-12T17:35:17.367Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "c2636ff1",
+    "mode": "hyper",
+    "winner": "Anna",
+    "timestamp": "2025-05-12T17:38:50.587Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "806eb5b9",
+    "mode": "hyper",
+    "winner": "Valentin",
+    "timestamp": "2025-05-12T17:43:54.158Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "29f914ec",
+    "mode": "hyper",
+    "winner": "Valentin",
+    "timestamp": "2025-05-12T18:02:43.868Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "1bf88825",
+    "mode": "hyper",
+    "winner": "Anna",
+    "timestamp": "2025-05-12T18:03:07.237Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "1b2b06ba",
+    "mode": "hyper",
+    "winner": "Anna",
+    "timestamp": "2025-05-12T18:03:57.988Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "758d24e2",
+    "mode": "hyper",
+    "winner": "Anna",
+    "timestamp": "2025-05-12T18:28:55.828Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "534f86fe",
+    "mode": "hyper",
+    "winner": "Valentin",
+    "timestamp": "2025-05-12T18:44:39.372Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "b6835b89",
+    "mode": "hyper",
+    "winner": "Valentin",
+    "timestamp": "2025-05-12T18:49:04.115Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "c2f040e8",
+    "mode": "hyper",
+    "winner": "Valentin",
+    "timestamp": "2025-05-12T18:53:07.799Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "5fc57fbe",
+    "mode": "hyper",
+    "winner": "Anna",
+    "timestamp": "2025-05-12T18:55:10.347Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "220b341e",
+    "mode": "hyper",
+    "winner": "Valentin",
+    "timestamp": "2025-05-12T18:56:07.204Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "13528c88",
+    "mode": "hyper",
+    "winner": "Anna",
+    "timestamp": "2025-05-12T19:01:14.703Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "2c5c74f1",
+    "mode": "hyper",
+    "winner": "Valentin",
+    "timestamp": "2025-05-12T19:03:36.954Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "b19b4943",
+    "mode": "hyper",
+    "winner": "Anna",
+    "timestamp": "2025-05-12T19:04:19.304Z"
+  },
+  {
+    "type": "match2",
+    "matchID": "51d487c9",
+    "mode": "hyper",
+    "winner": "Anna",
+    "timestamp": "2025-05-12T19:05:03.616Z"
+  }
+]

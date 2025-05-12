@@ -3,33 +3,236 @@
 <head>
   <meta charset="UTF-8">
   <title>Admin Poker</title>
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap">
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    input { width: 200px; margin-bottom: 8px; }
-    label, select, button { display: block; margin: 10px 0; }
-    #result a { color: blue; word-break: break-all; }
+    :root {
+      --bg-dark:    #1e1e2f;
+      --bg-light:   #2e2e44;
+      --accent:     #ffcc00;
+      --text:       #e0e0e0;
+      --text-light: #a0a0a0;
+      --radius:     6px;
+      --gap:        12px;
+    }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Montserrat',sans-serif; background:var(--bg-dark); color:var(--text); display:flex; min-height:100vh; }
+    header {
+      position:fixed; top:0; left:0; right:0; height:60px;
+      background:var(--bg-light); display:flex; align-items:center;
+      padding:0 var(--gap); box-shadow:0 2px 4px rgba(0,0,0,0.5); z-index:10;
+    }
+    header h1 { font-size:1.2rem; color:var(--accent); margin-right:var(--gap); }
+    #main-tabs { display:flex; gap:8px; }
+    #main-tabs button {
+      padding:8px 12px; border:none; border-radius:var(--radius);
+      background:#3e3e5a; color:var(--text-light); cursor:pointer; font-weight:500;
+    }
+    #main-tabs button.active { background:var(--accent); color:var(--bg-dark); }
+    main { margin-top:60px; flex:1; display:grid; grid-template-columns:1fr 2fr; gap:var(--gap); padding:var(--gap); }
+    .panel { background:var(--bg-light); border-radius:var(--radius); padding:var(--gap); box-shadow:0 2px 8px rgba(0,0,0,0.5); }
+    .tab-buttons { display:flex; gap:8px; margin-bottom:var(--gap); }
+    .tab-buttons button {
+      flex:1; padding:8px; border:none; border-radius:var(--radius);
+      background:#3e3e5a; color:var(--text-light); cursor:pointer; font-weight:500;
+    }
+    .tab-buttons button.active { background:var(--accent); color:var(--bg-dark); }
+    table { width:100%; border-collapse:collapse; margin-bottom:var(--gap); }
+    th, td { padding:10px; text-align:center; border-bottom:1px solid #444; }
+    thead { background:var(--bg-light); }
+    th { color:var(--accent); font-weight:500; }
+    tbody tr:hover { background:#3a3a59; }
+    input, select { width:100%; padding:8px; border:1px solid #555; border-radius:var(--radius); background:var(--bg-dark); color:var(--text); }
+    .mode-selector { display:flex; gap:var(--gap); margin:var(--gap) 0; }
+    .mode-option { flex:1; text-align:center; padding:8px; border-radius:var(--radius); background:#3e3e5a; color:var(--text-light); cursor:pointer; user-select:none; transition:background .2s; }
+    .mode-option.active { background:var(--accent); color:var(--bg-dark); }
+    .create-btn { width:100%; padding:10px; background:var(--accent); border:none; border-radius:var(--radius); color:var(--bg-dark); font-weight:700; cursor:pointer; transition:opacity .2s; margin-bottom:var(--gap); }
+    .create-btn:disabled { opacity:.5; cursor:not-allowed; }
+    .copy-btn, .delete-btn, .toggle-details-btn, .history-btn { padding:4px 8px; border:none; border-radius:var(--radius); font-size:.9rem; cursor:pointer; margin:0 2px; }
+    .copy-btn { background:#28a745; color:#1e1e2f; }
+    .delete-btn { background:#dc3545; color:#1e1e2f; }
+    .toggle-details-btn { background:var(--accent); color:#1e1e2f; }
+    .history-btn { background:#007bff; color:#fff; }
+    .winner-cell { color:var(--accent); font-weight:600; }
+    .details-row td { background:#2e2e44; padding:8px 16px; font-size:.9rem; }
+    #profile-search, #level-search { margin-bottom:var(--gap); }
+    @media(max-width:800px) { main { grid-template-columns:1fr; } }
+
+    /* Styles pour l’historique de niveaux */
+    .history-details .history-container {
+      max-height:240px;
+      overflow-y:auto;
+      background:#fff;
+      border:1px solid #ccc;
+      border-radius:8px;
+      box-shadow:0 2px 6px rgba(0,0,0,0.1);
+      padding:12px;
+      margin-top:8px;
+    }
+    .history-details .history-container ul {
+      list-style:none;
+      margin:0;
+      padding:0;
+    }
+    .history-details .history-container li {
+      display:flex;
+      align-items:flex-start;
+      padding:6px 0;
+      border-bottom:1px solid #eee;
+    }
+    .history-details .history-container li:last-child {
+      border-bottom:none;
+    }
+    .history-date {
+      font-family:monospace;
+      font-size:.85em;
+      color:#888;
+      margin-right:12px;
+      flex-shrink:0;
+      width:140px;
+    }
+    .history-action {
+      font-size:.95em;
+      color:#333;
+      line-height:1.4;
+    }
   </style>
 </head>
 <body>
-  <h1>Création de table (10 joueurs)</h1>
-  <form id="table-form">
-    <fieldset>
-      <legend>Joueurs</legend>
-      <div id="players-list"></div>
-    </fieldset>
-    <label>
-      Mode de jeu
-      <select id="mode">
-        <option value="beginner">Beginner (5/10)</option>
-        <option value="normal">Normal (50/100)</option>
-        <option value="turbo">Turbo (500/1000)</option>
-        <option value="highroller">Highroller (5000/10000)</option>
-        <option value="hyper">Hyper-fast (one-shot)</option>
-      </select>
-    </label>
-    <button type="submit">Générer le lien de la table</button>
-  </form>
-  <div id="result"></div>
+  <header>
+    <h1>🎲 Admin IMDCX</h1>
+    <div id="main-tabs">
+      <button id="main-10" class="active">Partie 10 joueurs</button>
+      <button id="main-2">Partie 2 joueurs</button>
+      <button id="main-niveaux">Niveaux</button>
+    </div>
+  </header>
+  <main>
+    <!-- Left: Create Panels -->
+    <section id="create-panel" class="panel">
+      <!-- Partie 10 Create -->
+      <div id="panel-10-create">
+        <h2>New table (10 Players)</h2>
+        <form id="table-form">
+          <table id="players-list"><tbody>
+            <tr><td>1</td><td><input name="player" placeholder="Player 1"></td></tr>
+            <tr><td>2</td><td><input name="player" placeholder="Player 2"></td></tr>
+            <tr><td>3</td><td><input name="player" placeholder="Player 3"></td></tr>
+            <tr><td>4</td><td><input name="player" placeholder="Player 4"></td></tr>
+            <tr><td>5</td><td><input name="player" placeholder="Player 5"></td></tr>
+            <tr><td>6</td><td><input name="player" placeholder="Player 6"></td></tr>
+            <tr><td>7</td><td><input name="player" placeholder="Player 7"></td></tr>
+            <tr><td>8</td><td><input name="player" placeholder="Player 8"></td></tr>
+            <tr><td>9</td><td><input name="player" placeholder="Player 9"></td></tr>
+            <tr><td>10</td><td><input name="player" placeholder="Player 10"></td></tr>
+          </tbody></table>
+          <div class="mode-selector">
+            <div class="mode-option" data-mode="beginner">Beginner</div>
+            <div class="mode-option" data-mode="normal">Normal</div>
+            <div class="mode-option" data-mode="turbo">Turbo</div>
+            <div class="mode-option" data-mode="highroller">Highroller</div>
+            <div class="mode-option" data-mode="hyper">Hyper-fast</div>
+          </div>
+          <button type="submit" id="create-btn" class="create-btn" disabled>Generate Link</button>
+          <div id="result"></div>
+        </form>
+      </div>
+      <!-- Partie 2 Create -->
+      <div id="panel-2-create" hidden>
+        <h2>New match (2 Players)</h2>
+        <form id="match2-form">
+          <table id="players2-list"><tbody>
+            <tr><td>1</td><td><input name="player2" placeholder="Player 1"></td></tr>
+            <tr><td>2</td><td><input name="player2" placeholder="Player 2"></td></tr>
+          </tbody></table>
+          <div class="mode-selector">
+            <div class="mode-option" data-mode="beginner">Beginner</div>
+            <div class="mode-option" data-mode="normal">Normal</div>
+            <div class="mode-option" data-mode="turbo">Turbo</div>
+            <div class="mode-option" data-mode="highroller">Highroller</div>
+            <div class="mode-option" data-mode="hyper">Hyper-fast</div>
+          </div>
+          <button type="submit" id="create2-btn" class="create-btn" disabled>Generate Match Link</button>
+          <div id="result2"></div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Right: Content Panels -->
+    <section id="content-panel" class="panel">
+      <!-- Partie 10 Content -->
+      <div id="panel-10-content">
+        <div class="tab-buttons">
+          <button id="tab-tables" class="active">Tables</button>
+          <button id="tab-profiles">Profils</button>
+          <button id="tab-games">Games</button>
+        </div>
+        <div id="tables-panel" class="panel">
+          <h2>Created Tables (10)</h2>
+          <table id="tables-list"><thead>
+            <tr><th>ID</th><th>Mode</th><th>Winner</th><th>Link</th><th>Action</th></tr>
+          </thead><tbody></tbody></table>
+        </div>
+        <div id="profiles-panel" class="panel" hidden>
+          <h2>Profils</h2>
+          <input id="profile-search" placeholder="Rechercher…">
+          <table id="profiles-table"><thead>
+            <tr><th>Joueur</th><th>Parties</th><th>Victoires</th><th>Action</th></tr>
+          </thead><tbody></tbody></table>
+        </div>
+        <div id="games-panel" class="panel" hidden>
+          <h2>Historique des Parties</h2>
+          <table id="games-table"><thead>
+            <tr><th>Type</th><th>ID</th><th>Mode</th><th>Winner</th><th>Date</th></tr>
+          </thead><tbody></tbody></table>
+        </div>
+      </div>
+      <!-- Partie 2 Content -->
+      <div id="panel-2-content" hidden>
+        <div class="tab-buttons">
+          <button id="tab-matches2" class="active">Matches</button>
+          <button id="tab-profiles2">Profils</button>
+          <button id="tab-games2">Games</button>
+        </div>
+        <div id="matches2-panel" class="panel">
+          <h2>Created Matches (2)</h2>
+          <table id="matches2-list"><thead>
+            <tr><th>ID</th><th>Mode</th><th>Winner</th><th>Link</th><th>Action</th></tr>
+          </thead><tbody></tbody></table>
+        </div>
+        <div id="profiles2-panel" class="panel" hidden>
+          <h2>Profils (2j)</h2>
+          <table id="profiles2-table"><thead>
+            <tr><th>Joueur</th><th>Parties</th><th>Victoires</th><th>Action</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div id="games2-panel" class="panel" hidden>
+          <h2>Historique des Matches</h2>
+          <table id="games2-table">
+            <thead>
+              <tr><th>Type</th><th>ID</th><th>Mode</th><th>Winner</th><th>Date</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Niveaux -->
+      <div id="panel-niveaux" class="panel" hidden>
+        <h2>Classement par niveau</h2>
+        <input id="level-search" placeholder="Rechercher un joueur…">
+        <table id="levels-table">
+          <thead>
+            <tr><th>Joueur</th><th>Niveau</th><th>Parties</th><th>Victoires</th><th>Dernier changement</th><th>Actions</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
   <script src="admin.js"></script>
 </body>
 </html>

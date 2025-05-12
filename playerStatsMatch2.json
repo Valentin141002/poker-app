@@ -1,0 +1,56 @@
+{
+  "Valentin": {
+    "name": "Valentin",
+    "gamesPlayed": 27,
+    "wins": 14,
+    "byMode": {
+      "beginner": {
+        "played": 0,
+        "wins": 0
+      },
+      "normal": {
+        "played": 0,
+        "wins": 0
+      },
+      "turbo": {
+        "played": 0,
+        "wins": 0
+      },
+      "highroller": {
+        "played": 0,
+        "wins": 0
+      },
+      "hyper": {
+        "played": 27,
+        "wins": 14
+      }
+    }
+  },
+  "Anna": {
+    "name": "Anna",
+    "gamesPlayed": 13,
+    "wins": 7,
+    "byMode": {
+      "beginner": {
+        "played": 0,
+        "wins": 0
+      },
+      "normal": {
+        "played": 0,
+        "wins": 0
+      },
+      "turbo": {
+        "played": 0,
+        "wins": 0
+      },
+      "highroller": {
+        "played": 0,
+        "wins": 0
+      },
+      "hyper": {
+        "played": 13,
+        "wins": 7
+      }
+    }
+  }
+}

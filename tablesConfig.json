@@ -1,16 +1,106 @@
 {
-  "1667c22b": {
+  "d352040f": {
     "players": [
       "a",
       "aa",
-      "aaaa",
       "anais",
-      "aaa",
+      "aaaa",
       "aaaaa",
       "z",
       "zz",
       "zzz",
-      "zzzz"
+      "zzzz",
+      "zzzZ"
+    ],
+    "mode": "hyper"
+  },
+  "15e7fb9e": {
+    "players": [
+      "a",
+      "aa",
+      "anais",
+      "aaaa",
+      "aaaaa",
+      "z",
+      "zz",
+      "zzz",
+      "zzzz",
+      "zzzZ"
+    ],
+    "mode": "hyper"
+  },
+  "99e2488a": {
+    "players": [
+      "a",
+      "aa",
+      "anais",
+      "aaaa",
+      "aaaaa",
+      "z",
+      "zz",
+      "zzz",
+      "zzzz",
+      "zzzZ"
+    ],
+    "mode": "hyper"
+  },
+  "e4567d1a": {
+    "players": [
+      "a",
+      "aa",
+      "anais",
+      "aaaa",
+      "aaaaa",
+      "z",
+      "zz",
+      "zzz",
+      "zzzz",
+      "zzzZ"
+    ],
+    "mode": "hyper"
+  },
+  "97a13541": {
+    "players": [
+      "1",
+      "12",
+      "2",
+      "22",
+      "3",
+      "33",
+      "4",
+      "45",
+      "5",
+      "55"
+    ],
+    "mode": "hyper"
+  },
+  "48d1973f": {
+    "players": [
+      "1",
+      "12",
+      "2",
+      "22",
+      "3",
+      "33",
+      "4",
+      "45",
+      "5",
+      "55"
+    ],
+    "mode": "hyper"
+  },
+  "f707d1d5": {
+    "players": [
+      "1",
+      "12",
+      "2",
+      "22",
+      "3",
+      "33",
+      "4",
+      "45",
+      "5",
+      "55"
     ],
     "mode": "hyper"
   }

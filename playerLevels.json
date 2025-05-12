@@ -1,0 +1,276 @@
+{
+  "1": {
+    "name": "1",
+    "level": 0,
+    "gamesPlayed": 2,
+    "wins": 0,
+    "history": []
+  },
+  "2": {
+    "name": "2",
+    "level": 0,
+    "gamesPlayed": 4,
+    "wins": 0,
+    "history": []
+  },
+  "3": {
+    "name": "3",
+    "level": 0,
+    "gamesPlayed": 4,
+    "wins": 1,
+    "history": []
+  },
+  "4": {
+    "name": "4",
+    "level": 0,
+    "gamesPlayed": 4,
+    "wins": 1,
+    "history": []
+  },
+  "5": {
+    "name": "5",
+    "level": 0,
+    "gamesPlayed": 4,
+    "wins": 0,
+    "history": []
+  },
+  "12": {
+    "name": "12",
+    "level": 0,
+    "gamesPlayed": 4,
+    "wins": 0,
+    "history": []
+  },
+  "22": {
+    "name": "22",
+    "level": 0,
+    "gamesPlayed": 4,
+    "wins": 1,
+    "history": []
+  },
+  "33": {
+    "name": "33",
+    "level": 0,
+    "gamesPlayed": 4,
+    "wins": 0,
+    "history": []
+  },
+  "45": {
+    "name": "45",
+    "level": 0,
+    "gamesPlayed": 4,
+    "wins": 1,
+    "history": []
+  },
+  "55": {
+    "name": "55",
+    "level": 0,
+    "gamesPlayed": 4,
+    "wins": 0,
+    "history": []
+  },
+  "aaaa": {
+    "name": "aaaa",
+    "level": 0,
+    "gamesPlayed": 2,
+    "wins": 0,
+    "history": []
+  },
+  "aaaaa": {
+    "name": "aaaaa",
+    "level": 0,
+    "gamesPlayed": 2,
+    "wins": 0,
+    "history": []
+  },
+  "zz": {
+    "name": "zz",
+    "level": 0,
+    "gamesPlayed": 2,
+    "wins": 0,
+    "history": []
+  },
+  "zzz": {
+    "name": "zzz",
+    "level": 0,
+    "gamesPlayed": 2,
+    "wins": 1,
+    "history": []
+  },
+  "Valentin": {
+    "name": "Valentin",
+    "level": 2,
+    "gamesPlayed": 27,
+    "wins": 14,
+    "history": [
+      {
+        "date": "2025-05-12T12:30:50.786Z",
+        "action": "Perdant du duel → niveau descendu de 0 à 0"
+      },
+      {
+        "date": "2025-05-12T12:33:54.143Z",
+        "action": "Vainqueur du duel → niveau monté de 0 à 1"
+      },
+      {
+        "date": "2025-05-12T12:34:58.721Z",
+        "action": "Vainqueur du duel → niveau monté de 1 à 2"
+      },
+      {
+        "date": "2025-05-12T12:40:50.157Z",
+        "action": "Vainqueur du duel → niveau monté de 2 à 3"
+      },
+      {
+        "date": "2025-05-12T13:00:14.596Z",
+        "action": "Perdant du duel → niveau descendu de 3 à 2"
+      },
+      {
+        "date": "2025-05-12T13:00:32.944Z",
+        "action": "Vainqueur du duel → niveau monté de 2 à 3"
+      },
+      {
+        "date": "2025-05-12T17:28:41.130Z",
+        "action": "Vainqueur du duel → niveau monté de 3 à 4"
+      },
+      {
+        "date": "2025-05-12T17:29:08.876Z",
+        "action": "Vainqueur du duel → niveau monté de 4 à 5"
+      },
+      {
+        "date": "2025-05-12T17:29:08.897Z",
+        "action": "Perdant du duel → niveau descendu de 5 à 4"
+      },
+      {
+        "date": "2025-05-12T17:29:08.904Z",
+        "action": "Vainqueur du duel → niveau monté de 4 à 5"
+      },
+      {
+        "date": "2025-05-12T17:29:22.075Z",
+        "action": "Perdant du duel → niveau descendu de 5 à 4"
+      },
+      {
+        "date": "2025-05-12T17:35:17.372Z",
+        "action": "Perdant du duel → niveau descendu de 4 à 3"
+      },
+      {
+        "date": "2025-05-12T17:38:50.591Z",
+        "action": "Perdant du duel → niveau descendu de 3 à 2"
+      },
+      {
+        "date": "2025-05-12T17:43:54.162Z",
+        "action": "Vainqueur du duel → niveau monté de 2 à 3"
+      },
+      {
+        "date": "2025-05-12T18:02:43.872Z",
+        "action": "Vainqueur du duel → niveau monté de 3 à 4"
+      },
+      {
+        "date": "2025-05-12T18:03:07.243Z",
+        "action": "Perdant du duel → niveau descendu de 4 à 3"
+      },
+      {
+        "date": "2025-05-12T18:03:57.991Z",
+        "action": "Perdant du duel → niveau descendu de 3 à 2"
+      },
+      {
+        "date": "2025-05-12T18:28:55.833Z",
+        "action": "Perdant du duel → niveau descendu de 2 à 1"
+      },
+      {
+        "date": "2025-05-12T18:44:39.376Z",
+        "action": "Vainqueur du duel → niveau monté de 1 à 2"
+      },
+      {
+        "date": "2025-05-12T18:49:04.119Z",
+        "action": "Vainqueur du duel → niveau monté de 2 à 3"
+      },
+      {
+        "date": "2025-05-12T18:53:07.803Z",
+        "action": "Vainqueur du duel → niveau monté de 3 à 4"
+      },
+      {
+        "date": "2025-05-12T18:55:10.349Z",
+        "action": "Perdant du duel → niveau descendu de 4 à 3"
+      },
+      {
+        "date": "2025-05-12T18:56:07.208Z",
+        "action": "Vainqueur du duel → niveau monté de 3 à 4"
+      },
+      {
+        "date": "2025-05-12T19:01:14.706Z",
+        "action": "Perdant du duel → niveau descendu de 4 à 3"
+      },
+      {
+        "date": "2025-05-12T19:03:36.958Z",
+        "action": "Vainqueur du duel → niveau monté de 3 à 4"
+      },
+      {
+        "date": "2025-05-12T19:04:19.307Z",
+        "action": "Perdant du duel → niveau descendu de 4 à 3"
+      },
+      {
+        "date": "2025-05-12T19:05:03.618Z",
+        "action": "Perdant du duel → niveau descendu de 3 à 2"
+      }
+    ]
+  },
+  "Anna": {
+    "name": "Anna",
+    "level": 2,
+    "gamesPlayed": 13,
+    "wins": 7,
+    "history": [
+      {
+        "date": "2025-05-12T18:02:43.872Z",
+        "action": "Perdant du duel → niveau descendu de 0 à 0"
+      },
+      {
+        "date": "2025-05-12T18:03:07.243Z",
+        "action": "Vainqueur du duel → niveau monté de 0 à 1"
+      },
+      {
+        "date": "2025-05-12T18:03:57.991Z",
+        "action": "Vainqueur du duel → niveau monté de 1 à 2"
+      },
+      {
+        "date": "2025-05-12T18:28:55.833Z",
+        "action": "Vainqueur du duel → niveau monté de 2 à 3"
+      },
+      {
+        "date": "2025-05-12T18:44:39.376Z",
+        "action": "Perdant du duel → niveau descendu de 3 à 2"
+      },
+      {
+        "date": "2025-05-12T18:49:04.119Z",
+        "action": "Perdant du duel → niveau descendu de 2 à 1"
+      },
+      {
+        "date": "2025-05-12T18:53:07.803Z",
+        "action": "Perdant du duel → niveau descendu de 1 à 0"
+      },
+      {
+        "date": "2025-05-12T18:55:10.349Z",
+        "action": "Vainqueur du duel → niveau monté de 0 à 1"
+      },
+      {
+        "date": "2025-05-12T18:56:07.208Z",
+        "action": "Perdant du duel → niveau descendu de 1 à 0"
+      },
+      {
+        "date": "2025-05-12T19:01:14.706Z",
+        "action": "Vainqueur du duel → niveau monté de 0 à 1"
+      },
+      {
+        "date": "2025-05-12T19:03:36.958Z",
+        "action": "Perdant du duel → niveau descendu de 1 à 0"
+      },
+      {
+        "date": "2025-05-12T19:04:19.307Z",
+        "action": "Vainqueur du duel → niveau monté de 0 à 1"
+      },
+      {
+        "date": "2025-05-12T19:05:03.618Z",
+        "action": "Vainqueur du duel → niveau monté de 1 à 2"
+      }
+    ]
+  }
+}
