@@ -96,6 +96,22 @@
       color:#333;
       line-height:1.4;
     }
+
+    /* ======================= */
+    /* Pastilles “Status”      */
+    /* ======================= */
+    .status-cell {
+      text-align: center;
+    }
+    .status-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin: auto;
+    }
+    .status-active   { background-color: #4CAF50; }
+    .status-inactive { background-color: #F44336; }
   </style>
 </head>
 <body>
@@ -170,7 +186,7 @@
         <div id="tables-panel" class="panel">
           <h2>Created Tables (10)</h2>
           <table id="tables-list"><thead>
-            <tr><th>ID</th><th>Mode</th><th>Winner</th><th>Link</th><th>Action</th></tr>
+            <tr><th>Status</th><th>ID</th><th>Mode</th><th>Winner</th><th>Link</th><th>Action</th></tr>
           </thead><tbody></tbody></table>
         </div>
         <div id="profiles-panel" class="panel" hidden>
@@ -197,42 +213,34 @@
         <div id="matches2-panel" class="panel">
           <h2>Created Matches (2)</h2>
           <table id="matches2-list"><thead>
-            <tr><th>ID</th><th>Mode</th><th>Winner</th><th>Link</th><th>Action</th></tr>
+            <tr><th>Status</th><th>ID</th><th>Mode</th><th>Winner</th><th>Link</th><th>Action</th></tr>
           </thead><tbody></tbody></table>
         </div>
         <div id="profiles2-panel" class="panel" hidden>
           <h2>Profils (2j)</h2>
           <table id="profiles2-table"><thead>
             <tr><th>Joueur</th><th>Parties</th><th>Victoires</th><th>Action</th></tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+          </thead><tbody></tbody></table>
         </div>
         <div id="games2-panel" class="panel" hidden>
           <h2>Historique des Matches</h2>
-          <table id="games2-table">
-            <thead>
-              <tr><th>Type</th><th>ID</th><th>Mode</th><th>Winner</th><th>Date</th></tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+          <table id="games2-table"><thead>  
+            <tr><th>Type</th><th>ID</th><th>Mode</th><th>Winner</th><th>Date</th></tr>
+          </thead><tbody></tbody></table>
         </div>
       </div>
       <!-- Niveaux -->
       <div id="panel-niveaux" class="panel" hidden>
         <h2>Classement par niveau</h2>
         <input id="level-search" placeholder="Rechercher un joueur…">
-        <table id="levels-table">
-          <thead>
-            <tr><th>Joueur</th><th>Niveau</th><th>Parties</th><th>Victoires</th><th>Dernier changement</th><th>Actions</th></tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+        <table id="levels-table"><thead>
+          <tr><th>Joueur</th><th>Niveau</th><th>Parties</th><th>Victoires</th><th>Dernier changement</th><th>Actions</th></tr>
+        </thead><tbody></tbody></table>
       </div>
     </section>
   </main>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script src="admin.js"></script>
+  <script src="/admin/admin.js"></script>
 </body>
 </html>
