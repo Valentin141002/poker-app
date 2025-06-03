@@ -21,7 +21,7 @@
       top: 0;
       left: 0;
       width: 100%;
-      height: 60px; /* Hauteur de la barre */
+      height: 60px;
       background-color: black;
       z-index: 1000;
       text-align: center;
@@ -37,7 +37,7 @@
     }
     /* Décalage pour le contenu principal */
     #game-container {
-      margin-top: 70px; /* Hauteur de la barre + marge */
+      margin-top: 70px;
     }
     /* Écran de chargement */
     #loading-screen {
@@ -54,24 +54,45 @@
       justify-content: center;
       font-size: 24px;
     }
+
+    #timer-container {
+  position: absolute;
+  top: 400px;
+  right: 12px;
+  width: 80px;
+  height: 80px;
+  pointer-events: none; /* laisse passer les clics */
+  z-index: 1500;
+}
+
+#timer-svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* On retire la transition CSS pour gérer tout en JS */
+#timer-circle {
+  stroke-dasharray: 226;  /* 2π×36 ≃ 226 */
+  stroke-dashoffset: 0;
+}
   </style>
 </head>
 <body onload="initGame()">
   <!-- Écran de chargement (overlay) -->
   <div id="loading-screen">
-    En attente de joueurs : <span id="waiting-count">0</span>/10
+    <span id="waiting-count"></span>
   </div>
-
+  
   <!-- Barre noire en haut -->
   <div id="top-black-bar">
     <div id="end-game-message"></div>
   </div>
 
-  
   <div id="blinds-display">
     <span id="small-blind">SB: –</span>
     <span id="big-blind">BB: –</span>
-  </div>      
+  </div>   
+
 
   <!-- Contenu principal de votre jeu (votre ancien affichage, structure en cercle, etc.) -->
   <div id="game-container">
@@ -205,6 +226,32 @@
         <div id="burn2" class="card boardcard"></div>
         <div id="burn3" class="card boardcard"></div>
       </div>
+
+      <div id="timer-container">
+        <svg id="timer-svg" viewBox="0 0 80 80">
+          <!-- Fond circulaire semi-transparent -->
+          <circle cx="40" cy="40" r="38" fill="rgba(0,0,0,0.2)" stroke="none"/>
+          <!-- Cercle animé -->
+          <circle
+            id="timer-circle"
+            cx="40" cy="40" r="36"
+            stroke="#00e676"
+            stroke-width="6"
+            fill="none"
+            stroke-linecap="round"
+            transform="rotate(-90 40 40)"
+          />
+          <!-- Texte centré -->
+          <text
+            id="timer-text"
+            x="40" y="44"
+            text-anchor="middle"
+            font-size="20"
+            font-family="Montserrat, sans-serif"
+            fill="#fff"
+          >30</text>
+        </svg>
+      </div>      
       
       <!-- Pot -->
       <div id="pot">
@@ -219,6 +266,7 @@
       <div id="call-button" class="action-button"></div>
       <a id="custom-raise" class="action-button" href="javascript:show_custom_raise()"></a>
     </div>
+
     <div id="quick-raises"></div>
     <div id="game-response" class="response-normal"></div>
     <div id="modal-box"></div>

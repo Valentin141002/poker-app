@@ -800,17 +800,19 @@ select {
 /* La modal box toujours en bas, fond noir, etc. */
 #modal-box {
   position: fixed;
-  bottom: -100%;  
-  left: 0;
-  width: 100%;
-  background-color: black;
+  bottom: 20px;               /* petite marge du bas */
+  left: 50%;                  /* point de référence pour le centrage */
+  transform: translateX(-50%);/* centre horizontalement */
+  max-width: 650px; /* ou toute autre valeur */
+  width: 90%;
+  background-color: #000;
   border-top: 1px solid #666;
   box-shadow: 0 -4px 8px rgba(0,0,0,0.3);
   z-index: 10000;
-  max-height: 165px; 
+  max-height: 165px;
   overflow-y: auto;
   display: none;
-  transition: bottom 0.4s ease;
+  transition: bottom 0.4s ease, width 0.2s ease;
   padding: 4px;
   box-sizing: border-box;
 }
@@ -1337,4 +1339,59 @@ select {
   font-size: 0.95em;
   color: #333;
   line-height: 1.4;
+}
+
+/* ======================= */
+/* Pastilles “Status”      */
+/* ======================= */
+.status-cell {
+  /* centre verticalement la pastille */
+  text-align: center;
+}
+.status-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin: auto; /* centre dans la cellule */
+}
+.status-active   { background-color: #4CAF50; }  /* vert */
+.status-inactive { background-color: #F44336; }  /* rouge */
+
+
+#timer-circle-container {
+  position: absolute;
+  bottom: -75px;
+  right: 20px;
+  width: 100px;
+  height: 100px;
+  pointer-events: none;
+  z-index: 500;
+}
+
+#timer-circle {
+  /* circonférence = 2π·45 ≃ 283 */
+  stroke-dasharray: 283;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 1s linear, stroke 0.5s;
+}
+
+#timer-text {
+  user-select: none;
+}
+
+/* Exemple de style : placer #my-cards en bas à gauche */
+#my-cards {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  width: 100px;   /* ou ce qui correspond à deux cartes côte à côte */
+  height: 60px;   /* hauteur de carte */
+  pointer-events: none; /* pour que ça ne gêne pas les clics */
+  display: flex;
+  gap: 5px;
+}
+.my-cards-container .card {
+  width: 50px;  /* largeur d’une carte */
+  height: 60px; /* hauteur d’une carte */
 }

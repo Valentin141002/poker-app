@@ -112,6 +112,63 @@
     }
     .status-active   { background-color: #4CAF50; }
     .status-inactive { background-color: #F44336; }
+
+    /* === Styles pour la liste de liens === */
+#result ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+#result li {
+  display: flex;
+  align-items: center;
+  justify-content: start;
+  gap: 12px;           /* espace entre texte, bouton et feedback */
+  padding: 8px 0;      /* espace vertical entre les lignes */
+  border-bottom: 1px solid #444;
+}
+
+/* === Style des boutons COPY === */
+.copy-link-btn {
+  type: button;
+  background-color: var(--accent);
+  color: var(--bg-dark);
+  border: none;
+  border-radius: var(--radius);
+  padding: 6px 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+.copy-link-btn:hover {
+  background-color: #00dbe6;  /* un peu plus sombre au survol */
+  transform: scale(1.05);
+}
+.copy-feedback {
+  font-size: 0.9rem;
+  color: #8f8;
+  min-width: 100px;    /* pour que le texte n’en fasse pas bouger le bouton */
+}
+
+/* ==== Amélioration discrète du bouton "Liens" ==== */
+.copy-links-btn {
+  background-color: #3ae600;
+  color: var(--bg-dark);
+  border: none;
+  border-radius: var(--radius);
+  padding: 6px 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+.copy-links-btn:hover {
+  background-color: #3ae600;  /* légèrement plus sombre */
+  transform: scale(1.05);      /* petit effet “pop” */
+}
+.copy-links-btn:active {
+  transform: scale(0.98);
+}
+
   </style>
 </head>
 <body>
@@ -150,7 +207,80 @@
             <div class="mode-option" data-mode="hyper">Hyper-fast</div>
           </div>
           <button type="submit" id="create-btn" class="create-btn" disabled>Generate Link</button>
-          <div id="result"></div>
+          <div id="result">
+            <ul>
+              <li>
+                Siège 1 :
+                <button type="button" class="copy-link-btn" data-link="…">
+                  COPY
+                </button>
+                <span class="copy-feedback"></span>
+              </li>
+              <li>
+                Siège 2 :
+                <button type="button" class="copy-link-btn" data-link="…">
+                  COPY
+                </button>
+                <span class="copy-feedback"></span>
+              </li> 
+              <li>
+                Siège 3 :
+                <button type="button" class="copy-link-btn" data-link="…">
+                  COPY
+                </button>
+                <span class="copy-feedback"></span>
+              </li>   
+              <li>
+                Siège 4 :
+                <button type="button" class="copy-link-btn" data-link="…">
+                  COPY
+                </button>
+                <span class="copy-feedback"></span>
+              </li>   
+              <li>
+                Siège 5 :
+                <button type="button" class="copy-link-btn" data-link="…">
+                  COPY
+                </button>
+                <span class="copy-feedback"></span>
+              </li>
+              <li>
+                Siège 6 :
+                <button type="button" class="copy-link-btn" data-link="…">
+                  COPY
+                </button>
+                <span class="copy-feedback"></span>
+              </li>
+              <li>
+                Siège 7 :
+                <button type="button" class="copy-link-btn" data-link="…">
+                  COPY
+                </button>
+                <span class="copy-feedback"></span>
+              </li>
+              <li>
+                Siège 8 :
+                <button type="button" class="copy-link-btn" data-link="…">
+                  COPY
+                </button>
+                <span class="copy-feedback"></span>
+              </li>
+              <li>
+                Siège 9 :
+                <button type="button" class="copy-link-btn" data-link="…">
+                  COPY
+                </button>
+                <span class="copy-feedback"></span>
+              </li>
+              <li>
+                Siège 10 :
+                <button type="button" class="copy-link-btn" data-link="…">
+                  COPY
+                </button>
+                <span class="copy-feedback"></span>
+              </li>
+                 </ul>            
+          </div>
         </form>
       </div>
       <!-- Partie 2 Create -->
@@ -241,6 +371,6 @@
   </main>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script src="/admin/admin.js"></script>
+  <script src="admin.js"></script>
 </body>
 </html>
