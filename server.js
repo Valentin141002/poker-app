@@ -1792,5 +1792,4 @@ if (matches2Config[table]) {
 // 13) Lancement du serveur
 // ──────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
-// au lieu de : server.listen(PORT, '127.0.0.1', …)
-server.listen(PORT, '0.0.0.0', () => console.log(`Serveur sur port ${PORT}`));
+server.listen(PORT, () => console.log(`Serveur sur port ${PORT}`));
