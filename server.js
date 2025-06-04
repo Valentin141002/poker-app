@@ -246,11 +246,26 @@ app.delete('/admin/deleteProfile/:name', (req, res) => {
 // ──────────────────────────────────────────────────────────────
 // 8) Static files & fallback
 // ──────────────────────────────────────────────────────────────
-app.use('/admin', express.static(path.join(__dirname, 'admin-app')));
-app.use(express.static(path.join(__dirname, 'poker-app')));
-app.get('*', (_req, res) =>
-  res.sendFile(path.join(__dirname, 'poker-app', 'poker.html'))
+// 1) Sert tout ce qui est dans /admin-app sous l’URL /admin/…
+app.use(
+  '/admin',
+  express.static(path.join(__dirname, 'admin-app'))
 );
+
+// 2) Si on tape exactement GET /admin (sans “/quelque-chose”), on renvoie admin.html
+app.get('/admin', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'admin-app', 'admin.html'));
+});
+
+// 3) Ensuite, on sert le front “poker-app” sur la racine “/”
+app.use(
+  express.static(path.join(__dirname, 'poker-app'))
+);
+
+// 4) Et enfin, pour tout autre GET non capté précédemment, on renvoie poker.html
+app.get('*', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'poker-app', 'poker.html'));
+});
 
 // ──────────────────────────────────────────────────────────────
 // 8) Poker utility functions (deck, deal, blinds, bets…)

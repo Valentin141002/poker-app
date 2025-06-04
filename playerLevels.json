@@ -208,7 +208,7 @@
   },
   "Valentin": {
     "name": "Valentin",
-    "level": 1,
+    "level": 0,
     "gamesPlayed": 328,
     "wins": 212,
     "history": [
@@ -1431,6 +1431,10 @@
       {
         "date": "2025-06-03T14:12:08.865Z",
         "action": "Perdu duel niveau 2 → 1"
+      },
+      {
+        "date": "2025-06-03T18:11:46.797Z",
+        "action": "Perdu duel niveau 1 → 0"
       }
     ]
   },
@@ -1876,9 +1880,9 @@
   },
   "Anais": {
     "name": "Anais",
-    "level": 8,
+    "level": 9,
     "gamesPlayed": 192,
-    "wins": 174,
+    "wins": 175,
     "history": [
       {
         "date": "2025-05-20T07:42:24.014Z",
@@ -2699,6 +2703,10 @@
       {
         "date": "2025-06-03T14:12:08.865Z",
         "action": "Gagné duel niveau 7 → 8"
+      },
+      {
+        "date": "2025-06-03T18:11:46.797Z",
+        "action": "Gagné duel niveau 8 → 9"
       }
     ]
   }
