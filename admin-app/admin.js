@@ -3,6 +3,7 @@ console.log('>> admin.js chargé');
 
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
+    window.socket = socket;           // ← AJOUT 1 : expose le socket globalement
   socket.emit('joinAdmin');
 
   // ——————————————————————————————————————————
@@ -103,6 +104,7 @@ socket.on('profilesUpdated', () => {
     fetchProfiles(tbody2, 'match2');
   }
 });
+
 
 // … à placer à l’intérieur de document.addEventListener('DOMContentLoaded', () => { … })
 
@@ -1031,3 +1033,4 @@ async function fetchGames(tbody, type) {
   // ——————————————————————————————————————————
   main10.click();
 });
+

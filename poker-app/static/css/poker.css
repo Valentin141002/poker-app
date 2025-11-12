@@ -45,10 +45,10 @@ body {
     background-image: url('../images/dealerbutton.png');
     background-repeat: no-repeat;
     background-size: 100%;
-    height: 19px;
+    height: 20px;
     position: absolute;
     width: 24px;
-    z-index: 0 !important;            /* Au-dessus des placeholders */
+    z-index: 1 !important;            /* Au-dessus des placeholders */
 }
 
 .name-chips1 {
@@ -56,7 +56,7 @@ body {
   border-radius: 4px;
   color: white;
   font-size: 12px;
-  height: 33px;
+  height: 50px;
   position: absolute;
   text-align: center;
   top: 65px;
@@ -71,17 +71,85 @@ body {
   font-size: 12px;
   line-height: 33px;   /* Pour centrer le texte verticalement */
   letter-spacing: 0.5px;
-  height: 100px;
+  height: 120px;
   position: absolute;
   text-align: center;
   top: 65px;
-  width: 80px;
+  width: 123px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.5);
   z-index: 1;            /* Au-dessus des placeholders */
 }
 
 .player-name {
     width: 100%;
+}
+
+/* ==== SEATS: nom + stack sur une ligne, mise en blanc en dessous ==== */
+
+/* On garde EXACTEMENT la même taille du panneau */
+.seat .name-chips{
+  width: 123px;      /* ta valeur actuelle */
+  height: 120px;     /* ta valeur actuelle */
+  padding: 0;
+}
+
+/* Nom à gauche, sur la même ligne que le stack */
+.seat .name-chips .player-name{
+  position: absolute;
+  top: 20px; left: -35px; right: 54px;   /* espace à droite pour le stack */
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #eaf9ff;
+  text-shadow: 0 1px 0 rgba(0,0,0,.7);
+}
+
+/* Stack (pot personnel) aligné à droite, un peu plus gros que le nom */
+.seat .name-chips .chips{
+  position: absolute;
+  top: 20px; right: 12px;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1;
+  color: #fff;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  text-shadow: 0 1px 0 rgba(0,0,0,.8);
+}
+
+/* === BET centré et TOUJOURS au-dessus des cartes === */
+.seat .bet{
+  position: absolute !important;
+  top: 110% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+
+  /* Style lisible (à ajuster si besoin) */
+  color: #fff !important;
+  font-size: 18px !important;      /* plus gros que P1/stack */
+  font-weight: 900;
+  text-shadow:
+    0 0 2px #000,
+    -1px 0 2px #000, 0 1px 2px #000, 1px 0 2px #000, 0 -1px 2px #000,
+    0 0 10px rgba(0,0,0,.35);
+}
+
+/* Assure que les cartes restent en dessous du bet, même pendant le flip */
+.seat .holecards,
+.seat .holecards .card,
+.seat .holecards .card::after{
+  position: relative;
+  z-index: 3 !important;
+}
+
+/* === FOLD : tout griser, y compris la mise === */
+.seat.status-fold :is(
+  .holecard1,.holecard2,.card,.player-cards,
+  .bet,.bet-chip,.dealer-btn,.dealer,.action-chip
+){
+  filter: grayscale(1) opacity(.45) !important;
 }
 
 .card {
@@ -140,61 +208,61 @@ body {
 /* ---------------------- */
 /* 5 joueurs sur la rangée du haut : seats 0 à 4 */
 #seat0 {
-    left: 72px;
+    left: 59px;
     top: -50px;
     overflow: visible;
   }
   .seat0-button {
-    left: 85px; /* anciennement 80 => 80 + 72 = 152 */
-    top: 290px;
+    left: 95px; /* anciennement 80 => 80 + 72 = 152 */
+    top: 300px;
   }
   #seat0 .bet {
     top: 135px;
   }
   
   #seat1 {
-    left: 192px; /* 120 + 72 */
+    left: 185px; /* 120 + 72 */
     top: -50px;
   }
   .seat1-button {
-    left: 205px; /* 200 + 72 */
-    top: 290px;
+    left: 220px; /* 200 + 72 */
+    top: 300px;
   }
   #seat1 .bet {
     top: 135px;
   }
   
   #seat2 {
-    left: 312px; /* 240 + 72 */
+    left: 311px; /* 240 + 72 */
     top: -50px;
   }
   .seat2-button {
-    left: 325px; /* 320 + 72 */
-    top: 290px;
+    left: 347px; /* 320 + 72 */
+    top: 300px;
   }
   #seat2 .bet {
     top: 135px;
   }
   
   #seat3 {
-    left: 432px; /* 360 + 72 */
+    left: 437px; /* 360 + 72 */
     top: -50px;
   }
   .seat3-button {
-    left: 445px; /* 440 + 72 */
-    top: 290px;
+    left: 474px; /* 440 + 72 */
+    top: 300px;
   }
   #seat3 .bet {
     top: 135px;
   }
   
   #seat4 {
-    left: 552px; /* 480 + 72 */
+    left: 563px; /* 480 + 72 */
     top: -50px;
   }
   .seat4-button {
-    left: 565px; /* 560 + 72 */
-    top: 290px;
+    left: 600px; /* 560 + 72 */
+    top: 300px;
   }
   #seat4 .bet {
     top: 135px;
@@ -202,60 +270,60 @@ body {
   
   /* 5 joueurs sur la rangée du bas : seats 5 à 9 */
   #seat9 {
-    left: 72px;
+    left: 59px;
     top: 225px;
   }
   .seat9-button {
     left: 95px;
-    top: 570px;
+    top: 575px;
   }
   #seat9 .bet {
     top: 140px;
   }
   
   #seat8 {
-    left: 192px;
+    left: 185px;
     top: 225px;
   }
   .seat8-button {
-    left: 215px;
-    top: 570px;
+    left: 221px;
+    top: 575px;
   }
   #seat8 .bet {
     top: 140px;
   }
   
   #seat7 {
-    left: 312px;
+    left: 311px;
     top: 225px;
   }
   .seat7-button {
-    left: 335px;
-    top: 570px;
+    left: 347px;
+    top: 575px;
   }
   #seat7 .bet {
     top: 140px;
   }
   
   #seat6 {
-    left: 432px;
+    left: 437px;
     top: 225px;
   }
   .seat6-button {
-    left: 455px;
-    top: 570px;
+    left: 474px;
+    top: 575px;
   }
   #seat6 .bet {
     top: 140px;
   }
   
   #seat5 {
-    left: 552px;
+    left: 563px;
     top: 225px;
   }
   .seat5-button {
-    left: 575px;
-    top: 570px;
+    left: 600px;
+    top: 575px;
   }
   #seat5 .bet {
     top: 140px !important;
@@ -317,12 +385,14 @@ body {
     top: -20px;
     left: 0px;
     width: 80px;
+    height: 95px !important;
   }
   .seat .holecards .holecard2 {
     position: absolute;
-    top: 95px;
+    top: 75px;
     left: 0px;
     width: 80px;
+    height: 96px !important;
   }
   
   /* ─────────────────────────────────────────────
@@ -347,16 +417,16 @@ body {
   
   /* ajustements de position/taille pour ton affichage bottom-left */
   .seat.my-seat .holecards .holecard1 {
-    top: 20px !important;
+    top: 60px !important;
     left: -63px !important;
     width: 118px !important;
-    height: 170px !important;
+    height: 142px !important;
   }
   .seat.my-seat .holecards .holecard2 {
-    top: 20px !important;
+    top: 60px !important;
     left: 65px !important;
     width: 118px !important;
-    height: 170px !important;
+    height: 142px !important;
   }
   
 
@@ -386,46 +456,157 @@ body {
   transition: background-color 0.3s ease;
 }
 
-#board-placeholders {
-  position: absolute;
-  top: -183px;             /* Ajustez selon vos besoins */
-  left: 50%;
-  transform: translateX(-50%);
-  width: 550px;          /* Largeur totale souhaitée */
-  height: 150px;         /* Hauteur totale */
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  z-index: 1;            /* En dessous des cartes réelles */
+/* === RAIL DES CARTES RÉELLES (aligne sur les placeholders) ========== */
+#board{
+  position: absolute !important;
+  top: -184px !important;         /* même hauteur que #board-placeholders */
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: 630px !important;        /* même largeur que #board-placeholders */
+  height: 150px !important;
+  display: flex !important;
+  justify-content: space-around !important;  /* ou: justify-content:center; gap:16px; */
+  align-items: center !important;
+  z-index: 3 !important;          /* au-dessus des placeholders (z-index:1) */
 }
 
-.board-placeholder {
-  width: 100px;          
-  height: 145px;
-  background-size: cover;
+/* Normalise CHAQUE carte du board (plus d’absolu ni d’offsets) */
+#flop1, #flop2, #flop3, #turn, #river,
+.boardcard, .card.boardcard{
+  position: static !important;
+  top: auto !important; left: auto !important; right: auto !important;
+  margin: 0 !important;
+  width: 120px !important;
+  height: 147px !important;
+  flex: 0 0 120px !important;     /* largeur fixe dans le flex */
+  border-radius: 14px !important;
+  background-size: cover !important;
+  background-position: center !important;
+}
+
+/* Supprime l’écartement parasite */
+#board .card{ margin-right: 0 !important; }
+
+/* Si tu utilises <img> à l’intérieur d’une div .boardcard */
+#flop1 img, #flop2 img, #flop3 img, #turn img, #river img,
+#board .boardcard img{
+  display:block; width:100%; height:100%; object-fit:cover; border-radius:14px;
+}
+
+
+/* === BOARD PLACEHOLDER — même design que .name-chips (sièges) === */
+/* dimensions & fadeIn restent les tiens */
+.board-placeholder{
+  position: relative;
+  width: 120px;
+  height: 147px;
   background-position: center;
-  border: 2px solid #aaa;  /* Cadre pour indiquer l'emplacement */
-  border-radius: 8px;
-  box-shadow: 0 0 8px rgba(0,0,0,0.5);
-  opacity: 0;
+  background-size: cover;
+
+  /* verre fumé identique aux sièges */
+  background:
+    radial-gradient(160% 140% at 50% 50%, transparent 60%, rgba(0,0,0,.25) 86%),
+    radial-gradient(90% 70%  at 50% 45%, var(--center-glow, rgba(0,210,255,.22)), transparent 60%),
+    linear-gradient(180deg, rgba(0,0,0,calc(var(--panel-alpha,.60)*.85)),
+                           rgba(0,0,0,var(--panel-alpha,.60))) !important;
+
+  border-radius: 15px;            /* tu gardes ton rayon */
+  border: 1px solid transparent;  /* le cadre néon arrive via ::after */
+  box-shadow: none;
+  isolation: isolate;
+  overflow: hidden;
+
+  opacity: 0;                     /* ton fondu d’origine */
   animation: fadeIn 1.5s ease forwards;
 }
 
-#ph-flop1 {
-  background-image: url('/static/images/chip1.png');
+/* scanlines verticales lentes + grain doux (mêmes que sièges) */
+.board-placeholder::before{
+  content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+  background:
+    repeating-linear-gradient(to bottom, rgba(255,255,255,var(--scan-alpha,.06)) 0 1px,
+                                         transparent 1px var(--scan-gap,4px)),
+    radial-gradient(100% 70% at 50% 45%, rgba(255,255,255,.04), transparent 60%);
+  opacity:.28;
+  mix-blend-mode: screen;
+  animation: seatScanY var(--scan-speed,14s) linear infinite;
 }
-#ph-flop2 {
-  background-image: url('/static/images/chip1.png');
+
+/* cadre néon turquoise fin + léger pulse (identique sièges) */
+.board-placeholder::after{
+  content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+  padding: 2px; /* épaisseur du trait */
+  background: linear-gradient(90deg, var(--seat-neon,#19e7ff), #0bd0ff, var(--seat-neon,#19e7ff));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: neonPulse 2.4s ease-in-out infinite;
 }
-#ph-flop3 {
-  background-image: url('/static/images/chip1.png');
+
+/* Place le rail, on garde tes dimensions */
+#board-placeholders{
+  position:absolute;
+  top:-184px;
+  left:50%;
+  transform:translateX(-50%);
+  width:630px;
+  height:150px;
+  display:flex;
+  justify-content:space-around; /* ou gap:16px; justify-content:center; */
+  align-items:center;
+  z-index:1;
 }
-#ph-turn {
-  background-image: url('/static/images/chip1.png');
+
+/* aligne les cartes comme les placeholders */
+#flop1,#flop2,#flop3,#turn,#river{
+  position:static !important;
+  left:auto !important;
+  width:120px !important;
+  height:147px !important;
+  flex:0 0 120px;
 }
-#ph-river {
-  background-image: url('/static/images/chip1.png');
+
+/* si ce sont des <img> dans ces divs */
+#flop1 img,#flop2 img,#flop3 img,#turn img,#river img{
+  display:block; width:100%; height:100%; object-fit:cover; border-radius:14px;
 }
+
+/* --- Board placeholders thème ORANGE NÉON --- */
+#board-placeholders.board-orange{
+  --ora-base: #fe833c;                                   /* orange principal (néon) */
+  --ora-hot:  color-mix(in oklab, var(--ora-base) 92%, #fff);
+  --ora-deep: color-mix(in oklab, var(--ora-base) 88%, #000);
+}
+
+/* fond “glass” + halo chaud lisible */
+#board-placeholders.board-orange .board-placeholder{
+  background:
+    /* halo central chaud (donne du relief sans cramer) */
+    radial-gradient(120% 90% at 50% 45%,
+      color-mix(in oklab, var(--ora-hot) 22%, #e8aaaa 6%) 0%,
+      transparent 62%),
+    /* vignette douce pour garder le contraste des bords */
+    radial-gradient(160% 140% at 50% 50%, transparent 64%, rgba(0,0,0,.18) 86%),
+    /* voile sombre modéré (évite le “trop sombre”) */
+    linear-gradient(180deg, rgba(0,0,0,.5), rgba(0,0,0,.7)) !important;
+}
+
+/* scanlines subtiles + reflets internes orange */
+#board-placeholders.board-orange .board-placeholder::before{
+  background:
+    repeating-linear-gradient(to bottom, rgba(255,255,255,.05) 0 1px, transparent 1px 4px),
+    radial-gradient(100% 70% at 50% 45%, color-mix(in oklab, var(--ora-hot) 18%, transparent), transparent 60%);
+  opacity:.32;
+}
+
+/* cadre néon orange + glow propre */
+#board-placeholders.board-orange .board-placeholder::after{
+  background: linear-gradient(90deg, #ed9645, var(--ora-base), #FFD2A8);
+  box-shadow:
+    0 0 18px color-mix(in oklab, var(--ora-base) 78%, transparent),
+    0 0 34px color-mix(in oklab, var(--ora-deep) 50%, transparent);
+}
+
+
 
 /* L'overlay qui affichera la carte réelle */
 .card-overlay {
@@ -453,11 +634,11 @@ body {
 #pot {
   position: absolute;
   /* Centre horizontalement */
-  left: 50%;
+  left: 40%;
   transform: translateX(-50%);
   /* Tu peux aussi centrer verticalement : */
   /* top: 50%; transform: translate(-50%, -50%); */
-  top: 185px;            /* Garde ta valeur verticale actuelle */
+  top: 180px;            /* Garde ta valeur verticale actuelle */
   
   color: white;
   font-size: 35px;
@@ -483,31 +664,6 @@ body {
   background-size: cover; /* Ou contain */
   border-radius: 4px;
   right: 400px;
-}
-
-#flop1 {
-  position: absolute;
-  left: 90px;
-}
-
-#flop2 {
-  position: absolute;
-    left: 200px;
-}
-
-#flop3 {
-    left: 310px;
-    position: absolute;
-}
-
-#turn {
-    left: 420px;
-    position: absolute;
-}
-
-#river {
-    left: 530px;
-    position: absolute;
 }
 
 #burn1 {
@@ -723,8 +879,8 @@ select {
   
   #fold-button {
     display: block;
-    width: 200px;
-    height: 160px;
+    width: 140px;
+    height: 132px;
     margin: 10px;
     background-image: url(http://localhost:3000/static/images/custom_D.png
     );
@@ -732,25 +888,27 @@ select {
     background-position: center;
     background-size: contain;
     cursor: pointer;
-    top: 279px;
+    top: 291px;
     z-index: 3;
-    right: 25px;
+    right: 116px;
+    border-radius: 10px !important;
   }
 
   #custom-raise {
     display: none;
-    width: 200px;
-    height: 160px;
+    width: 140px;
+    height: 132px;
     margin: 10px;
     background-image: url(http://localhost:3000/static/images/custom_X.png);
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
     cursor: pointer;
-    left: 230px;
-    top: 279px;
+    left: 140px !important;
+    top: 291px;
     z-index: 3;
     position: absolute;
+    border-radius: 10px !important;
   }
 
 
@@ -766,18 +924,19 @@ select {
   
   #call-button {
     display: block;
-    width: 200px;
-    height: 160px;
+    width: 140px;
+    height: 132px;
     margin: 10px;
     background-image: url(http://localhost:3000/static/images/custom_C.png );
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
     cursor: pointer;
-    right: 138px;
-    top: 279px;
+    right: 167px;
+    top: 291px;
     bottom: 50px;
     z-index: 3;
+    border-radius: 10px !important;
   }
 
   @keyframes fadeInCustomRaise {
@@ -798,54 +957,284 @@ select {
   
 /* Conteneur modal */
 /* La modal box toujours en bas, fond noir, etc. */
-#modal-box {
-  position: fixed;
-  bottom: 20px;               /* petite marge du bas */
-  left: 50%;                  /* point de référence pour le centrage */
-  transform: translateX(-50%);/* centre horizontalement */
-  max-width: 650px; /* ou toute autre valeur */
-  width: 90%;
-  background-color: #000;
-  border-top: 1px solid #666;
-  box-shadow: 0 -4px 8px rgba(0,0,0,0.3);
-  z-index: 10000;
-  max-height: 165px;
-  overflow-y: auto;
-  display: none;
-  transition: bottom 0.4s ease, width 0.2s ease;
-  padding: 4px;
-  box-sizing: border-box;
+/* === MODALE RAISE — OVERLAY CENTRÉ === */
+/* === OVERLAY + FENÊTRE === */
+/* —— Arcade / Cartoon theme for Raise Modal —— */
+/* (optionnel) Police pixel : fonctionne si Google Fonts est chargé dans ta page
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap'); */
+
+/* =========================
+   OVERLAY (toujours actif)
+   ========================= */
+/* Overlay */
+/* ===================== OVERLAY ===================== */
+#modal-box{
+  position: fixed; inset: 0;
+  display: none; align-items: center; justify-content: center;
+  background: radial-gradient(60% 50% at 50% 40%, rgba(0,0,0,.18), rgba(0,0,0,.30)), rgba(0,0,0,.10);
+  padding: min(4vw, 28px); z-index: 10000;
+}
+#modal-box *{ box-sizing: border-box; }
+@media (max-height:560px){ #modal-box{ align-items:flex-start; } }
+
+/* Thème arcade (overlay un poil plus sombre) */
+#modal-box.arcade{
+  background: radial-gradient(80% 60% at 50% 40%, rgba(0,0,0,.22), rgba(0,0,0,.34)), rgba(0,0,0,.08);
 }
 
-/* Disposition horizontale principale, 
-   align-items: stretch pour forcer la même hauteur de colonnes */
-.calc-horizontal-layout {
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: stretch; /* clé pour remplir la hauteur */
-  gap: 5px;  
-  width: 100%;
-  box-sizing: border-box;
+/* ===================== FENÊTRE — WIDE & LOW ===================== */
+#modal-box.arcade .raise-window{
+  position: relative;
+  width: 820px;               /* ← moins large par défaut (ajuste 780–900 si besoin) */
+  max-width: 96vw;
+  max-height: 36vh;           /* basse pour rester dans le tapis */
+  overflow: hidden;           /* scroll seulement dans .raise-body */
+  border-radius: 18px;
+  border: 5px solid rgba(46,240,255,.85);
+  background: rgba(11,15,26,.50);
+  backdrop-filter: blur(6px) saturate(115%); -webkit-backdrop-filter: blur(6px) saturate(115%);
+  box-shadow: 0 10px 0 0 #08101c, 0 0 32px 8px rgba(46,240,255,.30);
+  animation: fy-pop .16s ease-out;
+  cursor: grab;               /* drag */
+}
+#modal-box.arcade .raise-window:active{ cursor: grabbing; }
+#modal-box.arcade .raise-window::after{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background: repeating-linear-gradient(to bottom, rgba(255,255,255,.03) 0 2px, transparent 2px 4px);
+  mix-blend-mode: soft-light; opacity:.10;
 }
 
-/* Chaque colonne .calc-col a un fond sombre, s'étire en hauteur */
-.calc-col {
-  background: #111;
-  border: 1px solid #333;
-  border-radius: 4px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start; /* ou space-evenly / space-around selon l'effet voulu */
-  align-items: stretch;
-  padding: 4px;
-  box-sizing: border-box;
+/* ===================== HEADER ===================== */
+#modal-box.arcade .raise-head{
+  display:flex; align-items:center; gap:10px; padding:10px 12px;
+  background: linear-gradient(180deg,#121a2b,#0d1322 60%, #0a0f1a);
+  box-shadow: 0 3px 0 0 #07101c inset, 0 1px 0 rgba(255,255,255,.06);
+}
+#modal-box.arcade .raise-title{
+  margin:0; font:700 11px/1.1 "Press Start 2P", system-ui, sans-serif;
+  letter-spacing:.08em; color:#2ef0ff; text-shadow:0 0 8px rgba(46,240,255,.6);
+}
+#modal-box.arcade .calc-btn-x{
+  margin-left:auto; width:30px; height:30px; border-radius:10px;
+  background:#ff3f7a; border:3px solid #ffe0ea; color:#fff;
+  box-shadow:0 3px 0 #be2d57,0 0 10px rgba(255,63,122,.35);
+  font:700 16px/1 "Press Start 2P", system-ui, sans-serif; cursor:pointer;
 }
 
-.calc-col-display   { flex: 1;   }
-.calc-col-actions   { flex: 0.5; }
-.calc-col-presets   { flex: 0.5; }
-.calc-col-digits    { flex: 1.3; }
+/* ===================== CONTENU ===================== */
+#modal-box.arcade .raise-body{
+  padding:10px 12px 0;
+  max-height: calc(36vh - 46px);  /* réserve la place de Close */
+  overflow:auto;
+}
+
+/* grille horizontale: display | actions | presets | digits */
+#modal-box.arcade .calc-horizontal-layout{
+  display:grid; gap:10px;
+  grid-template-columns: 1.05fr 0.95fr 1.10fr 1.20fr;
+}
+
+/* cartes (colonnes) */
+#modal-box.arcade .calc-col{
+  background: linear-gradient(180deg, rgba(14,21,38,.74), rgba(10,15,26,.64));
+  border: 2px solid #2a3b55; border-radius:14px; padding:10px; gap:10px;
+  box-shadow: 0 4px 0 #050a12, 0 0 0 2px #0a1a2e inset;
+}
+
+/* titres de section + display */
+#modal-box.arcade .calc-title{
+  font:700 10px/1 "Press Start 2P", system-ui, sans-serif;
+  letter-spacing:.14em; color:#a9bbff; margin:0 0 6px;
+  text-shadow: 0 0 6px rgba(144,164,255,.45);
+}
+#modal-box.arcade .calc-display{
+  background: rgba(2,6,15,.56);
+  border: 2px solid #36507f; border-radius:12px;
+  color:#7CFF8A; font:700 20px/1.2 "Press Start 2P", monospace;
+  padding:10px 12px; text-align:right;
+  box-shadow: 0 0 0 2px #0b213f inset, 0 0 12px rgba(124,255,138,.16);
+}
+
+/* ===================== BOUTONS ===================== */
+#modal-box.arcade .calc-btn{
+  border-radius:12px; border:2px solid #ffd3bf;
+  background: linear-gradient(180deg,#ff8247 0%, #ff6b2d 70%, #e3541c 100%);
+  color:#fff; font:700 12px/1 "Press Start 2P", system-ui, sans-serif;
+  padding:9px 11px; text-shadow:0 2px 0 rgba(0,0,0,.25);
+  box-shadow:0 4px 0 #b44924, 0 0 12px rgba(255,107,45,.22);
+  min-height:36px;
+}
+#modal-box.arcade .calc-digit-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+#modal-box.arcade .calc-digit-grid .calc-btn{ min-height:36px; }
+#modal-box.arcade .calc-col-actions .calc-btn,
+#modal-box.arcade .calc-col-presets .calc-btn{ min-height:40px; }
+#modal-box.arcade .calc-col-actions .calc-btn{
+  background: linear-gradient(180deg,#48d2ff 0%, #2ebfff 70%, #1799d8 100%);
+  border-color:#c8f2ff; box-shadow:0 4px 0 #106a8f, 0 0 12px rgba(46,191,255,.28);
+}
+#modal-box.arcade .calc-col-presets .calc-btn{
+  background: linear-gradient(180deg,#ffd447 0%, #ffbe2d 70%, #e39d1a 100%);
+  border-color:#fff0c5; box-shadow:0 4px 0 #b57b18, 0 0 12px rgba(255,190,45,.28);
+}
+
+/* ===================== CLOSE ===================== */
+#modal-box.arcade .calc-row-close{
+  position: sticky; bottom: 0; z-index: 1;
+  padding: 10px 12px 12px;
+  background: linear-gradient(180deg, rgba(11,15,26,.001), rgba(11,15,26,.16));
+  backdrop-filter: blur(2px);
+}
+#modal-box.arcade .calc-close-btn{
+  width:100%;
+  background: linear-gradient(180deg,#7e59ff 0%, #6a48ff 70%, #4e38cc 100%);
+  border-color:#e4dbff; box-shadow:0 4px 0 #3b2a9d, 0 0 12px rgba(106,72,255,.28);
+  padding:10px 12px; border-radius:12px; color:#fff; font:700 12px/1 "Press Start 2P", system-ui, sans-serif;
+}
+
+/* ===================== JETONS (presets) ===================== */
+#modal-box.arcade .chip-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 12px; align-content: start;
+}
+#modal-box.arcade .chip{
+  position: relative; display: grid; place-items: center;
+  width: 84px; aspect-ratio: 1/1; border-radius: 50%;
+  border: 6px solid #0a0f1a;
+  box-shadow: 0 6px 0 #050a12, 0 0 0 3px rgba(255,255,255,.08) inset, 0 10px 18px rgba(0,0,0,.28);
+  cursor: pointer; transition: transform .12s ease, filter .12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+#modal-box.arcade .chip:hover{ filter: brightness(1.06); }
+#modal-box.arcade .chip:active{ transform: translateY(1px) scale(.98); }
+#modal-box.arcade .chip::before{
+  content:""; position:absolute; inset: 6px; border-radius: 50%;
+  background:
+    conic-gradient(from 0deg, rgba(255,255,255,.85) 0 10deg, transparent 10deg 20deg),
+    radial-gradient(circle at 50% 50%, transparent 58%, rgba(0,0,0,.35) 59% 62%, transparent 62%);
+  opacity: .32; mix-blend-mode: overlay; pointer-events: none;
+}
+#modal-box.arcade .chip span{
+  position: relative; z-index: 1; display: grid; place-items: center;
+  width: 58%; aspect-ratio: 1/1; border-radius: 50%;
+  background: rgba(0,0,0,.18);
+  box-shadow: 0 0 0 2px rgba(255,255,255,.25) inset, 0 8px 10px rgba(0,0,0,.25) inset;
+  color:#fff; font: 800 17px/1 "Press Start 2P", system-ui, sans-serif; text-shadow: 0 1px 0 rgba(0,0,0,.6);
+}
+/* couleurs par valeur + halo */
+#modal-box.arcade .chip-50   { background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.14), transparent 55%), linear-gradient(180deg,#2bd38a,#1fb56f 70%,#15945a);   box-shadow: 0 6px 0 #050a12,0 0 0 3px rgba(255,255,255,.08) inset,0 0 18px rgba(43,211,138,.35); }
+#modal-box.arcade .chip-100  { background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.14), transparent 55%), linear-gradient(180deg,#48d2ff,#2ebfff 70%,#1799d8);   box-shadow: 0 6px 0 #050a12,0 0 0 3px rgba(255,255,255,.08) inset,0 0 18px rgba(72,210,255,.35); }
+#modal-box.arcade .chip-200  { background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.14), transparent 55%), linear-gradient(180deg,#ffd447,#ffbe2d 70%,#e39d1a);   box-shadow: 0 6px 0 #050a12,0 0 0 3px rgba(255,255,255,.08) inset,0 0 18px rgba(255,212,71,.35); }
+#modal-box.arcade .chip-500  { background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.14), transparent 55%), linear-gradient(180deg,#a268ff,#8a54ff 70%,#6a3ddb);   box-shadow: 0 6px 0 #050a12,0 0 0 3px rgba(255,255,255,.08) inset,0 0 18px rgba(162,104,255,.35); }
+#modal-box.arcade .chip-1000 { background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.14), transparent 55%), linear-gradient(180deg,#ff6e5b,#ff553e 70%,#e04632); box-shadow: 0 6px 0 #050a12,0 0 0 3px rgba(255,255,255,.08) inset,0 0 18px rgba(255,110,91,.35); }
+
+/* Responsive jetons */
+@media (max-width: 720px){
+  #modal-box.arcade .chip{ width: 80px; }
+  #modal-box.arcade .chip span{ font-size: 16px; }
+}
+
+/* ===================== Poignée de redimensionnement (largeur) ===================== */
+#modal-box.arcade .resize-handle-x{
+  position: absolute; top: 0; right: -8px; width: 16px; height: 100%;
+  cursor: ew-resize; touch-action: none;
+  display: flex; align-items: center; justify-content: center;
+}
+#modal-box.arcade .resize-handle-x::after{
+  content: ""; width: 4px; height: 48px; border-radius: 3px;
+  background: rgba(46,240,255,.6); box-shadow: 0 0 12px rgba(46,240,255,.35); opacity: .7;
+}
+#modal-box.arcade .raise-window.resizing{ transition: none; }
+
+/* ===================== Anim ===================== */
+@keyframes fy-pop{
+  from{ transform: translateY(6px) scale(.985); opacity:0; }
+  to{   transform: translateY(0)   scale(1);     opacity:1; }
+}
+
+/* Presets: 3 rangées x 2 colonnes + jetons plus petits */
+#modal-box.arcade .chip-grid{
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 8px;                /* un peu moins d’espace */
+}
+
+#modal-box.arcade .chip{
+  width: 68px;             /* ← réduit (était ~84–92) */
+  border-width: 5px;       /* tranche un peu plus fine */
+  box-shadow:
+    0 5px 0 #050a12,
+    0 0 0 2px rgba(255,255,255,.08) inset,
+    0 8px 14px rgba(0,0,0,.26);
+}
+#modal-box.arcade .chip::before{ inset: 5px; } /* anneau adapté */
+
+#modal-box.arcade .chip span{
+  width: 58%;
+  font-size: 14px;         /* valeur lisible mais compacte */
+}
+
+/* Couleur et halo du nouveau jeton 2000 (rouge profond) */
+#modal-box.arcade .chip-2000{
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,.14), transparent 55%),
+    linear-gradient(180deg, #ff4d4d, #e83a3a 70%, #c82b2b);
+  box-shadow:
+    0 5px 0 #050a12,
+    0 0 0 2px rgba(255,255,255,.08) inset,
+    0 0 18px rgba(255,77,77,.35);
+}
+
+/* Les boutons (dont les chips) réagissent direct au tap */
+#modal-box.arcade button,
+#modal-box.arcade .chip { touch-action: manipulation; }
+
+/* avant (à supprimer ou écraser) */
+/* #modal-box.arcade .raise-window { cursor: grab; }
+#modal-box.arcade .raise-window:active { cursor: grabbing; } */
+
+/* après */
+#modal-box.arcade .raise-head { cursor: grab; }
+#modal-box.arcade .raise-head:active { cursor: grabbing; }
+
+/* au cas où : assure que les jetons capturent bien les taps/clics partout */
+#modal-box.arcade .chip,
+#modal-box.arcade .chip span { pointer-events: auto; touch-action: manipulation; }
+
+/* Option: si ça déborde encore, descends un cran :
+#modal-box.arcade .chip{ width: 64px; }
+#modal-box.arcade .chip span{ font-size: 13px; }
+*/
+#modal-box.arcade .calc-btn-x{
+  pointer-events: auto;
+  z-index: 3;            /* au-dessus de tout dans le header */
+}
+
+/* Sélection désactivée (drag agréable) */
+#modal-box.arcade, #modal-box.arcade *{ user-select: none; -webkit-user-select: none; }
+
+/* CHECK vert cyan */
+#modal-box.arcade .btn-check{
+  background: linear-gradient(180deg,#1fe2b9 0%, #16caa3 70%, #10a386 100%);
+  border-color:#baf6ec;
+  box-shadow: 0 4px 0 #0b7d69, 0 0 12px rgba(31,226,185,.28);
+}
+
+/* FOLD rouge */
+#modal-box.arcade .btn-fold{
+  background: linear-gradient(180deg,#ff6b6b 0%, #ff4e4e 70%, #e23939 100%);
+  border-color:#ffd6d6;
+  box-shadow: 0 4px 0 #a62f2f, 0 0 12px rgba(255,75,75,.28);
+}
+
+/* Assure une bonne hauteur sur toute la colonne actions */
+#modal-box.arcade .calc-col-actions .calc-btn{ min-height: 40px; }
+
+#modal-box.arcade .calc-btn:disabled{
+  opacity: .55;
+  filter: grayscale(.15);
+  cursor: not-allowed;
+  box-shadow: none;
+}
 
 /* Titre */
 .calc-title {
@@ -1054,13 +1443,6 @@ select {
 }
 
 /* S'applique aux cartes dans tout siège qui a la classe "winning-hand" */
-.winning-hand .holecards .card {
-  margin: 0 !important;
-  padding: 0 !important;
-  border: 3px solid yellow;
-  box-shadow: 0 0 8px yellow;
-  transition: border 0.3s ease, box-shadow 0.3s ease;
-}
 
 #seat0.winning-hand .holecards .card {
   border: none !important;
@@ -1200,11 +1582,6 @@ select {
 }
 
 /* ── Glow autour des cartes de la main gagnante ── */
-.seat.winning-hand .holecards .card {
-  box-shadow: 0 0 12px 4px yellow !important;
-  border-radius: 4px;
-  transition: box-shadow 0.3s ease;
-}
 
 .mode-selector {
   display: flex;
@@ -1394,4 +1771,1789 @@ select {
 .my-cards-container .card {
   width: 50px;  /* largeur d’une carte */
   height: 60px; /* hauteur d’une carte */
+}
+
+/* overlay plein écran */
+#warning-modal {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+/* boîte blanche centrée */
+#warning-modal .warning-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+
+/* message */
+#warning-modal .warning-content p {
+  font-size: 1.25rem;
+  color: #333;
+  margin-bottom: 1.5rem;
+  font-weight: bold;
+}
+
+/* bouton OK */
+#warning-modal .warning-content button {
+  padding: 0.75rem 1.5rem;
+  font-size: 1.2rem;
+  background: #ff9100;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+#warning-modal .warning-content button:hover {
+  background: #e08100;
+}
+
+/* === WAITING ROOM — SKIN ARCADE (aucun changement JS requis) ========== */
+/* Le seul prérequis : avoir un élément <div id="waiting-count"></div> dans ta page. */
+
+#waiting-count{
+  /* on convertit cet élément en "overlay + carte" arcade */
+  position: fixed;
+  left: 50%; top: 50%; transform: translate(-50%, -50%);
+  z-index: 12000;
+
+  /* carte glass */
+  min-width: min(420px, 92vw);
+  max-width: 92vw;
+  padding: 20px 24px;
+  border-radius: 18px;
+  border: 5px solid rgba(46,240,255,.85);
+  background: rgba(11,15,26,.72);
+  backdrop-filter: blur(6px) saturate(115%);
+  -webkit-backdrop-filter: blur(6px) saturate(115%);
+  box-shadow: 0 12px 0 #07101c, 0 0 36px rgba(46,240,255,.35);
+
+  /* typo arcade */
+  font: 700 14px/1.3 "Press Start 2P", system-ui, sans-serif;
+  letter-spacing: .04em;
+  color: #a9bbff;
+  text-align: center;
+  text-shadow: 0 0 6px rgba(169,187,255,.35);
+}
+
+/* Overlay sombre + grille néon (pas besoin d’autres éléments) */
+#waiting-count::before{
+  content: "";
+  position: fixed; inset: 0;         /* couvre tout l’écran */
+  z-index: -1;                       /* derrière la carte mais au-dessus du jeu */
+  background:
+    radial-gradient(80% 60% at 50% 40%, rgba(0,0,0,.40), rgba(0,0,0,.85)),
+    linear-gradient(180deg,#0a0f1a,#0b0f1a 60%, #070b13);
+}
+#waiting-count::after{
+  /* grille animée légère */
+  content: "";
+  position: fixed; inset: 0; z-index: -1; opacity: .22;
+  background:
+    linear-gradient(transparent 31px, rgba(46,240,255,.25) 32px),
+    linear-gradient(90deg, transparent 31px, rgba(46,240,255,.25) 32px);
+  background-size: 32px 32px;
+  animation: waiting-scan 14s linear infinite;
+}
+
+/* ligne de progression animée, décorative (option) */
+#waiting-count{
+  --bar-h: 12px;
+  background-image:
+    linear-gradient(90deg,#48d2ff,#7e59ff);           /* barre */
+  background-repeat: no-repeat;
+  background-size: 0% var(--bar-h);                   /* rempli en JS si tu veux, sinon animé */
+  background-position: left calc(100% - 10px);
+}
+@keyframes waiting-scan{
+  from{ background-position: 0 0, 0 0; }
+  to  { background-position: 0 256px, 256px 0; }
+}
+
+/* petit pouls sur le texte pour le côté “arcade vivant” */
+@media (prefers-reduced-motion: no-preference){
+  #waiting-count{ animation: waiting-pop .18s ease-out; }
+  @keyframes waiting-pop{
+    from{ transform: translate(-50%,-52%) scale(.985); opacity:0; }
+    to  { transform: translate(-50%,-50%) scale(1);     opacity:1; }
+  }
+}
+
+/* Responsive */
+@media (max-width: 480px){
+  #waiting-count{ font-size: 12px; padding: 16px 18px; }
+}
+
+/* ========= WAITING PILL — ARCADE ========= */
+/* Requis côté HTML/JS : juste un élément #waiting-count dont le texte est mis à jour. */
+
+#waiting-count{
+  position: fixed; left:50%; top:50%; transform:translate(-50%,-50%);
+  z-index: 12000;
+
+  /* capsule */
+  --pill-w: clamp(260px, 42vw, 560px);
+  --pill-h: 58px;
+  width: var(--pill-w); min-height: var(--pill-h);
+  padding: 14px 22px;
+
+  display: grid; place-items: center;
+  border-radius: 18px;
+  border: 4px solid rgba(46,240,255,.9);
+  background:
+    radial-gradient(120% 140% at 50% 0%, rgba(255,255,255,.06), rgba(255,255,255,0) 55%),
+    rgba(10,14,24,.72);
+  backdrop-filter: blur(6px) saturate(115%);
+  -webkit-backdrop-filter: blur(6px) saturate(115%);
+  box-shadow:
+    0 10px 0 #07101c,
+    0 0 22px 6px rgba(46,240,255,.35);
+
+  /* typo arcade */
+  font: 700 13px/1.2 "Press Start 2P", system-ui, sans-serif;
+  letter-spacing:.04em;
+  color:#cfe2ff; text-shadow:0 0 8px rgba(168,188,255,.25);
+  text-align:center;
+
+  /* anim d’apparition */
+  animation: wc-pop .18s ease-out;
+}
+
+/* halo externe doux */
+#waiting-count::before{
+  content:"";
+  position:absolute; inset:-16px; border-radius:26px; pointer-events:none;
+  background: radial-gradient(55% 60% at 50% 48%, rgba(46,240,255,.25), transparent 60%);
+  filter: blur(10px); opacity:.9;
+}
+
+/* décor interne : scanlines + reflet + barre de progression */
+#waiting-count::after{
+  content:"";
+  position:absolute; inset:0; border-radius:14px; pointer-events:none;
+  background:
+    /* 1) scanlines très fines */
+    repeating-linear-gradient(to bottom, rgba(255,255,255,.06) 0 2px, transparent 2px 4px),
+    /* 2) glossy highlight sur le haut */
+    linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,0) 28%),
+    /* 3) barre de progression en bas (voir --wc-pct plus bas) */
+    linear-gradient(90deg, #48d2ff, #7e59ff) bottom left / calc(var(--wc-pct, 25%)) 6px no-repeat;
+  mix-blend-mode: soft-light;
+  opacity:.9;
+  /* petit défilement des scanlines */
+  animation: wc-scan 10s linear infinite;
+}
+
+/* liseré intérieur vibrant (effet “tron”) */
+#waiting-count .wc-ring{ display:none; } /* (placeholder si besoin un jour) */
+
+/* plein écran sombre léger derrière la capsule (reste moderne & discret) */
+#waiting-count:has(+ *)::backdrop { background: none; } /* harmless */
+
+/* ===== Animations ===== */
+@keyframes wc-pop{
+  from{ transform:translate(-50%,-52%) scale(.985); opacity:0; }
+  to  { transform:translate(-50%,-50%) scale(1);     opacity:1; }
+}
+@keyframes wc-scan{
+  from{ background-position: 0 0, 0 0, 0 calc(100% - 6px); }
+  to  { background-position: 0 256px, 0 0, 0 calc(100% - 6px); }
+}
+
+/* ===== Responsif ===== */
+@media (max-width: 480px){
+  #waiting-count{ --pill-h: 52px; font-size:11px; padding: 12px 16px; }
+}
+
+/* ===== Waiting pill — bigger font ===== */
+#waiting-count{
+  /* hauteur + padding un peu plus généreux */
+  --pill-h: 70px;
+  padding: 18px 26px;
+
+  /* taille de police adaptative (mobile → desktop) */
+  font-size: clamp(14px, 1.9vw, 20px);
+  line-height: 1.25;
+  letter-spacing: .05em;
+
+  /* un glow un peu plus présent */
+  text-shadow: 0 0 10px rgba(168,188,255,.35);
+  box-shadow:
+    0 12px 0 #07101c,
+    0 0 28px 8px rgba(46,240,255,.38);
+  border-width: 5px;
+}
+
+/* barre de progression un chouïa plus épaisse */
+#waiting-count::after{
+  background:
+    repeating-linear-gradient(to bottom, rgba(255,255,255,.06) 0 2px, transparent 2px 4px),
+    linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,0) 28%),
+    linear-gradient(90deg, #48d2ff, #7e59ff) bottom left / calc(var(--wc-pct, 25%)) 8px no-repeat;
+}
+
+/* mobile: garde lisible mais compact */
+@media (max-width: 480px){
+  #waiting-count{
+    --pill-h: 62px;
+    font-size: 16px;        /* force un minimum lisible sur petit écran */
+    padding: 16px 20px;
+  }
+}
+
+/* ========= WAITING PILL — ARCADE (Neon Pill+) ========= */
+#waiting-count{
+  position: fixed; left:50%; top:50%; transform:translate(-50%,-50%);
+  z-index: 12000;
+  /* capsule */
+  --pill-w: clamp(280px, 44vw, 620px);
+  --pill-h: 76px;
+  --wc-pct: 0%;                 /* largeur de la barre de progression (remplie par JS) */
+  width: var(--pill-w); min-height: var(--pill-h);
+  padding: 18px 28px; border-radius: 20px;
+  border: 5px solid rgba(46,240,255,.95);
+  background:
+    radial-gradient(120% 140% at 50% 0%, rgba(255,255,255,.06), rgba(255,255,255,0) 58%),
+    rgba(10,14,24,.75);
+  backdrop-filter: blur(7px) saturate(120%); -webkit-backdrop-filter: blur(7px) saturate(120%);
+  box-shadow: 0 12px 0 #07101c, 0 0 34px 10px rgba(46,240,255,.38);
+
+  /* typo arcade */
+  font: 700 16px/1.25 "Press Start 2P", system-ui, sans-serif;
+  letter-spacing:.05em; color:#e6f0ff; text-align:center;
+  text-shadow: 0 0 10px rgba(168,188,255,.35);
+
+  animation: wc-pop .18s ease-out;
+}
+
+/* halo externe */
+#waiting-count::before{
+  content:""; position:absolute; inset:-18px; border-radius:28px; pointer-events:none;
+  background: radial-gradient(55% 60% at 50% 48%, rgba(46,240,255,.25), transparent 60%);
+  filter: blur(12px); opacity:.95;
+}
+
+/* scanlines + glossy + barre de progression (bas) */
+#waiting-count::after{
+  content:""; position:absolute; inset:0; border-radius:16px; pointer-events:none;
+  background:
+    repeating-linear-gradient(to bottom, rgba(255,255,255,.06) 0 2px, transparent 2px 4px),
+    linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,0) 28%),
+    linear-gradient(90deg, #48d2ff, #7e59ff) bottom left / var(--wc-pct) 8px no-repeat;
+  mix-blend-mode: soft-light; opacity:.95; animation: wc-scan 11s linear infinite;
+}
+
+/* petits scintillements discrets */
+#waiting-count .stars{
+  position:absolute; inset:0; pointer-events:none;
+  background:
+    radial-gradient(2px 2px at 10% 60%, rgba(255,255,255,.6), transparent 60%),
+    radial-gradient(2px 2px at 60% 30%, rgba(255,255,255,.45), transparent 60%),
+    radial-gradient(2px 2px at 85% 65%, rgba(255,255,255,.5), transparent 60%);
+  opacity:.35; animation: twinkle 2.2s ease-in-out infinite;
+}
+
+/* “...” animés pour le texte (option) */
+#waiting-count .dots::after{
+  content: "• • •"; margin-left: .6em; letter-spacing:.35em; color:#7ec9ff;
+  text-shadow: 0 0 8px rgba(126,201,255,.45);
+  animation: dots 1.4s steps(3,end) infinite;
+}
+
+/* animations */
+@keyframes wc-pop{ from{transform:translate(-50%,-52%) scale(.985); opacity:0} to{transform:translate(-50%,-50%) scale(1); opacity:1} }
+@keyframes wc-scan{ from{background-position:0 0, 0 0, 0 100%} to{background-position:0 256px, 0 0, 0 100%} }
+@keyframes twinkle{ 0%,100%{opacity:.15} 50%{opacity:.45} }
+@keyframes dots{ 0%{opacity:.2} 50%{opacity:1} 100%{opacity:.2} }
+
+/* responsive */
+@media (max-width: 480px){
+  #waiting-count{ --pill-h: 64px; font-size: 14px; padding: 16px 20px; border-width:4px; }
+}
+
+/* === WAITING PILL — OVERRIDES : no bar, bigger & centered === */
+#waiting-count{
+  /* plus grand */
+  --pill-w: clamp(420px, 58vw, 860px);
+  --pill-h: 96px;
+  width: var(--pill-w);
+  min-height: var(--pill-h);
+  padding: 28px 36px;
+
+  /* typo plus grande et bien centrée */
+  font-size: clamp(18px, 2.3vw, 28px);
+  line-height: 1.3;
+  letter-spacing: .06em;
+  text-align: center;
+
+  /* cadre plus “épais” */
+  border-width: 6px;
+  box-shadow:
+    0 14px 0 #07101c,
+    0 0 36px 10px rgba(46,240,255,.42);
+}
+
+/* on garde scanlines + reflet, mais on RETIRE la barre de progression */
+#waiting-count::after{
+  content:"";
+  position:absolute; inset:0; border-radius:18px; pointer-events:none;
+  background:
+    /* scanlines fines */
+    repeating-linear-gradient(to bottom, rgba(255,255,255,.06) 0 2px, transparent 2px 4px),
+    /* glossy sur le haut */
+    linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,0) 28%);
+  mix-blend-mode: soft-light;
+  opacity:.95;
+  animation: wc-scan 11s linear infinite;
+}
+
+/* halo un peu plus large */
+#waiting-count::before{
+  inset: -22px; border-radius: 32px; filter: blur(14px);
+}
+
+/* Option : espace plus propre entre “…” et le ratio */
+#waiting-count .dots::after{ margin-left: .8em; }
+
+/* Mobile */
+@media (max-width: 480px){
+  #waiting-count{
+    --pill-h: 82px;
+    font-size: 18px;
+    padding: 22px 26px;
+    border-width: 5px;
+  }
+}
+
+/* === Fix dépassement sous la capsule d’attente === */
+#waiting-count{
+  /* on supprime l'ombre pleine verticale et on garde un drop-shadow doux */
+  box-shadow: 0 18px 28px rgba(0,0,0,.55),        /* ombre floue, pas de “bande” */
+              0 0 36px 10px rgba(46,240,255,.42); /* glow néon */
+  --r: 22px;                                      /* même rayon partout */
+  border-radius: var(--r);
+}
+
+/* halo extérieur : même rayon + marge */
+#waiting-count::before{
+  inset: -22px;
+  border-radius: calc(var(--r) + 10px);
+}
+
+/* calque interne (scanlines/reflet) : même rayon, pas de fuite */
+#waiting-count::after{
+  border-radius: calc(var(--r) - 4px);
+}
+
+/* (optionnel) si tu veux forcer le clipping de tout ce qui est interne */
+#waiting-count{ overflow: hidden; }
+
+/* ==== END OVERLAY — SAFE RESET ==== */
+
+/* Conteneur plein écran */
+.arcade-overlay{ position:fixed; inset:0; z-index:13000; pointer-events:auto; }
+
+/* Fond simple (noir dégradé) */
+.arcade-overlay .ao-bg{
+  position:absolute; inset:0;
+  background: radial-gradient(80% 60% at 50% 40%, rgba(0,0,0,.35), rgba(0,0,0,.88));
+}
+
+/* ---------- CARTE (bannière) ---------- */
+.arcade-overlay .ao-card{
+  position:absolute; left:50%; top:50%;
+  transform: translate(-50%, -50%);
+  width: min(1100px, 94vw);
+  height: clamp(120px, 18vh, 180px);
+  border-radius: 18px;
+  background: linear-gradient(180deg, #101727, #0b111d);
+  border: 4px solid #2ef0ff;
+  box-shadow: 0 18px 36px rgba(0,0,0,.55), 0 0 44px rgba(46,240,255,.40);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* Enlève TOUT ancien ::before/::after résiduel */
+.arcade-overlay .ao-card::before,
+.arcade-overlay .ao-card::after { content: none !important; }
+
+/* Win/Lose variations (glow) */
+.arcade-overlay.win  .ao-card{ border-color:#2ef0ff; box-shadow:0 18px 36px rgba(0,0,0,.55), 0 0 44px rgba(46,240,255,.40); }
+.arcade-overlay.lose .ao-card{ border-color:#ff6e5b; box-shadow:0 18px 36px rgba(0,0,0,.55), 0 0 44px rgba(255,110,91,.40); }
+
+/* ---------- EN-TÊTE ---------- */
+.arcade-overlay .ao-head{
+  display:flex; align-items:center; gap:12px;
+  padding: 14px 18px; background: transparent;
+}
+.arcade-overlay .ao-title{
+  margin:0;
+  font: 700 clamp(26px, 3vw, 40px)/1.1 "Press Start 2P", system-ui, sans-serif;
+  letter-spacing: .06em; color:#eafaff;
+  text-shadow: 0 0 10px rgba(234,250,255,.35);
+}
+.arcade-overlay.lose .ao-title{ color:#ffe2dc; text-shadow: 0 0 10px rgba(255,110,91,.45); }
+
+.arcade-overlay .ao-x{
+  margin-left:auto; width:40px; height:40px; border-radius:10px; cursor:pointer;
+  background:#ff3f7a; border:3px solid #ffe0ea; color:#fff;
+  box-shadow:0 3px 0 #be2d57, 0 0 10px rgba(255,63,122,.30);
+  font:700 18px/1 "Press Start 2P", system-ui, sans-serif;
+}
+
+/* ---------- CONTENU ---------- */
+.arcade-overlay .ao-body{
+  flex:1; display:flex; align-items:center; justify-content:center;
+  padding: 0 22px; position: relative; overflow:hidden;
+}
+.arcade-overlay .ao-sub{
+  margin:0; text-align:center; color:#e6f0ff;
+  font:700 clamp(16px, 2.1vw, 22px)/1.35 "Press Start 2P", system-ui, sans-serif;
+  letter-spacing:.05em; text-shadow:0 0 8px rgba(255,255,255,.18);
+}
+.arcade-overlay .ao-sub.lose-main{ color:#ffcf88; text-shadow:0 0 8px rgba(255,207,136,.28); }
+
+/* ---------- SHIMMER discret ---------- */
+.arcade-overlay .ao-shimmer{
+  position:absolute; left:-25%; right:-25%; top:0; height:45%;
+  background: linear-gradient(180deg, transparent 0%, rgba(255,255,255,.05) 55%, transparent 100%);
+  transform: translateX(-25%); filter: blur(.5px); opacity:.7; pointer-events:none;
+  animation: aoShimmer 4.8s ease-in-out infinite;
+}
+@keyframes aoShimmer{
+  0% { transform:translateX(-25%); opacity:.6; }
+  50%{ transform:translateX(25%);  opacity:.85; }
+  100%{ transform:translateX(-25%); opacity:.6; }
+}
+
+/* ---------- MARQUEE DE JETONS (optionnel) ---------- */
+/* on réduit et on fixe en bas de la carte, pas de débordement écran */
+.arcade-overlay .ao-chip-marquee{
+  position:absolute; left:10px; right:10px; bottom:8px; height:18px;
+  overflow:hidden; pointer-events:none; opacity:.85;
+}
+.arcade-overlay .ao-chip-track{
+  position:absolute; left:0; top:0; height:100%; display:flex; gap:10px;
+  animation: aoScroll 16s linear infinite;
+}
+@keyframes aoScroll{ from{ transform: translateX(0) } to{ transform: translateX(-50%) } }
+.arcade-overlay .ao-chip{
+  flex:0 0 18px; width:18px; height:18px; border-radius:50%;
+  border:3px solid #0a0f1a; box-shadow:0 2px 0 #050a12, 0 0 0 2px rgba(255,255,255,.08) inset;
+}
+.ao-chip.c50  { background: linear-gradient(180deg,#2bd38a,#15945a); }
+.ao-chip.c100 { background: linear-gradient(180deg,#48d2ff,#1799d8); }
+.ao-chip.c200 { background: linear-gradient(180deg,#ffd447,#e39d1a); }
+.ao-chip.c500 { background: linear-gradient(180deg,#a268ff,#6a3ddb); }
+.ao-chip.c1k  { background: linear-gradient(180deg,#ff6e5b,#e04632); }
+
+/* ==== Dynamique soft pour le banner de fin ==== */
+
+/* glow qui respire (très discret) */
+.arcade-overlay .ao-card{
+  animation: aoGlow 3.6s ease-in-out infinite alternate;
+}
+@keyframes aoGlow{
+  from{ box-shadow:0 18px 36px rgba(0,0,0,.55), 0 0 34px rgba(46,240,255,.32), 0 0 70px rgba(46,240,255,.18); }
+  to  { box-shadow:0 18px 36px rgba(0,0,0,.55), 0 0 46px rgba(46,240,255,.46), 0 0 120px rgba(46,240,255,.28); }
+}
+.arcade-overlay.lose .ao-card{
+  animation-name: aoGlowLose;
+}
+@keyframes aoGlowLose{
+  from{ box-shadow:0 18px 36px rgba(0,0,0,.55), 0 0 34px rgba(255,110,91,.32), 0 0 70px rgba(255,110,91,.18); }
+  to  { box-shadow:0 18px 36px rgba(0,0,0,.55), 0 0 46px rgba(255,110,91,.46), 0 0 120px rgba(255,110,91,.28); }
+}
+
+/* fines scanlines qui défilent lentement, rappel arcade */
+.arcade-overlay .ao-body::before{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:
+    repeating-linear-gradient(to bottom, rgba(255,255,255,.03) 0 2px, transparent 2px 4px);
+  opacity:.25;
+  animation: aoScan 10s linear infinite;
+}
+@keyframes aoScan{
+  from{ transform: translateY(0) }
+  to  { transform: translateY(8px) }
+}
+
+/* shimmer doux déjà présent ; on garde */
+.arcade-overlay .ao-shimmer{
+  position:absolute; left:-25%; right:-25%; top:0; height:45%;
+  background:linear-gradient(180deg,transparent 0%,rgba(255,255,255,.05) 55%,transparent 100%);
+  transform:translateX(-25%); filter:blur(.5px); opacity:.7; pointer-events:none;
+  animation: aoShimmer 4.8s ease-in-out infinite;
+}
+@keyframes aoShimmer{
+  0%{ transform:translateX(-25%); opacity:.6 }
+  50%{ transform:translateX(25%);  opacity:.85 }
+  100%{ transform:translateX(-25%); opacity:.6 }
+}
+
+/* séparateur de points animé (comme la waiting room) */
+.arcade-overlay .ao-dots{
+  display:block; width:min(280px,40%); height:10px; margin:10px auto 0;
+  background:
+    radial-gradient(circle at 4px 50%, rgba(146,198,255,.55) 0 2px, transparent 3px) repeat-x;
+  background-size: 18px 10px;
+  background-position: 0 0;
+  opacity:.9;
+  animation: aoDots 3.2s linear infinite;
+}
+@keyframes aoDots{
+  to{ background-position: -18px 0; }
+}
+
+/* underline discret (on garde si tu l'as) */
+.arcade-overlay .ao-underline{
+  position:absolute; left:14px; right:14px; bottom:12px; height:3px; border-radius:3px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);
+  opacity:.35; overflow:hidden;
+}
+.arcade-overlay .ao-underline::before{
+  content:""; position:absolute; left:-20%; right:-20%; top:0; bottom:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.65),transparent);
+  animation: aoUnderline 3.6s ease-in-out infinite;
+}
+@keyframes aoUnderline{
+  0%{ transform:translateX(-20%) }
+  50%{ transform:translateX(20%) }
+  100%{ transform:translateX(-20%) }
+}
+
+/* === End banner: plus étroit et bien centré === */
+.arcade-overlay .ao-card{
+  width: min(760px, 86vw);   /* ← ajuste ici (ex: 700–820) */
+  height: clamp(110px, 16vh, 160px);
+}
+
+/* un peu plus de marge interne pour le texte */
+.arcade-overlay .ao-head{ padding: 12px 16px; }
+.arcade-overlay .ao-body{ padding: 6px 18px 14px; }
+.arcade-overlay .ao-title{
+  font: 700 clamp(22px, 2.6vw, 34px)/1.1 "Press Start 2P", system-ui, sans-serif;
+}
+.arcade-overlay .ao-sub{
+  font: 700 clamp(14px, 1.8vw, 20px)/1.35 "Press Start 2P", system-ui, sans-serif;
+}
+
+/* option: encore plus étroit sur petits écrans */
+@media (max-width: 560px){
+  .arcade-overlay .ao-card{ width: min(92vw, 640px); height: clamp(110px, 20vh, 150px); }
+}
+
+/* ==== Fond dynamique du banner (overlay) ==== */
+
+/* base sombre + vignette respirante */
+.arcade-overlay .ao-bg{
+  position:absolute; inset:0;
+  background:
+    radial-gradient(90% 70% at 50% 40%, rgba(0,0,0,.30), rgba(0,0,0,.88)),
+    linear-gradient(180deg,#070b13,#0a0f1a 60%, #070b13);
+  animation: bgBreath 6s ease-in-out infinite;
+}
+@keyframes bgBreath{
+  0%   { filter: brightness(1) }
+  50%  { filter: brightness(1.06) }
+  100% { filter: brightness(1) }
+}
+
+/* couche 1 : “aurora” (voiles colorés très doux) */
+.arcade-overlay .ao-bg::before{
+  content:""; position:absolute; inset:-12%;
+  background:
+    radial-gradient(120% 70% at 15% 25%, rgba(46,240,255,.10), transparent 60%),
+    radial-gradient(120% 70% at 85% 70%, rgba(126,89,255,.12), transparent 60%),
+    radial-gradient(120% 70% at 50% 95%, rgba(43,211,138,.08), transparent 60%);
+  filter: blur(18px) saturate(115%);
+  animation: auroraDrift 11s ease-in-out infinite alternate;
+  pointer-events:none;
+}
+@keyframes auroraDrift{
+  0%   { transform: translate(-2%, -1%) rotate(0.4deg); opacity:.85; }
+  100% { transform: translate(2%,  1%) rotate(-0.4deg); opacity:1; }
+}
+
+/* couche 2 : bokeh léger qui dérive */
+.arcade-overlay .ao-bg::after{
+  content:""; position:absolute; inset:-20% -10% -15% -10%;
+  background:
+    radial-gradient(12px 12px at 10% 20%, rgba(255,255,255,.06), transparent 60%),
+    radial-gradient(10px 10px at 35% 75%, rgba(255,255,255,.05), transparent 60%),
+    radial-gradient(8px  8px  at 70% 30%, rgba(255,255,255,.05), transparent 60%),
+    radial-gradient(12px 12px at 85% 60%, rgba(255,255,255,.06), transparent 60%),
+    radial-gradient(9px  9px  at 55% 15%, rgba(255,255,255,.05), transparent 60%);
+  filter: blur(1px);
+  animation: bokehFloat 16s linear infinite;
+  pointer-events:none;
+}
+@keyframes bokehFloat{
+  0%   { transform: translateY(0) }
+  100% { transform: translateY(-12px) }
+}
+
+/* fine “scanline” horizontale sur tout l’overlay (rappel arcade) */
+.arcade-overlay::after{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background: repeating-linear-gradient(
+    to bottom, rgba(255,255,255,.03) 0 2px, transparent 2px 4px
+  );
+  opacity:.22; mix-blend-mode: soft-light;
+  animation: scanSlide 12s linear infinite;
+}
+@keyframes scanSlide{
+  from{ transform: translateY(0) }
+  to  { transform: translateY(10px) }
+}
+
+
+/* === SEATS — STYLE COMME TA 2e IMAGE =============================== */
+/* (garde width/height/top/left existants) */
+
+.seat{ overflow: visible; } /* pour que le glow ne soit jamais coupé */
+
+/* Fond sombre translucide, sans bandes — “verre fumé” */
+.name-chips{
+  position:absolute;
+  background: linear-gradient(180deg, rgba(0,8,12,.62), rgba(0,8,12,.76)) !important;
+  border-radius:14px;
+  border: 1px solid transparent;     /* le cadre néon arrive via ::after */
+  box-shadow:none !important;         /* on nettoie les ombres précédentes */
+  color:#eaf9ff; font-weight:700; line-height:33px;
+  isolation:isolate; overflow:hidden; z-index:1;
+}
+
+/* Léger “flux” bleu interne, doux, sans rayures visibles */
+@keyframes fyFlow {
+  0%   { background-position: 0 0,  0 0; }
+  100% { background-position: 220px 0, -160px 0; }
+}
+.name-chips::before{
+  content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+  background:
+    radial-gradient(100% 80% at 20% 25%, rgba(0,188,255,.20), transparent 60%),
+    radial-gradient(120% 90% at 80% 75%, rgba(0,188,255,.14), transparent 60%);
+  mix-blend-mode: screen; opacity:.9;
+  animation: fyFlow 10s linear infinite;
+}
+
+/* Cadre bleu très net + glow, comme sur ta 2e image */
+@keyframes fyNeonPulse {
+  0%,100% { box-shadow: 0 0 12px rgba(0,234,255,.75), 0 0 26px rgba(0,234,255,.45); }
+  50%     { box-shadow: 0 0 18px rgba(0,234,255,.95), 0 0 40px rgba(0,234,255,.60); }
+}
+.name-chips::after{
+  content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+  /* anneau uniquement sur le contour (épaisseur = padding) */
+  padding:1.5px;                                /* ~1.5–2px comme ta 2e image */
+  background: linear-gradient(90deg,#00eaff,#00c8ff,#00eaff);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: fyNeonPulse 2.2s ease-in-out infinite;
+}
+
+/* Accent léger au hover/active (sans bouger la position) */
+.seat:hover .name-chips{ filter: brightness(1.06) saturate(1.08); }
+.seat:active .name-chips{ transform: translateY(1px); }
+
+/* Optionnel : sur TON siège, intensifie un peu le néon (comme focus) */
+.seat.me .name-chips::after{
+  animation-duration: 1.8s;
+}
+
+/* === SEAT PANEL — effet comme ta capture ============================ */
+/* Réglages rapides */
+/* transparence contrôlée */
+:root{
+  --seat-neon: #19e7ff;
+  --panel-alpha: .60;                 /* transparence du fond (↑ = moins transparent) */
+  --center-glow: rgba(0,210,255,.22); /* halo central discret */
+  --scan-alpha: .06;
+  --scan-gap: 4px;
+  --scan-speed: 14s;
+}
+
+.name-chips{
+  position:absolute; border-radius:14px; overflow:hidden; isolation:isolate; z-index:1;
+  /* FOND NOIR TRANSPARENT + halo + vignette douce */
+  background:
+    radial-gradient(160% 140% at 50% 50%, transparent 60%, rgba(0,0,0,.25) 86%),
+    radial-gradient(90% 70%  at 50% 45%, var(--center-glow), transparent 60%),
+    linear-gradient(180deg, rgba(0,0,0,calc(var(--panel-alpha)*.85)),
+                           rgba(0,0,0,var(--panel-alpha))) !important;
+  border:1px solid transparent; box-shadow:none !important;
+  color:#eaf9ff; font-weight:700; line-height:33px;
+}
+
+
+/* scanlines horizontales fines + défilement VERTICAL très lent */
+@keyframes seatScanY{
+  0%   { background-position: 0 0, 0 0; }
+  100% { background-position: 0 calc(var(--scan-gap)*4), 0 0; } /* boucle clean */
+}
+.name-chips::before{
+  content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+  /* 1) fines lignes  2) micro grain doux (quasi invisible) */
+  background:
+    repeating-linear-gradient(to bottom, rgba(255,255,255,var(--scan-alpha)) 0 1px,
+                                         transparent 1px var(--scan-gap)),
+    radial-gradient(100% 70% at 50% 45%, rgba(255,255,255,.04), transparent 60%);
+  opacity:.28; mix-blend-mode: screen;
+  animation: seatScanY var(--scan-speed) linear infinite;
+}
+
+/* cadre néon turquoise fin + léger “pulse” (comme ta bordure) */
+@keyframes neonPulse{
+  0%,100%{ box-shadow: 0 0 10px rgba(25,231,255,.70), 0 0 22px rgba(25,231,255,.40) }
+  50%    { box-shadow: 0 0 16px rgba(25,231,255,.95), 0 0 34px rgba(25,231,255,.60) }
+}
+.name-chips::after{
+  content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+  padding:2px;                                  /* épaisseur du cadre */
+  background: linear-gradient(90deg, var(--seat-neon), #0bd0ff, var(--seat-neon));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude; /* anneau seulement */
+  animation: neonPulse 2.4s ease-in-out infinite;
+}
+
+/* === TOUR ACTIF — corner beacons + double-bordure néon (très lisible) === */
+:root{
+  --turn-color: #19e7ff;   /* couleur du tour (changez ici au besoin) */
+  --cb-len: 22px;          /* longueur des coins */
+  --cb-thk: 3px;           /* épaisseur des coins */
+}
+
+.seat.turn{ overflow:visible; z-index:7; }
+
+.seat.turn .name-chips{
+  position:relative;
+  z-index:0;                              /* pour nos pseudos */
+  filter: brightness(1.05) saturate(1.06);/* légère mise en avant du panneau */
+}
+
+/* Double-bordure néon qui pulse (très visible) */
+@keyframes ringPulse {
+  0%,100% { box-shadow:
+    0 0 0 2px color-mix(in oklab, var(--turn-color) 95%, #fff),
+    0 0 18px color-mix(in oklab, var(--turn-color) 80%, transparent),
+    0 0 38px color-mix(in oklab, var(--turn-color) 55%, transparent); }
+  50%    { box-shadow:
+    0 0 0 3px color-mix(in oklab, var(--turn-color) 100%, #fff),
+    0 0 26px color-mix(in oklab, var(--turn-color) 95%, transparent),
+    0 0 56px color-mix(in oklab, var(--turn-color) 70%, transparent); }
+}
+.seat.turn .name-chips::after{
+  content:""; position:absolute; inset:0; border-radius:14px; pointer-events:none;
+  animation: ringPulse 1.9s ease-in-out infinite;
+}
+
+/* Balises néon aux 4 coins (épaisses + glow) */
+@keyframes beaconPulse { 0%,100%{opacity:.75} 50%{opacity:1} }
+
+.seat.turn .name-chips::before{
+  content:""; position:absolute; inset:0; border-radius:14px; pointer-events:none; z-index:1;
+  /* 8 segments (2 par coin) + halo autour */
+  background:
+    /* coin haut gauche */
+    linear-gradient(var(--turn-color),var(--turn-color)) left top/var(--cb-len) var(--cb-thk) no-repeat,
+    linear-gradient(var(--turn-color),var(--turn-color)) left top/var(--cb-thk) var(--cb-len) no-repeat,
+    /* coin haut droit */
+    linear-gradient(var(--turn-color),var(--turn-color)) right top/var(--cb-len) var(--cb-thk) no-repeat,
+    linear-gradient(var(--turn-color),var(--turn-color)) right top/var(--cb-thk) var(--cb-len) no-repeat,
+    /* coin bas gauche */
+    linear-gradient(var(--turn-color),var(--turn-color)) left bottom/var(--cb-len) var(--cb-thk) no-repeat,
+    linear-gradient(var(--turn-color),var(--turn-color)) left bottom/var(--cb-thk) var(--cb-len) no-repeat,
+    /* coin bas droit */
+    linear-gradient(var(--turn-color),var(--turn-color)) right bottom/var(--cb-len) var(--cb-thk) no-repeat,
+    linear-gradient(var(--turn-color),var(--turn-color)) right bottom/var(--cb-thk) var(--cb-len) no-repeat,
+    /* halo doux pour donner du volume */
+    radial-gradient(80% 70% at 50% 50%, color-mix(in oklab, var(--turn-color) 22%, transparent), transparent 60%);
+  filter:
+    drop-shadow(0 0 8px color-mix(in oklab, var(--turn-color) 90%, transparent))
+    drop-shadow(0 0 18px color-mix(in oklab, var(--turn-color) 60%, transparent));
+  animation: beaconPulse 1.9s ease-in-out infinite;
+}
+
+/* Option : change rapide de couleur par siège */
+.seat.turn-amber { --turn-color:#ffb02e; }
+.seat.turn-violet{ --turn-color:#8e5aff; }
+.seat.turn-rose  { --turn-color:#ff5fa2; }
+.seat.turn-lime  { --turn-color:#7bff6a; }
+
+/* === TOUR ACTIF — ORANGE/AMBRE NÉON ++ (plus visible & arcade) === */
+:root{
+  --turn-deep: #ff7b00c0;   /* orange profond */
+  --turn-color:#ff9a1f;   /* orange principal (néon) */
+  --turn-hot:  #ffd36e;   /* jaune-ambre pour les éclats */
+  --cb-len: 28px;         /* longueur des coins (plus long = plus visible) */
+  --cb-thk: 4px;          /* épaisseur des coins */
+}
+
+/* ne coupe rien & priorité au-dessus */
+.seat.turn{ overflow:visible; z-index:8; }
+.seat.turn .name-chips{ position:relative; z-index:0; filter:brightness(1.05) saturate(1.1); }
+
+/* 0) HALO “EMBER” DERRIÈRE le panneau (ne touche pas aux cartes) */
+.seat.turn .name-chips::before{
+  content:""; position:absolute; inset:-22px; border-radius:20px; pointer-events:none; z-index:-1;
+  background:
+    radial-gradient(60% 70% at 50% 54%, color-mix(in oklab, var(--turn-color) 80%, transparent) 0%,
+                                            transparent 66%),
+    radial-gradient(90% 85% at 50% 54%, color-mix(in oklab, var(--turn-deep) 55%, transparent) 0%,
+                                            transparent 72%);
+  filter: blur(22px);
+  opacity:.95;
+}
+
+/* 1) DOUBLE-BORDURE NÉON ORANGE qui pulse (très arcade) */
+@keyframes ringPulse {
+  0%,100% {
+    box-shadow:
+      0 0 0 2px color-mix(in oklab, var(--turn-hot) 95%, #fff),
+      0 0 24px color-mix(in oklab, var(--turn-color) 90%, transparent),
+      0 0 64px color-mix(in oklab, var(--turn-deep) 70%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px color-mix(in oklab, var(--turn-hot) 100%, #fff),
+      0 0 36px color-mix(in oklab, var(--turn-color) 98%, transparent),
+      0 0 90px color-mix(in oklab, var(--turn-deep) 85%, transparent);
+  }
+}
+.seat.turn .name-chips::after{
+  content:""; position:absolute; inset:0; border-radius:14px; pointer-events:none;
+  animation: ringPulse 1.7s ease-in-out infinite;
+}
+
+/* 2) COINS “BEACONS” ÉPAIS + ÉCLATS ronds (super lisibles) */
+@keyframes beaconPulse { 0%,100%{opacity:.80} 50%{opacity:1} }
+.seat.turn .name-chips > ._corners,
+.seat.turn .name-chips > ._corners2{ display:none; } /* safety si existait */
+
+.seat.turn .name-chips::marker { content:none; } /* éviter interférences */
+
+.seat.turn .name-chips:has(*){} /* no-op for specificity boost */
+
+.seat.turn .name-chips {
+  --_glowA: color-mix(in oklab, var(--turn-hot) 95%, #fff);
+  --_glowB: color-mix(in oklab, var(--turn-color) 70%, transparent);
+}
+.seat.turn .name-chips::before,
+.seat.turn .name-chips::after{ border-radius:14px; }
+
+/* on superpose les coins sur une 3e pseudo couche via outline-style */
+.seat.turn .name-chips ._beacons{ display:none; } /* placeholder if needed */
+
+.seat.turn .name-chips::selection{ background:transparent }
+
+/* coins & flares sur une nouvelle pseudo (utilise :after déjà pris → on ajoute via shadow) */
+.seat.turn .name-chips{
+  box-shadow:
+    /* petit “sol” pour détacher visuellement */
+    0 16px 28px rgba(0,0,0,.85),
+    /* coins horizontaux */
+    0 0 0 var(--cb-thk) var(--_glowA) inset,
+    0 0 22px var(--_glowB) inset;
+}
+
+/* Dessin des coins + flares via background de la couche supérieure (pseudo déjà pris) */
+.seat.turn .name-chips > .player-name, .seat.turn .name-chips > .stack{ position:relative; z-index:2; }
+.seat.turn .name-chips::after{
+  background:
+    /* L haut gauche */
+    linear-gradient(var(--turn-hot),var(--turn-hot)) left top/var(--cb-len) var(--cb-thk) no-repeat,
+    linear-gradient(var(--turn-hot),var(--turn-hot)) left top/var(--cb-thk) var(--cb-len) no-repeat,
+    /* L haut droit */
+    linear-gradient(var(--turn-hot),var(--turn-hot)) right top/var(--cb-len) var(--cb-thk) no-repeat,
+    linear-gradient(var(--turn-hot),var(--turn-hot)) right top/var(--cb-thk) var(--cb-len) no-repeat,
+    /* L bas gauche */
+    linear-gradient(var(--turn-hot),var(--turn-hot)) left bottom/var(--cb-len) var(--cb-thk) no-repeat,
+    linear-gradient(var(--turn-hot),var(--turn-hot)) left bottom/var(--cb-thk) var(--cb-len) no-repeat,
+    /* L bas droit */
+    linear-gradient(var(--turn-hot),var(--turn-hot)) right bottom/var(--cb-len) var(--cb-thk) no-repeat,
+    linear-gradient(var(--turn-hot),var(--turn-hot)) right bottom/var(--cb-thk) var(--cb-len) no-repeat,
+    /* flares ronds dans chaque coin */
+    radial-gradient(26px 26px at 11px 11px, var(--_glowA) 0 7px, var(--_glowB) 12px, transparent 100%),
+    radial-gradient(26px 26px at calc(100% - 11px) 11px, var(--_glowA) 0 7px, var(--_glowB) 12px, transparent 100%),
+    radial-gradient(26px 26px at 11px calc(100% - 11px), var(--_glowA) 0 7px, var(--_glowB) 12px, transparent 100%),
+    radial-gradient(26px 26px at calc(100% - 11px) calc(100% - 11px), var(--_glowA) 0 7px, var(--_glowB) 12px, transparent 100%);
+  background-blend-mode: screen,screen,screen,screen,screen,screen,screen,screen,screen,screen,screen,screen;
+  animation: ringPulse 1.7s ease-in-out infinite; /* synchronisé */
+}
+
+/* ====== FOLD — tout le siège grisé, net et lisible ================== */
+:root{
+  --fold-veil: .78;     /* opacité du voile gris (0.65–0.85) */
+  --fold-text: #cfd5da; /* couleur du texte sur fond gris     */
+}
+
+/* 1) état */
+.seat.status-fold{ overflow:visible; z-index:5; }
+
+/* 2) panneau : plus de néon, gris + voile sombre uniforme */
+.seat.status-fold .name-chips{
+  position:relative;
+  filter: grayscale(1) brightness(.7) contrast(.95) saturate(.5);
+  box-shadow: 0 10px 18px rgba(0,0,0,.55);     /* légère ombre, pas de glow */
+}
+.seat.status-fold .name-chips::after{ content:none !important; } /* coupe le cadre néon */
+
+/* voile gris uniforme par-dessus le panneau */
+.seat.status-fold .name-chips::before{
+  content:""; position:absolute; inset:0; border-radius:14px; pointer-events:none;
+  background: rgba(0,0,0,var(--fold-veil));
+}
+
+/* 3) texte lisible sur gris */
+.seat.status-fold .name-chips,
+.seat.status-fold .name-chips *{
+  color: var(--fold-text) !important;
+  text-shadow: none !important;
+}
+
+/* 4) cartes & éléments du siège : gris + opacité plus faible */
+.seat.status-fold :is(.holecard1,.holecard2,.card,.player-cards,
+                      .bet-chip,.dealer-btn,.dealer,.action-chip){
+  filter: grayscale(1) opacity(.45) !important;
+}
+
+/* 5) ruban discret "FOLDED" (optionnel) — diagonal, peu intrusif.
+   Retire ce bloc si tu n’en veux pas. */
+.seat.status-fold .name-chips::marker{ content:none; } /* safety */
+.seat.status-fold .name-chips > ._foldRibbon{ display:none; }
+.seat.status-fold .name-chips::before {}
+.seat.status-fold .name-chips::after {}
+.seat.status-fold .name-chips > .player-name,
+.seat.status-fold .name-chips > .stack{ position:relative; z-index:1; }
+
+.seat.status-fold .name-chips .fold-label{ display:none; } /* si tu as un span dédié */
+.seat.status-fold .name-chips::before{} /* (laisse le voile ci-dessus) */
+.seat.status-fold .name-chips::after{}  /* (on a déjà désactivé le néon) */
+
+.seat.status-fold .name-chips::before,
+.seat.status-fold .name-chips::after{ /* placeholders pour la compat */ }
+
+/* petit bandeau texte centré (alternative au ruban diagonal) */
+.seat.status-fold .name-chips::before{} /* garde le voile */
+.seat.status-fold .name-chips::after{}  /* néon coupé */
+.seat.status-fold .name-chips > ._badge { display:none; }
+.seat.status-fold .name-chips::selection{ background:transparent; }
+
+.seat.status-fold .name-chips::after{
+  content:"FOLD";
+  position:absolute; top:-9px; left:-7px; padding:4px 9px; border-radius:10px;
+  font:800 10px/1.1 system-ui; letter-spacing:.5px; text-transform:uppercase;
+  color:#0a0c11;
+  background: linear-gradient(90deg,#ff7a00,#ff9a1f);
+  box-shadow: 0 4px 14px rgba(255,154,31,.45), 0 0 0 2px rgba(255,255,255,.08) inset;
+}
+
+/* === BOARD: état "dos" + flip fiable (sans changer le HTML) ======= */
+
+/* Les 5 cases peuvent se rétrécir horizontalement pour simuler le flip */
+#flop1,#flop2,#flop3,#turn,#river,
+#board .boardcard{
+  backface-visibility:hidden;
+  transform-origin:50% 50%;
+  transition: transform 180ms ease; /* fermeture/ouverte rapide */
+}
+
+/* pendant la bascule (on ferme) */
+.board-flip-in { transform: scaleX(0); }
+
+/* état "dos de carte" (image inline ou via classe) */
+.board-back{
+  background-image: url("cardback.png") !important;
+  background-size: cover !important;
+  background-position: center !important;
+}
+
+/* Améliore le rendu 3D du flip */
+#table, #board, .board-area { perspective: 900px; }
+.card, #flop1, #flop2, #flop3, #turn, #river {
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+/* Perspective 3D propre autour du board */
+#table, #board, .board-area { perspective: 1200px; }
+
+#flop1, #flop2, #flop3, #turn, #river,
+#flop1 .card, #flop2 .card, #flop3 .card, #turn .card, #river .card {
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+/* Flip fort + petit "pop" à la fin */
+@keyframes fyFlipStrong {
+  0%   { transform: rotateY(0) scale(1);              filter: brightness(1); }
+  48%  { transform: rotateY(90deg) scale(0.92);       filter: brightness(1.28) saturate(1.15); }
+  52%  { transform: rotateY(-88deg) scale(1.02);      filter: brightness(1.05); }
+  86%  { transform: rotateY(-2deg) scale(1.015);      filter: none; }
+  100% { transform: rotateY(0) scale(1);              filter: none; }
+}
+
+/* Perspective (si pas déjà définie) */
+#table, #board, .board-area { perspective: 1200px; }
+
+/* Flip doux appliqué au slot lui-même (marche même si l’intérieur change) */
+.fy-flip-soft {
+  animation: fyFlipSoft var(--flip-dur, 1300ms) ease-in-out var(--flip-delay,0ms) both;
+  will-change: transform;
+}
+@keyframes fyFlipSoft {
+  0%   { transform: rotateY(0) }
+  45%  { transform: rotateY(90deg) }
+  55%  { transform: rotateY(90deg) }
+  100% { transform: rotateY(0) }
+}
+
+/* Afficher les \n comme des retours à la ligne dans la mise */
+.seat .bet{
+  white-space: pre-line;    /* \n => saut de ligne */
+  text-align: center;       /* bien centré */
+  line-height: 1.05;        /* compact */
+}
+
+/* (option) un peu plus petit pour éviter tout débordement */
+.seat .bet { font-size: 14px; }
+#seat0 .bet, #seat1 .bet, #seat2 .bet, #seat3 .bet, #seat4 .bet,
+#seat5 .bet, #seat6 .bet, #seat7 .bet, #seat8 .bet, #seat9 .bet {
+  max-width: 100%;
+}
+
+/* siège ALL-IN : en lice mais inactif */
+.seat.status-allin .player-name {
+  background: rgba(0, 200, 0, 0.18);
+  box-shadow: 0 0 0 2px rgba(0, 200, 0, 0.35) inset;
+  color: #b6ffb6; /* lisible sur fond sombre */
+}
+.seat.status-allin { filter: saturate(1.2); }
+
+html, body{ transform:none !important; } /* évite le piège "fixed relatif" */
+
+.my-hole-cards{
+  position: fixed !important;   /* ancré au viewport, pas au layout de la table */
+  left: 16px !important;
+  bottom: 16px !important;
+  display: flex !important;
+  gap: 8px !important;
+  z-index: 9999 !important;
+  pointer-events: none !important; /* les clics passent dessous */
+}
+
+.my-hole-cards .card{
+  width: 86px !important;       /* tes tailles */
+  height: 114px !important;
+  flex: 0 0 auto !important;
+  margin: 0 !important;
+  transform: none !important;
+}
+
+/* Coupe tous les styles conditionnels qui déplaceraient les cartes pendant ALL-IN */
+.allin .my-hole-cards,
+.seat-allin .my-hole-cards,
+.table--allin .my-hole-cards { transform:none !important; left:16px !important; }
+
+.seat.my-seat .holecards{
+  position: fixed !important;
+  left: 120px !important;
+  top: 470px !important;
+  bottom: var(--hole-bottom, 16px) !important; /* au lieu de top:470px */
+  width: 500px !important;
+  height: 300px !important;
+}
+
+/* Ne change rien d'autre : on "peint" en vert à l'intérieur du bloc */
+:is(#poker_table, .poker-table) .seat.is-allin-bg .name-chips{
+  box-shadow: inset 0 0 0 9999px rgba(89, 237, 121, 0.504);
+  /* garde tes arrondis existants */
+}
+:is(#poker_table, .poker-table) .seat .name-chips{ position: relative; } /* si pas déjà en relative */
+
+:is(#poker_table, .poker-table) .seat.is-allin-bg .name-chips::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #00d0ff76;
+  opacity: .9;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* ===== Seats alignés sur la taille du board, SANS toucher ton siège perso ===== */
+:is(#poker_table, .poker-table){
+  /* mets la taille de tes 5 cartes du haut (board) */
+  --board-card-w: 120px;
+  --board-card-h: 147px;
+  --board-card-r: 14px;
+}
+
+/* Cartes des sièges (sauf .my-seat) = même taille que le board */
+:is(#poker_table, .poker-table) .seat:not(.my-seat) .holecards .card{
+  width:  var(--board-card-w) !important;
+  height: var(--board-card-h) !important;
+  border-radius: var(--board-card-r) !important;
+  background-size: cover !important;
+  background-position: center !important;
+}
+
+/* Les wrappers des 2 cartes suivent la même taille */
+:is(#poker_table, .poker-table) .seat:not(.my-seat) .holecards .holecard1,
+:is(#poker_table, .poker-table) .seat:not(.my-seat) .holecards .holecard2{
+  width:  var(--board-card-w) !important;
+  height: var(--board-card-h) !important;
+}
+
+/* Empilement propre (si tu les veux en colonne) */
+:is(#poker_table, .poker-table) .seat:not(.my-seat) .holecards .holecard1{ top: 0 !important; }
+:is(#poker_table, .poker-table) .seat:not(.my-seat) .holecards .holecard2{
+  top: calc(var(--board-card-h) * 0.78) !important; /* chevauchement ~22% */
+}
+
+/* Neutralise tes anciennes tailles qui rapetissaient les cartes (hors .my-seat) */
+:is(#poker_table, .poker-table) .seat:not(.my-seat) .card{ 
+  width: var(--board-card-w) !important; 
+  height: var(--board-card-h) !important; 
+}
+
+/* Plus d’écart vertical entre les 2 cartes des autres sièges */
+:is(#poker_table, .poker-table){ 
+  --seat-v-gap: 0.96;   /* 0.78 par défaut ; ↑ = plus d’espace (ex: 0.82, 0.86, 0.90) */
+}
+
+:is(#poker_table, .poker-table) .seat:not(.my-seat) .holecards .holecard1{
+  top: -80px !important;
+}
+:is(#poker_table, .poker-table) .seat:not(.my-seat) .holecards .holecard2{
+  top: 65px !important;
+}
+
+/* ↑ Monte/descend le rail des 5 cartes */
+:is(#poker_table, .poker-table){ --board-dy: -50px; } /* négatif = plus haut */
+
+:is(#poker_table, .poker-table) #board,
+:is(#poker_table, .poker-table) #board-placeholders{
+  /* on garde ton centrage X, et on ajoute un offset Y */
+  transform: translate(-50%, var(--board-dy)) !important;
+}
+
+
+/* ==== Décalage simple pendant le REVEAL ==== */
+/* règle seulement ces 2 valeurs */
+:is(#poker_table, .poker-table){
+  --reveal-top-dy: 0px;  /* avant: -28px  → monte moins */
+  --reveal-bot-dy: 20px;  /* avant:  28px  → descend moins */
+}
+
+/* Rangée du HAUT (seats 0→4) — décalé seulement si reveal */
+#seat0 .holecards:has(.card.revealed),
+#seat1 .holecards:has(.card.revealed),
+#seat2 .holecards:has(.card.revealed),
+#seat3 .holecards:has(.card.revealed),
+#seat4 .holecards:has(.card.revealed){
+  transform: translateY(var(--reveal-top-dy)) !important;
+  will-change: transform;
+}
+
+/* Rangée du BAS (seats 5→9) — décalé seulement si reveal (hors .my-seat) */
+#seat5:not(.my-seat) .holecards:has(.card.revealed),
+#seat6:not(.my-seat) .holecards:has(.card.revealed),
+#seat7:not(.my-seat) .holecards:has(.card.revealed),
+#seat8:not(.my-seat) .holecards:has(.card.revealed),
+#seat9:not(.my-seat) .holecards:has(.card.revealed){
+  transform: translateY(var(--reveal-bot-dy)) !important;
+  will-change: transform;
+}
+
+/* Sécurité : ton siège perso ne bouge pas avec ce système */
+.seat.my-seat .holecards{ transform: none !important; }
+
+
+/* =========================================================
+   FIX — ta table a “disparu” car on a mis
+   background: transparent !important sur .poker-table.
+   On NE neutralise plus .poker-table, et on remet sa skin.
+   ========================================================= */
+
+/* 1) NEUTRALISATION SANS TOUCHER .poker-table */
+:is(#game-container, .table-container, .poker-table-wrapper,
+    #table, #board, #board-placeholders){
+  background-color: transparent !important; /* ← ne touche qu’à la couleur */
+  border: none !important;
+  box-shadow: none !important;
+}
+/* On retire .poker-table du bloc ci-dessus pour ne pas écraser son background-image */
+
+/* 2) TABLE RÉTABLIE + AU-DESSUS DU FOND */
+.poker-table{
+  position: absolute;
+  left: 50%; top: 100%;
+  transform: translate(-50%, -100%);
+  width: 745px; height: 411px;
+
+  /* Remet l’image de la table */
+  background-image: url('../images/poker_table.png') !important;
+  background-color: transparent !important; /* on laisse passer le fond étoilé autour */
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: contain !important;
+
+  border: none !important;
+  box-shadow: none !important;
+
+  /* s’assure de passer devant les aurores/étoiles */
+  z-index: 1;
+}
+
+/* 3) CONTENEURS DU JEU AU-DESSUS DU FOND */
+:is(#game-container, .poker-table-wrapper, #table, #board){ 
+  position: relative; 
+  z-index: 1; 
+}
+
+/* 4) COUCHES DE FOND — restent derrière (z-index 0 ou négatif OK) */
+html::before, html::after, body::before{
+  z-index: 0; /* si tu avais mis des valeurs négatives, ça marche aussi */
+}
+
+
+   /* =========================================================
+Début du nouveau fond   ========================================================= */
+/* =========================================================
+   (Option) Si tu veux garder le “Nuke” global mais safe :
+   Remplacer TOUT “background: transparent !important;”
+   par “background-color: transparent !important;”
+   Ça n’efface pas les background-image des éléments comme la table.
+   ========================================================= */
+
+   /* =========================================================
+   STARFIELD + AURORAS (fond plein écran, sans toucher au jeu)
+   ========================================================= */
+:root{
+  /* Couleurs d’aurores (ajuste si tu veux) */
+  --aurora-cyan:   #2ef0ff;
+  --aurora-violet: #8a6cff;
+  --aurora-rose:   #ff6e5b;
+  --aurora-vert:   #2bd38a;
+  --aurora-jaune:  #ffd447;
+
+  /* Intensités / vitesses */
+  --aurora-opacity: .55; /* 0.0 → 1.0 */
+  --stars-opacity:  .90; /* opacité des étoiles */
+  --twinkle-min:    .35; /* scintillement mini */
+  --twinkle-max:    1.00;/* scintillement maxi */
+  --speed-aurora:   22s;
+  --speed-drift:    48s; /* parallaxe étoiles */
+  --speed-twinkle:  3.6s;
+
+  /* Base sombre */
+  --sky-deep-1: #04070b;
+  --sky-deep-2: #0a0f1a;
+}
+
+/* Neutralise tout ancien fond/cadre */
+html, body { height: 100%; background: transparent !important; }
+#game-container, .table-container, .poker-table-wrapper, .poker-table,
+#table, #board, #board-placeholders{
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* ===== Couche 0 — ciel noir + vignette douce ===== */
+body{
+  position: relative; z-index: 0;
+  background: radial-gradient(100% 70% at 50% 45%, rgba(0,0,0,.55), transparent 62%),
+              linear-gradient(180deg, var(--sky-deep-1), var(--sky-deep-2)) !important;
+}
+
+/* ===== Couche 1 — AURORES (voiles colorés flous) ===== */
+html::before{
+  content:"";
+  position: fixed; inset: -12%;
+  z-index: -3; pointer-events: none;
+  filter: blur(20px) saturate(120%);
+  opacity: var(--aurora-opacity);
+  background:
+    radial-gradient(70% 45% at 18% 28%, var(--aurora-cyan),   transparent 60%),
+    radial-gradient(60% 40% at 82% 72%, var(--aurora-violet), transparent 60%),
+    radial-gradient(65% 45% at 50% 92%, var(--aurora-vert),   transparent 60%),
+    radial-gradient(55% 40% at 22% 78%, var(--aurora-rose),   transparent 60%),
+    radial-gradient(50% 35% at 80% 18%, var(--aurora-jaune),  transparent 60%);
+  animation: auroraDrift var(--speed-aurora) ease-in-out infinite alternate;
+}
+
+/* ===== Couche 2 — ÉTOILES (parallaxe L1 + twinkle) ===== */
+html::after{
+  content:"";
+  position: fixed; inset: 0;
+  z-index: -2; pointer-events:none;
+  opacity: var(--stars-opacity);
+  /* petit set d’étoiles (blancs) — points nets */
+  background:
+    radial-gradient(1.2px 1.2px at 8% 12%,   #fff 0 1.2px, transparent 1.3px),
+    radial-gradient(1.2px 1.2px at 16% 38%,  #fff 0 1.2px, transparent 1.3px),
+    radial-gradient(1.4px 1.4px at 28% 22%,  #fff 0 1.4px, transparent 1.5px),
+    radial-gradient(1.0px 1.0px at 34% 66%,  #fff 0 1.0px, transparent 1.1px),
+    radial-gradient(1.6px 1.6px at 42% 14%,  #fff 0 1.6px, transparent 1.7px),
+    radial-gradient(1.2px 1.2px at 51% 31%,  #fff 0 1.2px, transparent 1.3px),
+    radial-gradient(1.0px 1.0px at 57% 72%,  #fff 0 1.0px, transparent 1.1px),
+    radial-gradient(1.4px 1.4px at 63% 48%,  #fff 0 1.4px, transparent 1.5px),
+    radial-gradient(1.2px 1.2px at 71% 18%,  #fff 0 1.2px, transparent 1.3px),
+    radial-gradient(1.0px 1.0px at 78% 36%,  #fff 0 1.0px, transparent 1.1px),
+    radial-gradient(1.6px 1.6px at 85% 74%,  #fff 0 1.6px, transparent 1.7px),
+    radial-gradient(1.2px 1.2px at 92% 56%,  #fff 0 1.2px, transparent 1.3px),
+    /* quelques étoiles “chaudes” très discrètes */
+    radial-gradient(1.4px 1.4px at 12% 78%, rgba(255,214,120,.9) 0 1.4px, transparent 1.5px),
+    radial-gradient(1.2px 1.2px at 46% 84%, rgba(126,179,255,.9) 0 1.2px, transparent 1.3px),
+    radial-gradient(1.4px 1.4px at 68% 60%, rgba(255,160,160,.9) 0 1.4px, transparent 1.5px);
+  animation: starDrift var(--speed-drift) linear infinite,
+             twinkle    var(--speed-twinkle) ease-in-out infinite;
+}
+
+/* ===== Couche 3 — ÉTOILES (parallaxe L2 + plus denses, plus fines) ===== */
+body::before{
+  content:"";
+  position: fixed; inset: 0;
+  z-index: -1; pointer-events:none;
+  opacity: calc(var(--stars-opacity) * .85);
+  background:
+    radial-gradient(.9px .9px at 5% 25%,   #fff 0 .9px, transparent 1px),
+    radial-gradient(.9px .9px at 11% 52%,  #fff 0 .9px, transparent 1px),
+    radial-gradient(.9px .9px at 19% 10%,  #fff 0 .9px, transparent 1px),
+    radial-gradient(.9px .9px at 24% 43%,  #fff 0 .9px, transparent 1px),
+    radial-gradient(.9px .9px at 27% 82%,  #fff 0 .9px, transparent 1px),
+    radial-gradient(.9px .9px at 33% 67%,  #fff 0 .9px, transparent 1px),
+    radial-gradient(.9px .9px at 39% 35%,  #fff 0 .9px, transparent 1px),
+    radial-gradient(.9px .9px at 44% 12%,  #fff 0 .9px, transparent 1px),
+    radial-gradient(.9px .9px at 47% 90%,  #fff 0 .9px, transparent 1px),
+    radial-gradient(.9px .9px at 52% 58%,  #fff 0 .9px, transparent 1px),
+    radial-gradient(.9px .9px at 58% 22%,  #fff 0 .9px, transparent 1px),
+    radial-gradient(.9px .9px at 63% 76%,  #fff 0 .9px, transparent 1px),
+    radial-gradient(.9px .9px at 69% 41%,  #fff 0 .9px, transparent 1px),
+    radial-gradient(.9px .9px at 73% 15%,  #fff 0 .9px, transparent 1px),
+    radial-gradient(.9px .9px at 77% 88%,  #fff 0 .9px, transparent 1px),
+    radial-gradient(.9px .9px at 82% 33%,  #fff 0 .9px, transparent 1px),
+    radial-gradient(.9px .9px at 87% 65%,  #fff 0 .9px, transparent 1px),
+    radial-gradient(.9px .9px at 91% 27%,  #fff 0 .9px, transparent 1px),
+    radial-gradient(.9px .9px at 95% 50%,  #fff 0 .9px, transparent 1px);
+  animation: starDrift2 calc(var(--speed-drift) * 1.35) linear infinite,
+             twinkle    calc(var(--speed-twinkle) * 1.2) ease-in-out infinite;
+}
+
+/* ===== Animations ===== */
+@keyframes auroraDrift{
+  0%   { transform: translate(-2%, -1%) rotate(0.4deg) scale(1.00); }
+  50%  { transform: translate( 2%,  1%) rotate(-0.2deg) scale(1.02); }
+  100% { transform: translate(-1%,  2%) rotate(0.3deg)  scale(1.01); }
+}
+@keyframes starDrift{
+  from { transform: translate3d(0,0,0); }
+  to   { transform: translate3d(-18px, -12px, 0); }
+}
+@keyframes starDrift2{
+  from { transform: translate3d(0,0,0); }
+  to   { transform: translate3d(22px, 16px, 0); }
+}
+@keyframes twinkle{
+  0%,100% { filter: brightness(var(--twinkle-min)); opacity: .92; }
+  50%     { filter: brightness(var(--twinkle-max)); opacity: 1; }
+}
+
+/* Respecte les préférences “réduire les animations” */
+@media (prefers-reduced-motion: reduce){
+  html::before, html::after, body::before{ animation: none !important; }
+}
+
+/* =========================
+   FIX PACK — Board + Seats
+   À coller tout en bas
+   ========================= */
+
+/* 1) Table visuelle : on s’assure que l’image reste bien appliquée */
+.poker-table{
+  background-image: url('../images/poker_table.png') !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: contain !important;
+  border: none !important;
+  box-shadow: none !important;
+  z-index: 1;
+}
+
+/* 2) Board unique en "rail" flex (supprime les offsets/margins hérités) */
+#board{
+  position: absolute !important;
+  top: -184px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: 630px !important;
+  height: 150px !important;
+  display: flex !important;
+  justify-content: space-around !important;
+  align-items: center !important;
+  z-index: 3 !important;
+}
+
+/* Normalise TOUTES les cartes du board et tue les vieux offsets */
+#flop1, #flop2, #flop3, #turn, #river,
+#board .card, .boardcard, .card.boardcard{
+  position: static !important;
+  top: auto !important; right: auto !important; left: auto !important; margin: 0 !important;
+  width: 120px !important; height: 147px !important; flex: 0 0 120px !important;
+  border-radius: 14px !important;
+  background-size: cover !important; background-position: center !important;
+}
+
+/* Supprime l’espace parasite */
+#board .card:not(:last-child){ margin-right: 0 !important; }
+
+/* 3) Neutralise l’ancienne taille globale des cartes hors board */
+.card{ width: auto !important; height: auto !important; }
+
+/* 4) Holecards : anti-décalage total pendant ALL-IN / reveal.
+      On n’anime QUE la pseudo-face (::after) déjà prévue dans ton CSS. */
+.seat .holecards{ transform: none !important; }
+.seat .holecards .card{ transform: none !important; }           /* ok car la rotation est sur ::after */
+.table--allin .seat .holecards,
+.seat.status-allin .holecards{ transform: none !important; }
+
+/* 5) Pour les autres sièges (hors .my-seat), garde une taille homogène */
+:is(#poker_table, .poker-table){
+  --board-card-w: 120px;
+  --board-card-h: 147px;
+  --board-card-r: 14px;
+}
+:is(#poker_table, .poker-table) .seat:not(.my-seat) .holecards .card{
+  width: var(--board-card-w) !important;
+  height: var(--board-card-h) !important;
+  border-radius: var(--board-card-r) !important;
+  background-size: cover !important; background-position: center !important;
+}
+:is(#poker_table, .poker-table) .seat:not(.my-seat) .holecards .holecard1{
+  top: -80px !important; left: 0 !important; width: var(--board-card-w) !important; height: var(--board-card-h) !important;
+}
+:is(#poker_table, .poker-table) .seat:not(.my-seat) .holecards .holecard2{
+  top:  65px !important; left: 0 !important; width: var(--board-card-w) !important; height: var(--board-card-h) !important;
+}
+
+/* 6) Le texte de mise (bet) reste au-dessus des cartes, mais sans les déplacer */
+.seat .bet{
+  position: absolute !important;
+  top: 110% !important; left: 50% !important; transform: translate(-50%, -50%) !important;
+  white-space: pre-line;
+}
+
+/* 7) Coupe définitivement les vieux styles .boardcard “absolus” */
+.boardcard{ top:auto !important; left:auto !important; right:auto !important; }
+
+/* 8) Sécurité : aucune règle ailleurs ne peut re-scaler le board */
+#board img{ display:block; width:100%; height:100%; object-fit:cover; border-radius:14px; }
+
+
+   /* =========================================================
+Fin du nouveau fond   ========================================================= */
+
+
+/* Mains perdantes : cartes grisées (sans halo) */
+/* ===== Losing hand v2: gris + hatch + slash ===== */
+.seat.losing-hand .holecards { 
+  position: relative; 
+  z-index: 2;
+}
+.seat.losing-hand .holecards .card,
+.seat.losing-hand .holecards .card::after{
+  filter: grayscale(1) brightness(.65);
+  opacity: .70;
+  box-shadow: none !important;
+  border-color: transparent !important;
+}
+
+#seat0.winning-hand .holecards .card {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+:root{
+  --win-neon:        #00eaff;   /* change ici si tu veux */
+  --win-neon-strong: #5df2ff;
+}
+
+/* remplace entièrement ton bloc */
+.winning-hand .holecards .card{
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 14px !important;
+  /* bord fin et lueur interne très douce */
+  border: 1px solid rgba(0,234,255,.70) !important;          /* cyan */
+  box-shadow: inset 0 0 6px rgba(0,234,255,.22) !important;  /* glow léger */
+  transition: border .2s ease, box-shadow .2s ease;
+}
+
+.winning-hand .holecards .card{
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 14px !important;
+
+  /* très discret */
+  border: 1px solid rgba(0,234,255,.45) !important;       /* cyan pâle */
+  box-shadow: inset 0 0 4px rgba(0,234,255,.18) !important;
+  transition: border .2s ease, box-shadow .2s ease;
+}
+
+
+
+/* HALO NÉON — sur ::before (PAS ::after car ::after = face de carte pour le flip) */
+.seat.winning-hand .holecards .card::before{
+  content:"";
+  position:absolute;
+  inset:-8px;                     /* déborde pour l’auréole */
+  border-radius: inherit;
+  pointer-events:none;
+  z-index: 2;                     /* au-dessus de la carte, sous le texte */
+  box-shadow:
+    0 0 2px   var(--win-neon),
+    0 0 8px   var(--win-neon),
+    0 0 16px  var(--win-neon-strong),
+    0 0 28px  var(--win-neon-strong);
+  animation: winNeonPulse 1.6s ease-in-out infinite;
+}
+/* bonus : un petit drop-shadow sur le groupe (pas obligatoire) */
+.seat.winning-hand .holecards{
+  filter:
+    drop-shadow(0 0 6px  var(--win-neon))
+    drop-shadow(0 0 18px var(--win-neon-strong));
+}
+
+@keyframes winNeonPulse{
+  0%,100%{
+    filter: drop-shadow(0 0 6px var(--win-neon))
+            drop-shadow(0 0 16px var(--win-neon))
+            drop-shadow(0 0 28px var(--win-neon-strong));
+  }
+  50%{
+    filter: drop-shadow(0 0 8px var(--win-neon))
+            drop-shadow(0 0 22px var(--win-neon-strong))
+            drop-shadow(0 0 36px var(--win-neon-strong));
+  }
+}
+
+/* anneau léger autour de chaque carte – utilise ::before (pas de conflit avec ::after du flip) */
+.seat.winning-hand .holecards .card::before{
+  content:"";
+  position:absolute;
+  inset:-2px;                 /* minuscule débord pour l’auréole */
+  border-radius: inherit;
+  pointer-events:none;
+  z-index: 2;
+
+  /* lueur très douce */
+  box-shadow:
+    0 0 6px  rgba(0,234,255,.24),
+    0 0 10px rgba(0,234,255,.14);
+}
+
+/* anneau léger autour de chaque carte gagnante */
+.seat.winning-hand .holecards .card::before{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  border-radius: inherit;
+  pointer-events:none;
+  z-index: 2;
+  box-shadow:
+    0 0 6px  rgba(0,234,255,.22),
+    0 0 10px rgba(0,234,255,.12);
+  animation: neonSoft 2.8s ease-in-out infinite;
+}
+
+@keyframes neonSoft{
+  0%,100%{ box-shadow:
+    0 0 4px  rgba(0,234,255,.18),
+    0 0 8px  rgba(0,234,255,.10); }
+  50%    { box-shadow:
+    0 0 7px  rgba(0,234,255,.28),
+    0 0 12px rgba(0,234,255,.16); }
+}
+
+/* ===== Écran fin de partie (arcade) ===== */
+:root{
+  --accent-win:  #00eaff;   /* cyan néon */
+  --accent-lose: #ff4c4c;   /* rouge néon */
+}
+
+html,body{height:100%; margin:0;}
+.end-arcade{
+  position: fixed; inset: 0; z-index: 9999;
+  display: grid; place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(1200px 600px at 20% 15%, rgba(0,238,255,.07), transparent 60%),
+    radial-gradient(1100px 550px at 80% 85%, rgba(255,64,170,.07), transparent 60%),
+    #05070a;
+  color: #e9faff;
+  font-family: system-ui, -apple-system, Inter, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+/* Carte centrale */
+.end-arcade .end-card{
+  position: relative;
+  width: min(680px, 92vw);
+  padding: 28px 26px 22px;
+  border-radius: 20px;
+  background: rgba(16,22,30,.78);
+  border: 1px solid rgba(255,255,255,.08);
+  text-align: center;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.04) inset,
+    0 24px 80px rgba(0,0,0,.45);
+}
+
+/* Halo selon état */
+.end-arcade.win  .end-card::before,
+.end-arcade.lose .end-card::before{
+  content:""; position:absolute; inset:-2px; border-radius:inherit; pointer-events:none;
+  animation: cardPulse 2.8s ease-in-out infinite;
+}
+.end-arcade.win  .end-card::before{ box-shadow:
+   0 0 10px rgba(0,234,255,.30),
+   0 0 26px rgba(0,234,255,.18),
+   0 0 48px rgba(0,234,255,.12); }
+.end-arcade.lose .end-card::before{ box-shadow:
+   0 0 10px rgba(255,76,76,.30),
+   0 0 26px rgba(255,76,76,.18),
+   0 0 48px rgba(255,76,76,.12); }
+
+@keyframes cardPulse{
+  50% { filter: brightness(1.06); }
+}
+
+.end-arcade h1{
+  margin: 4px 0 6px; font-size: 32px; line-height: 1.15; letter-spacing: .3px;
+}
+.end-arcade.win  h1{ color:#bff6ff; text-shadow: 0 0 10px rgba(0,234,255,.30); }
+.end-arcade.lose h1{ color:#ffc9c9; text-shadow: 0 0 10px rgba(255,76,76,.30); }
+
+.end-arcade .sub   { margin: 0 0 6px; opacity:.9; }
+.end-arcade .detail{ margin: 0 0 16px; opacity:.75; }
+
+/* Boutons (optionnels) */
+.end-arcade .actions{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:10px; }
+.end-arcade .btn{
+  appearance:none; cursor:pointer; user-select:none;
+  padding:10px 14px; border-radius:12px;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  color:#e9faff; font-weight:600;
+  transition:.18s transform, .18s box-shadow, .18s border-color, .18s background;
+  text-decoration:none; display:inline-block;
+}
+.end-arcade .btn:hover{ transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0,0,0,.25); }
+
+.end-arcade.win  .btn.primary{
+  border-color: rgba(0,234,255,.6);
+  background: linear-gradient(180deg, rgba(0,234,255,.20), rgba(0,234,255,.08));
+  box-shadow: 0 0 10px rgba(0,234,255,.22);
+}
+.end-arcade.lose .btn.primary{
+  border-color: rgba(255,76,76,.6);
+  background: linear-gradient(180deg, rgba(255,76,76,.20), rgba(255,76,76,.08));
+  box-shadow: 0 0 10px rgba(255,76,76,.22);
+}
+
+.end-arcade .foot{ margin-top:10px; font-size:12px; opacity:.65; }
+
+
+/* Neutralise tout ancien overlay global qui débordait */
+:is(#poker_table, .poker-table) .seat.is-bust::after {
+  content: none !important;
+}
+
+/* Style BUSTED sans casser le style du siège */
+:is(#poker_table, .poker-table) .seat.is-bust .name-chips{
+  position: relative !important;       /* ancre l’overlay dans la carte du siège */
+  overflow: hidden !important;         /* coupe proprement aux arrondis existants */
+  filter: grayscale(100%) brightness(.9) !important;  /* look inactif */
+}
+
+/* Voile très léger rouge à l’intérieur de la carte du siège */
+:is(#poker_table, .poker-table) .seat.is-bust .name-chips::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(70% 70% at 50% 50%,
+              rgba(255,60,60,.20), rgba(255,60,60,.08) 70%, transparent 100%);
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Libellé BUSTED bien centré */
+:is(#poker_table, .poker-table) .seat.is-bust .name-chips::after{
+  content: "BUSTED";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 13px;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 2px 6px rgba(0,0,0,.6);
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Masque les infos parasites dans un siège BUSTED (on garde juste l’overlay) */
+:is(#poker_table, .poker-table) .seat.is-bust .player-name,
+:is(#poker_table, .poker-table) .seat.is-bust .stack,
+:is(#poker_table, .poker-table) .seat.is-bust .chips,
+:is(#poker_table, .poker-table) .seat.is-bust .bet,
+:is(#poker_table, .poker-table) .seat.is-bust .bet-amount{
+  visibility: hidden !important;
+}
+
+:is(#poker_table, .poker-table) .seat.is-bust .player-name{
+  visibility: visible !important;
+  opacity: .5 !important;              /* discret, le centre reste lisible */
+  filter: none !important;
+  left: 0px;
+  top: 50px;
+}
+
+#toast.toast{
+  position: fixed; left: 50%; bottom: 80px; transform: translateX(-50%) scale(.98);
+  background: rgba(20,22,28,.92); color: #fff; padding: 10px 16px;
+  border-radius: 12px; border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 10px 30px rgba(0,0,0,.35); opacity: 0; pointer-events: none;
+  transition: .18s ease; font-weight: 700; letter-spacing: .2px; z-index: 10;
+}
+#toast.toast.show{ opacity: 1; transform: translateX(-50%) scale(1); }
+
+.hist-tabs{
+  display:inline-flex; gap:0; padding:4px; border:1px solid #2a2a40;
+  border-radius:12px; background:#0f1220; box-shadow:inset 0 1px 0 #0a0d18;
+}
+.hist-tabs button{
+  border:0; background:transparent; color:#9aa; padding:6px 12px; cursor:pointer;
+  border-radius:8px; font-weight:600;
+}
+.hist-tabs button:hover{ color:#eaeaff; }
+.hist-tabs button.active{
+  background:#2a2a40; color:#fff; box-shadow:0 0 0 1px #3b3b5e inset;
 }

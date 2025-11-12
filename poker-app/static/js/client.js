@@ -16,8 +16,22 @@ let lastActiveIdx = null;
 let timerInterval = null;
 let lastTurnStartTime = null;
 let justReconnected = false;
+let clientRequestedReveal = false;   // évite d’émettre plusieurs fois
+let _tableID = null, _match2ID = null; // on mémorise pour l’emit
+
 
 /** Actions utilisateur */
+// === Waiting pill (arcade) — init markup une seule fois ===
+document.addEventListener('DOMContentLoaded', () => {
+  const wc = document.getElementById('waiting-count');
+  if (wc && !wc.dataset.arcadeInit) {
+    wc.innerHTML = '<span class="dots">En attente de joueurs :</span> <span id="wc-line">0/0</span><span class="stars"></span>';
+    wc.dataset.arcadeInit = '1';
+    // Optionnel: s'assurer qu'il est visible quand tu l'utilises
+    wc.style.display = 'block';
+  }
+});
+
 function human_fold() {
   console.log("[client] Fold");
   socket.emit("playerAction", { type: "fold" });
@@ -33,6 +47,18 @@ function human_call() {
 }
 function human_check() {
   console.log("[client] Check");
+  if (!currentGameState) return;
+
+  // montant à payer = current_bet - ce que j'ai déjà mis
+  const meIdx  = currentGameState.players.findIndex(p => p.id === mySocketId);
+  if (meIdx < 0) return;
+  const me     = currentGameState.players[meIdx];
+  const toCall = Math.max(0, (currentGameState.current_bet || 0) - (me.subtotal_bet || 0));
+
+  if (toCall > 0) {
+    showErrorToast(`Mise en cours : vous devez CALL (${toCall}) ou RAISE.`);
+    return; // ⛔️ on n'émet pas de "check"
+  }
   socket.emit("playerAction", { type: "check" });
 }
 
@@ -177,6 +203,7 @@ function handleGameStateUpdate(gs) {
     resetAllBacks();
     myCardsRevealed = false;
     animateMyCards();
+    setupBoardBacks(); // remets les dos au nouveau coup
     lastActiveIdx = null; // on force la relance du timer au prochain tour
     lastTurnStartTime = null;
   }
@@ -220,6 +247,9 @@ function initGame() {
   const tableID   = params.get("table");
   const match2ID  = params.get("match2");
   const seatParam = parseInt(params.get("seat"), 10);
+_tableID  = tableID || null;
+_match2ID = match2ID || null;
+
 
   // Validation de base
   if (!tableID && !match2ID) {
@@ -234,6 +264,21 @@ function initGame() {
 
   // ── 1) Connexion Socket.IO ──
   socket = io();
+
+  document.addEventListener('keydown', (e) => {
+  // ignore si on tape dans un champ
+  const t = e.target;
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+
+  if (e.key === 'c' || e.key === 'C') {
+    e.preventDefault();
+    human_check(); // déclenche le garde-fou ci-dessus
+  }
+});
+
+socket.on('endPage', (p) => {
+  if (p && p.html) { document.open(); document.write(p.html); document.close(); }
+});
 
   socket.on("joinError", message => {
     document.body.innerHTML = `
@@ -256,7 +301,7 @@ function initGame() {
   // ── 2) Fonction pour émettre joinGame à chaque (re)connexion ──
   function sendJoin() {
     const payload = {
-      name: localStorage.getItem("playername") || "Player",
+      name: localStorage.getItem("playername") || "P",
       seat: seatParam
     };
     if (tableID)  payload.table  = tableID;
@@ -271,6 +316,34 @@ function initGame() {
     sendJoin();
   });
 
+  // Affichage du modal d’avertissement
+// Au démarrage de votre initGame ou juste après la connexion socket :
+socket.on('warningElimination', ({ message }) => {
+  // si la modal existe déjà, on ne recrée pas
+  if (document.getElementById('warning-modal')) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'warning-modal';
+  overlay.innerHTML = `
+    <div class="warning-content">
+      <p>${message}</p>
+      <button id="warning-ok">OK</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  // fermeture au clic sur OK
+  document.getElementById('warning-ok').onclick = () => {
+    overlay.remove();
+  };
+}); 
+
+  // Au démarrage du jeu, après `socket = io();`
+socket.on('clearWarningElimination', () => {
+  const warn = document.getElementById('elimination-warning');
+  if (warn) warn.remove(); 
+});
+
   // On va marquer “justReconnected” à true avant d’émettre joinGame
   socket.on("reconnect", attempt => {
     console.log(`[client] reconnexion #${attempt}`);
@@ -278,13 +351,33 @@ function initGame() {
     sendJoin();
   });
 
-  // ── 3) Waiting room ──
-  socket.on("updateWaitingRoom", data => {
-    const el = document.getElementById("waiting-count");
-    if (!el) return;
-    const max = data.matchID ? 2 : 10;
-    el.textContent = `En attente de joueurs : ${data.waitingCount}/${max}`;
-  });
+// ── 3) Waiting room (arcade) ──
+socket.on("updateWaitingRoom", data => {
+  const el = document.getElementById("waiting-count");
+  if (!el) return;
+
+  const max = data.matchID ? 2 : 10;
+  const ratioTxt = `${data.waitingCount}/${max}`;
+
+  // 1) S'assure que le markup arcade est en place (si tu es arrivé ici avant DOMContentLoaded)
+  if (!el.dataset.arcadeInit) {
+    el.innerHTML = '<span class="dots">En attente de joueurs :</span> <span id="wc-line">0/0</span><span class="stars"></span>';
+    el.dataset.arcadeInit = '1';
+  }
+
+  // 2) Met à jour le texte (si <span id="wc-line"> existe on l’utilise, sinon fallback)
+  const line = el.querySelector('#wc-line');
+  if (line) line.textContent = ratioTxt;
+  else el.textContent = `En attente de joueurs : ${ratioTxt}`;
+
+  // 3) Met à jour la barre de progression (CSS var --wc-pct)
+  const pct = Math.min(100, Math.max(0, (data.waitingCount / max) * 100));
+  el.style.setProperty('--wc-pct', pct + '%');
+
+  // 4) (optionnel) garantit la visibilité quand la salle est active
+  el.style.display = 'block';
+});
+
 
   // ── 4) Démarrage du jeu ──
   socket.on("startGame", data => {
@@ -308,6 +401,8 @@ function initGame() {
     // 2) Reset visuel + UI
     resetAllBacks();
     updateInterface(currentGameState);
+    setupBoardBacks(); // 5 dos visibles dès le départ
+
   
     // ← ICI : on lance le timer basé sur le state serveur (turnStartTime fourni par le serveur)
     startClientTimerFromState(currentGameState);
@@ -427,6 +522,87 @@ function resetAllBacks() {
   });
 }
 
+const BOARD_IDS = ["flop1","flop2","flop3","turn","river"];
+const CARD_BACK_URL = "cardback1.png"; // ← ton dos
+
+function forceShow(el){
+  if (!el) return;
+  el.style.visibility = "visible";
+  el.style.opacity    = "1";
+  el.style.display    = el.style.display === "none" ? "" : el.style.display;
+}
+
+/** Peint le DOS en background sur un slot du board (id = flop1...river) */
+function paintBoardBack(i){
+  const slot = document.getElementById(BOARD_IDS[i]);
+  if (!slot) return;
+  slot.dataset.hasBack = "1";
+  // fond dos visible même si l’intérieur est vide
+  slot.style.backgroundImage    = `url("${CARD_BACK_URL}")`;
+  slot.style.backgroundRepeat   = "no-repeat";
+  slot.style.backgroundPosition = "center";
+  slot.style.backgroundSize     = "contain";
+  // assurer la présence visuelle
+  forceShow(slot);
+}
+
+/** Pose les 5 dos (préflop) */
+function setupBoardBacks(){
+  for (let i = 0; i < 5; i++) paintBoardBack(i);
+}
+
+/** Nettoie le DOS d’un slot (avant de poser la face) */
+function clearBoardBack(i){
+  const slot = document.getElementById(BOARD_IDS[i]);
+  if (!slot) return;
+  delete slot.dataset.hasBack;
+  slot.style.backgroundImage = "none";
+}
+
+/** Pose/MAJ une face avec un flip doux; enlève le dos au bon moment */
+function setBoardFace(i, code, animate = true, delayMs = 0, durMs = 1300){
+  const slot = document.getElementById(BOARD_IDS[i]);
+  if (!slot || !code) return;
+
+  // si la face est déjà posée, on force juste visible
+  const faceKey = `face${i}`;
+  if (slot.dataset[faceKey] === code) { forceShow(slot); return; }
+
+  const applyFace = () => {
+    // retirer le dos AVANT d’afficher la face
+    clearBoardBack(i);
+
+    if (typeof gui_lay_board_card === "function") {
+      gui_lay_board_card(i, code);   // ✅ ton rendu habituel
+    } else if (typeof internal_setCard === "function") {
+      // si tes slots contiennent une .card interne :
+      const inner = slot.querySelector('.card') || slot;
+      internal_setCard(inner, code, false, true);
+    }
+    slot.dataset[faceKey] = code;
+    forceShow(slot);
+  };
+
+  if (!animate) { applyFace(); return; }
+
+  // flip doux (classe CSS ci-dessous)
+  slot.style.setProperty('--flip-delay', `${delayMs}ms`);
+  slot.style.setProperty('--flip-dur',   `${durMs}ms`);
+  slot.classList.add('fy-flip-soft');
+
+  // change la face à mi-parcours
+  setTimeout(applyFace, delayMs + Math.floor(durMs / 2));
+
+  const onEnd = () => {
+    slot.classList.remove('fy-flip-soft');
+    slot.style.removeProperty('--flip-delay');
+    slot.style.removeProperty('--flip-dur');
+    slot.removeEventListener('animationend', onEnd);
+  };
+  slot.addEventListener('animationend', onEnd);
+}
+
+
 /** Met à jour toute l’UI */
 function updateInterface(gameState) {
   // 0) Garder les refs globales
@@ -455,6 +631,20 @@ function updateInterface(gameState) {
       }
     }
   });
+
+  
+// Après: gui_show_poker_table();
+gameState.players.forEach((player, i) => {
+  const seatEl = document.getElementById('seat' + i);
+  if (!seatEl) return;
+
+  const isBusted = player?.status === 'BUST';          // <-- plus de test sur bankroll
+  const isZero   = !isBusted && ((player?.bankroll | 0) <= 0);
+
+  seatEl.classList.toggle('is-bust', isBusted);
+  seatEl.classList.toggle('is-zero', isZero);          // optionnel, style léger
+});
+
 
   // 4) Mode hyperfast → auto all-in en préflop
   if (gameMode === 'hyper' && currentGameState.phase === 'preflop' && !overlayShown) {    gui_hide_fold_call_click();
@@ -493,7 +683,7 @@ function updateInterface(gameState) {
     } else if (isMe) {
       displayName = 'YOU';
     } else {
-      displayName = `Player${p.seat + 1}`; // générique
+      displayName = `P${p.seat + 1}`; // générique
     }
   
     // ← ici on passe seatIdx, pas i
@@ -504,11 +694,45 @@ function updateInterface(gameState) {
     if      (p.status === "FOLD")  betText = "DROPPED";
     else if (p.status === "CHECK") betText = "CHECK";
     else if (p.status === "CALL")  betText = `CALL (${p.subtotal_bet})`;
-    else if (p.status === "RAISE") betText = `BET (${p.subtotal_bet})`;
-    else if (p.status === "ALLIN") betText = `ALL IN (${p.subtotal_bet})`;
+    else if (p.status === "RAISE") betText = `+ (${p.subtotal_bet})`;
+    else if (p.status === "ALLIN") betText = `ALL-IN (${p.subtotal_bet})`;
     else if (p.subtotal_bet > 0)   betText = `${p.subtotal_bet}`;
 
     gui_set_bet(betText, seatIdx);
+    // ─────────────────────────────────────────────
+// Déclenchement REVEAL côté serveur si ALL-IN est couvert
+// (un joueur ALL-IN et au moins un autre a CALL, en gardant des jetons)
+// ─────────────────────────────────────────────
+if (!clientRequestedReveal) {
+  const players = gameState.players || [];
+  const allInIdx = players.findIndex(p =>
+    p && (p.status === "ALLIN" || (p.bankroll|0) === 0)
+  );
+
+  if (allInIdx >= 0) {
+    const currentBet = (gameState.current_bet || 0);
+
+    // appelant qui "couvre" = a fait CALL au niveau du current_bet ET possède encore des jetons (pas all-in)
+    const hasCoveringCaller = players.some((p, idx) =>
+      idx !== allInIdx &&
+      p &&
+      p.status === "CALL" &&
+      (p.subtotal_bet || 0) >= currentBet &&    // s'est aligné
+      (p.bankroll || 0) > 0                     // et il reste du stack
+    );
+
+    if (hasCoveringCaller && window.socket) {
+      clientRequestedReveal = true;
+      socket.emit("clientRequestReveal", {
+        reason: "allin_covered",
+        table:  _tableID,
+        match2: _match2ID
+      });
+      // Optionnel: log visible
+      console.log("[client] clientRequestReveal → allin_covered", { currentBet, allInIdx });
+    }
+  }
+}
   });
 
   // Pot
@@ -520,52 +744,91 @@ function updateInterface(gameState) {
     const e = document.getElementById(id);
     if (e) e.style.visibility = "hidden";
   });
-  const phase = gameState.phase;
-  if (["flop","turn","river","reveal"].includes(phase)) {
-    gameState.board.slice(0,3).forEach((c,i) => {
-      gui_lay_board_card(i, c);
-      document.getElementById(ids[i]).style.visibility = "visible";
-    });
-  }
-  if (["turn","river","reveal"].includes(phase)) {
-    gui_lay_board_card(3, gameState.board[3]);
-    document.getElementById("turn").style.visibility = "visible";
-  }
-  if (["river","reveal"].includes(phase)) {
-    gui_lay_board_card(4, gameState.board[4]);
-    document.getElementById("river").style.visibility = "visible";
-  }
+// === Board (on garde ta logique, on ajoute un flip) ===
+// === Board (flip fort + stagger sur le flop) ===
+// === Board (flip plus lent et cascade plus marquée) ===
+// === Board (dos visibles en préflop → flip vers faces selon la phase) ===
+// === Board : dos en préflop, flip vers faces par phase ===
+const phase = gameState.phase;
+
+// En préflop → toujours 5 dos visibles
+if (phase === "preflop") {
+  setupBoardBacks();
+}
+
+// FLOP (cascade lente 0 / 300 / 600 ms)
+if (["flop","turn","river","reveal"].includes(phase)) {
+  setBoardFace(0, gameState.board[0], true,   0, 1600);
+  setBoardFace(1, gameState.board[1], true, 300, 1600);
+  setBoardFace(2, gameState.board[2], true, 600, 1600);
+}
+// TURN
+if (["turn","river","reveal"].includes(phase)) {
+  setBoardFace(3, gameState.board[3], true,   0, 1600);
+}
+// RIVER
+if (["river","reveal"].includes(phase)) {
+  setBoardFace(4, gameState.board[4], true,   0, 1600);
+}
 
   // Turn indicator
   updateTurnIndicator(gameState);
 
-  // Highlight actif
-  const activeIdx = gameState.current_bettor_index;
-  gameState.players.forEach((p,i) => {
-    const nameEl = document.querySelector(`#seat${i} .player-name`);
-    if (!nameEl) return;
-    if (i === activeIdx && p.status !== 'BUST') {
-      nameEl.style.backgroundColor = 'orange';
-      nameEl.style.color           = 'black';
-    } else {
-      nameEl.style.backgroundColor = '';
-      nameEl.style.color           = '';
-    }
-  });
+  // Highlight actif → on ajoute/enlève une classe, pas de style inline
+const activeIdx = gameState.current_bettor_index;
+gameState.players.forEach((p, i) => {
+// dans ta boucle d'update pour chaque siège i
+const seatEl = document.getElementById('seat' + i);
+if (seatEl) seatEl.classList.toggle('is-allin-bg', p.status === 'ALLIN');
+  const isActive = (i === activeIdx && p.status !== 'BUST');
+  seatEl.classList.toggle('turn', isActive);
+
+  // On nettoie toute ancienne coloration inline sur le libellé
+  const nameEl = seatEl.querySelector('.player-name');
+  if (nameEl) { nameEl.style.backgroundColor = ''; nameEl.style.color = ''; nameEl.style.boxShadow = ''; }
+});
+
+// Couleurs selon statut → classes (pas de style inline)
+gameState.players.forEach((p, i) => {
+  const seatEl = document.getElementById('seat' + i);
+  if (!seatEl) return;
+  seatEl.classList.remove('status-fold', 'status-bust', 'status-winner');
+  if (p.status === 'FOLD')  seatEl.classList.add('status-fold');
+  if (p.status === 'BUST')  seatEl.classList.add('status-bust');
+  if (p.status === 'WINNER')seatEl.classList.add('status-winner');
+});
 
   // Couleurs selon statut
-  gameState.players.forEach((p,i) => {
-    const el = document.querySelector(`#seat${i} .player-name`);
-    if (!el) return;
-    if (p.status==='FOLD')        { el.style.backgroundColor='gray';  el.style.color='black'; }
-    else if (p.status==='BUST')   { el.style.backgroundColor='black'; el.style.color='white'; }
-    else if (p.status==='WINNER') { el.style.backgroundColor='yellow';el.style.color='black'; el.style.boxShadow='0 0 8px yellow'; }
-  });
+// --- Turn indicator déjà OK (classe .turn) ---
+
+// --- Statuts en classes (pas de style inline) ---
+gameState.players.forEach((p, i) => {
+  const seatEl = document.getElementById('seat' + i);
+  if (!seatEl) return;
+
+  // tour actif seulement si pas BUST/FOLD
+  const isActive = (i === gameState.current_bettor_index && p.status !== 'BUST' && p.status !== 'FOLD');
+  seatEl.classList.toggle('turn', isActive);
+
+  // reset classes & inline hérités
+  seatEl.classList.remove('status-fold','status-bust','status-winner');
+  const nameEl = seatEl.querySelector('.player-name');
+  if (nameEl) { nameEl.style.background = ''; nameEl.style.color = ''; nameEl.style.boxShadow = ''; }
+
+  // applique la classe correspondant au statut
+  if (p.status === 'FOLD')   seatEl.classList.add('status-fold');
+  if (p.status === 'BUST')   seatEl.classList.add('status-bust');
+  if (p.status === 'WINNER') seatEl.classList.add('status-winner');
+});
 
   // Fold/Check pour vous
   const myIdx    = gameState.players.findIndex(p=>p.id===mySocketId);
   const mePlayer = gameState.players[myIdx] || {};
-  const isMyTurn = myIdx === gameState.current_bettor_index && mePlayer.status !== 'BUST';
+const isMyTurn = (
+  myIdx === gameState.current_bettor_index &&
+  mePlayer.status !== 'BUST' &&
+  mePlayer.status !== 'ALLIN'
+);
   if (isMyTurn) {
     gui_setup_fold_call_click(
       `<font color="red"><u>F</u>old</font>`,
@@ -583,10 +846,9 @@ function updateInterface(gameState) {
   // Reveal final
   if (phase === 'reveal' && !revealedAllSeats) {
     // 1) retire d’éventuels marquages précédents
-    document.querySelectorAll('.seat').forEach(seatEl => {
-      seatEl.classList.remove('winning-hand');
-    });
-
+document.querySelectorAll('.seat').forEach(seatEl => {
+  seatEl.classList.remove('winning-hand','losing-hand');
+});
     // 2) flip immédiat des cartes encore en lice
     gameState.players.forEach((p, i) => {
       if (!p.inShowdown) return;
@@ -601,69 +863,87 @@ function updateInterface(gameState) {
     });
 
 // 3) après un délai, on affiche le message + surlignage + overlay
-const REVEAL_DELAY = 5000; // 3s
+// 3) après un délai, on affiche le winner + msg + (on démarre la période de “néon”)
+const REVEAL_DELAY = 3000;       // 2s avant d'afficher le gagnant
+const REVEAL_NEON_LINGER = 4000; // encore 4s de halo avant le cleanup préflop
+     // +4.5s pendant lesquels le néon doit rester
+
 setTimeout(() => {
-  // on ne fait rien si on n'est plus en phase "reveal"
   if (currentGameState.phase !== 'reveal') return;
 
-  // récupère le premier gagnant
-  const winners = currentGameState.players.filter(p => p.status === 'WINNER');
-  if (!winners.length) return;
+  // indices des gagnants (gère ex-aequo)
+  const winnerIdx = [];
+  currentGameState.players.forEach((p, i) => {
+    if (p.status === 'WINNER') winnerIdx.push(i);
+  });
+  if (!winnerIdx.length) return;
 
-  const w    = winners[0];
+  // message
+  const w    = currentGameState.players[winnerIdx[0]];
   const who  = w.id === mySocketId ? 'YOU' : w.label;
   const hand = w.handName || 'a winning hand';
-
-  // texte de fin
   document.getElementById('end-game-message').textContent =
     `${who} wins the hand with ${hand}!`;
 
-  // highlight gagnant
-  const idx    = currentGameState.players.indexOf(w);
-  const seatEl = document.getElementById('seat' + idx);
-  if (seatEl) seatEl.classList.add('winning-hand');
+  // marquer les gagnants
+  winnerIdx.forEach(i => {
+    document.getElementById('seat' + i)?.classList.add('winning-hand');
+  });
 
-  // overlay uniquement si vraiment terminé (un seul survivant)
+  // *** marquer les perdants (ceux qui étaient en showdown mais pas gagnants) ***
+  currentGameState.players.forEach((p, i) => {
+    if (p.inShowdown && !winnerIdx.includes(i)) {
+      document.getElementById('seat' + i)?.classList.add('losing-hand');
+    }
+  });
+
+  // faire durer le néon
+  window._neonLingerUntil = Date.now() + 4000;
+
+  // overlay fin de manche (inchangé)
   const survivors = currentGameState.players.filter(p => p.status !== 'BUST');
   if (survivors.length === 1) {
-    if (w.id === mySocketId)      showVictory(who);
-    else                           showLosing();
+    if (w.id === mySocketId) showVictory(who);
+    else                     showLosing();
   }
 }, REVEAL_DELAY);
-
     revealedAllSeats = true;
   }
 
     // → Au passage reveal → preflop, affiche l’overlay de défaite pour les BUST
-    if (lastPhase === 'reveal' && phase === 'preflop') {
-      const me = gameState.players.find(p => p.id === mySocketId);
-      if (me && me.status === 'BUST') {
+if (lastPhase === 'reveal' && phase === 'preflop') {
+  const me = gameState.players.find(p => p.id === mySocketId);
+  if (me && me.status === 'BUST') {
         // Le #end-game-message contient déjà "X wins the hand with Y"
-        showLosing(); 
+      showLosing();
         // On ne clear pas tout de suite #end-game-message pour conserver le texte
         return;  // on sort pour garder l'overlay figé
-      }
-    }  
+  }
+}
 
 // Reset préflop
+// Reset préflop
 if (phase === 'preflop') {
-  // Si on a déjà affiché l’overlay de défaite, on ne reset rien (return au-dessus)
-  
-  // sinon, on est un joueur actif → reset normal :
-  revealedAllSeats = false;
-  document.querySelectorAll('.seat').forEach(seatEl => {
-    seatEl.classList.remove('winning-hand');
-  });
-  const endMsg = document.getElementById('end-game-message');
-  if (endMsg) endMsg.textContent = '';
-  const tm = document.getElementById('turn-message');
-  if (tm) tm.textContent = '';
-  winnerAnnounced = false;
-  loserAnnounced  = false;
-  overlayShown    = false;
-  document.querySelectorAll('.player-name').forEach(el => {
-    el.style.boxShadow = '';
-  });
+  // si on a montré l’overlay lose juste avant, on a déjà “figé” l’écran (cf. ton return)
+  const doClear = () => {
+    clientRequestedReveal = false;
+    revealedAllSeats = false;
+    document.querySelectorAll('.seat').forEach(seatEl => {
+      seatEl.classList.remove('winning-hand','losing-hand');
+    });
+    const endMsg = document.getElementById('end-game-message');
+    if (endMsg) endMsg.textContent = '';
+    const tm = document.getElementById('turn-message');
+    if (tm) tm.textContent = '';
+    winnerAnnounced = false;
+    loserAnnounced  = false;
+    overlayShown    = false;
+    document.querySelectorAll('.player-name').forEach(el => { el.style.boxShadow = ''; });
+  };
+
+  const wait = Math.max(0, (window._neonLingerUntil || 0) - Date.now());
+  if (wait > 0) setTimeout(doClear, wait);
+  else          doClear();
 }
 
 }
@@ -729,45 +1009,246 @@ function updateTurnIndicator(gameState) {
 // ───────────────────────
 function show_custom_raise() {
   console.log("Raise modal");
+
   const html = `
-    <div id="calc-container" class="calc-horizontal-layout">
-      <div class="calc-col calc-col-display">
-        <h3 class="calc-title">RAISE CALCULATOR</h3>
-        <div id="calc-display" class="calc-display">0</div>
+    <div class="raise-window">
+      <div class="raise-head">
+        <h3 class="raise-title">RAISE CALCULATOR</h3>
+        <button class="calc-btn-x" type="button" title="Fermer" aria-label="Fermer" onclick="calcClose()">×</button>
       </div>
-      <div class="calc-col calc-col-actions">
-        <button class="calc-btn half-btn" onclick="calcAllIn()">ALL-IN</button>
-        <button class="calc-btn half-btn" onclick="calcCall()">CALL</button>
-      </div>
-      <div class="calc-col calc-col-presets">
-        <button class="calc-btn third-btn" onclick="calcSetValue(50)">50</button>
-        <button class="calc-btn third-btn" onclick="calcSetValue(100)">100</button>
-        <button class="calc-btn third-btn" onclick="calcSetValue(200)">200</button>
-      </div>
-      <div class="calc-col calc-col-digits">
-        <div class="calc-digit-grid">
-          <button class="calc-btn" onclick="calcAddDigit(7)">7</button>
-          <button class="calc-btn" onclick="calcAddDigit(8)">8</button>
-          <button class="calc-btn" onclick="calcAddDigit(9)">9</button>
-          <button class="calc-btn" onclick="calcAddDigit(4)">4</button>
-          <button class="calc-btn" onclick="calcAddDigit(5)">5</button>
-          <button class="calc-btn" onclick="calcAddDigit(6)">6</button>
-          <button class="calc-btn" onclick="calcAddDigit(1)">1</button>
-          <button class="calc-btn" onclick="calcAddDigit(2)">2</button>
-          <button class="calc-btn" onclick="calcAddDigit(3)">3</button>
-          <button class="calc-btn" onclick="calcAddDigit(0)">0</button>
-          <button class="calc-btn" onclick="calcClear()">CLEAR</button>
-          <button class="calc-btn" onclick="calcConfirm()">OK</button>
+
+      <div class="raise-body">
+        <div id="calc-container" class="calc-horizontal-layout">
+          <div class="calc-col calc-col-display">
+            <div class="calc-title">MONTANT</div>
+            <div id="calc-display" class="calc-display">0</div>
+          </div>
+
+<div class="calc-col calc-col-actions">
+  <button class="calc-btn btn-check" onclick="calcCheck()">CHECK</button>
+  <button class="calc-btn btn-fold"  onclick="calcFold()">FOLD</button>
+
+  <button class="calc-btn half-btn"  onclick="calcAllIn()">ALL-IN</button>
+  <button class="calc-btn half-btn"  onclick="calcCall()">CALL</button>
+</div>
+
+<div class="calc-col calc-col-presets">
+  <div class="chip-grid">
+    <button class="chip chip-50"   type="button" onclick="calcAddAmount(50)"><span>50</span></button>
+    <button class="chip chip-100"  type="button" onclick="calcAddAmount(100)"><span>100</span></button>
+    <button class="chip chip-200"  type="button" onclick="calcAddAmount(200)"><span>200</span></button>
+    <button class="chip chip-500"  type="button" onclick="calcAddAmount(500)"><span>500</span></button>
+    <button class="chip chip-1000" type="button" onclick="calcAddAmount(1000)"><span>1000</span></button>
+    <button class="chip chip-2000" type="button" onclick="calcAddAmount(2000)"><span>2000</span></button>
+  </div>
+</div>
+
+          <div class="calc-col calc-col-digits">
+            <div class="calc-digit-grid">
+              <button class="calc-btn" onclick="calcAddDigit(7)">7</button>
+              <button class="calc-btn" onclick="calcAddDigit(8)">8</button>
+              <button class="calc-btn" onclick="calcAddDigit(9)">9</button>
+              <button class="calc-btn" onclick="calcAddDigit(4)">4</button>
+              <button class="calc-btn" onclick="calcAddDigit(5)">5</button>
+              <button class="calc-btn" onclick="calcAddDigit(6)">6</button>
+              <button class="calc-btn" onclick="calcAddDigit(1)">1</button>
+              <button class="calc-btn" onclick="calcAddDigit(2)">2</button>
+              <button class="calc-btn" onclick="calcAddDigit(3)">3</button>
+              <button class="calc-btn" onclick="calcAddDigit(0)">0</button>
+              <button class="calc-btn" onclick="calcClear()">CLEAR</button>
+              <button class="calc-btn" onclick="calcConfirm()">RAISE</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    <div class="calc-row-close">
-      <button class="calc-btn calc-close-btn" onclick="calcClose()">Close</button>
-    </div>
   `;
+
+  // 1) Injecte la modale
   gui_write_modal_box(html);
-  const m = document.getElementById("modal-box");
-  if (m) { m.style.display = "block"; m.style.bottom = "0"; }
+
+  const overlay = document.getElementById('modal-box');
+  if (!overlay) return;
+
+  // 2) Thème + affichage centré
+  overlay.classList.add('arcade');     // garde ton skin arcade
+  overlay.style.display = 'flex';
+
+  // 3) Nettoie tout ancien ancrage "barre du bas"
+  ['bottom','left','right','top','transform','width','height'].forEach(p => overlay.style.removeProperty(p));
+
+  // 4) Réglages de taille & typo (→ modifie les 2 constantes au besoin)
+  const TARGET_WIDTH_PX = 700;   // ← un peu moins large (ex: 720 / 740 / 780)
+  const FONT_BUMP_PX   = 2;      // ← +2 px sur les textes clés (mets 3 si tu veux plus grand)
+
+  const win = overlay.querySelector('.raise-window');
+  if (!win) return;
+
+  // Désactiver CHECK s'il y a quelque chose à payer
+let canCheck = false;
+if (currentGameState) {
+  const meIdx = currentGameState.players.findIndex(p => p.id === mySocketId);
+  if (meIdx >= 0) {
+    const me = currentGameState.players[meIdx];
+    const toCall = Math.max(0, (currentGameState.current_bet||0) - (me.subtotal_bet||0));
+    canCheck = (toCall === 0);
+  }
+}
+const checkBtn = win.querySelector('.btn-check');
+if (checkBtn) {
+  checkBtn.disabled = !canCheck;
+  checkBtn.title = canCheck ? "" : "Check indisponible (mise en cours)";
+}
+
+  // largeur réduite
+  win.style.width = TARGET_WIDTH_PX + 'px';
+
+  // petit bump de typo (cible les éléments utiles)
+  const raiseTitle = win.querySelector('.raise-title');
+  if (raiseTitle) raiseTitle.style.fontSize = 'calc(10px + ' + FONT_BUMP_PX + 'px)';
+  const calcTitle = win.querySelector('.calc-title');
+  if (calcTitle)  calcTitle.style.fontSize  = 'calc(9px  + ' + FONT_BUMP_PX + 'px)';
+  const calcDisplay = win.querySelector('.calc-display');
+  if (calcDisplay)  calcDisplay.style.fontSize  = 'calc(16px + ' + FONT_BUMP_PX + 'px)';
+  win.querySelectorAll('.calc-btn').forEach(b => { b.style.fontSize = 'calc(11px + ' + FONT_BUMP_PX + 'px)'; });
+
+  // 5) Drag & drop (souris + tactile) sur toute la fenêtre sauf éléments interactifs
+makeDraggable(win, overlay, win.querySelector('.raise-head'));
+
+  // 6) Fermer sur clic hors fenêtre + ESC
+  overlay.onclick = (e) => { if (e.target === overlay) calcClose(); };
+  document.addEventListener('keydown', escToCloseOnce);
+}
+
+function makeDraggable(win, overlay, handle){
+  if (!handle) return;
+
+  win.style.position = 'absolute';
+
+  const centerInOverlay = () => {
+    const rO = overlay.getBoundingClientRect();
+    const rW = win.getBoundingClientRect();
+    win.style.left = Math.max(8, rO.width/2 - rW.width/2) + 'px';
+    win.style.top  = Math.max(8, rO.height/2 - rW.height/2) + 'px';
+  };
+  centerInOverlay();
+
+  handle.style.cursor = 'grab';
+  handle.style.touchAction = 'none';
+
+  let dragging = false, startX=0, startY=0, startLeft=0, startTop=0, pointerId=null;
+
+  // ✅ tout élément bouton/contrôle (y compris la croix et les chips)
+  const isInteractive = (el) =>
+    !!(el && el.closest('button, [role="button"], input, select, textarea, a, .chip'));
+
+  const onPointerDown = (e) => {
+    // ⛔️ ne pas démarrer un drag si on clique sur un bouton (ex: la croix)
+    if (isInteractive(e.target)) return;
+
+    dragging = true;
+    pointerId = e.pointerId;
+    handle.setPointerCapture(pointerId);
+
+    const r = win.getBoundingClientRect();
+    const rO = overlay.getBoundingClientRect();
+    startLeft = r.left - rO.left;
+    startTop  = r.top  - rO.top;
+    startX = e.clientX;
+    startY = e.clientY;
+
+    handle.style.cursor = 'grabbing';
+    e.preventDefault(); // ok ici, on n’a pas cliqué un bouton
+  };
+
+  const onPointerMove = (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    const box = overlay.getBoundingClientRect();
+    const w   = win.getBoundingClientRect();
+
+    let newLeft = startLeft + dx;
+    let newTop  = startTop  + dy;
+    const pad = 8;
+    newLeft = Math.min(Math.max(newLeft, pad), Math.max(pad, box.width  - w.width  - pad));
+    newTop  = Math.min(Math.max(newTop,  pad), Math.max(pad, box.height - w.height - pad));
+    win.style.left = newLeft + 'px';
+    win.style.top  = newTop  + 'px';
+  };
+
+  const onPointerUp = () => {
+    if (pointerId !== null) { try { handle.releasePointerCapture(pointerId); } catch(_){} }
+    dragging = false; pointerId = null;
+    handle.style.cursor = 'grab';
+  };
+
+  handle.addEventListener('pointerdown', onPointerDown);
+  handle.addEventListener('pointermove', onPointerMove);
+  handle.addEventListener('pointerup', onPointerUp);
+  handle.addEventListener('pointercancel', onPointerUp);
+
+  window.addEventListener('resize', () => {
+    const box = overlay.getBoundingClientRect();
+    const w = win.getBoundingClientRect();
+    let left = parseFloat(win.style.left || '0');
+    let top  = parseFloat(win.style.top  || '0');
+    left = Math.min(left, Math.max(8, box.width  - w.width  - 8));
+    top  = Math.min(top,  Math.max(8, box.height - w.height - 8));
+    win.style.left = Math.max(left, 8) + 'px';
+    win.style.top  = Math.max(top,  8) + 'px';
+  });
+}
+
+function escToCloseOnce(ev){
+  if (ev.key === 'Escape') {
+    document.removeEventListener('keydown', escToCloseOnce);
+    calcClose();
+  }
+}
+
+function calcFold(){
+  // utilise tes handlers natifs si présents, sinon émet direct
+  if (typeof human_fold === 'function') {
+    human_fold();
+  } else if (window.socket) {
+    socket.emit("playerAction", { type: "fold" });
+  }
+  calcClose();
+}
+
+function calcCheck(){
+  // Check UNIQUEMENT si rien à payer
+  if (!currentGameState) { calcClose(); return; }
+  const meIdx = currentGameState.players.findIndex(p => p.id === mySocketId);
+  const me    = meIdx >= 0 ? currentGameState.players[meIdx] : null;
+  const toCall = me ? Math.max(0, (currentGameState.current_bet||0) - (me.subtotal_bet||0)) : 0;
+
+  if (toCall > 0) {
+    alert("Check indisponible : une mise est en cours, vous devez au moins payer.");
+    return; // on ne ferme pas la fenêtre pour que le joueur choisisse CALL/RAISE/FOLD
+  }
+
+  if (typeof human_check === 'function') {
+    human_check();
+  } else if (window.socket) {
+    socket.emit("playerAction", { type: "check" });
+  }
+  calcClose();
+}
+
+function getCalcVal(){
+  const el = document.getElementById('calc-display');
+  if (!el) return 0;
+  const n = parseInt((el.textContent || el.innerText || '0').replace(/[^\d]/g,''), 10);
+  return isNaN(n) ? 0 : n;
+}
+function setCalcVal(v){
+  const el = document.getElementById('calc-display');
+  if (el) el.textContent = String(Math.max(0, Math.floor(v||0)));
+}
+function calcAddAmount(n){
+  setCalcVal(getCalcVal() + Number(n||0));
 }
 
 function calcAddDigit(d) {
@@ -780,9 +1261,18 @@ function calcSetValue(v) {
 function calcClear() {
   document.getElementById("calc-display").textContent = "0";
 }
-function calcClose() {
-  document.getElementById("modal-box").style.display = "none";
+
+/* === Close (nettoyage propre) === */
+function calcClose(){
+  const overlay = document.getElementById('modal-box');
+  if (!overlay) return;
+  overlay.style.display = 'none';
+  overlay.innerHTML = '';
+  overlay.onclick = null;
+  overlay.classList.remove('arcade', 'wide'); // au cas où
+  document.removeEventListener('keydown', escToCloseOnce);
 }
+
 function calcCall() {
   if (!currentGameState) { calcClose(); return; }
   const meIdx = currentGameState.players.findIndex(p => p.id === mySocketId);
@@ -800,18 +1290,24 @@ function calcAllIn() {
   calcClose();
 }
 function calcConfirm() {
-  const v = parseInt(document.getElementById("calc-display").textContent, 10) || 0;
-  socket.emit("playerAction", { type:"raise", amount: v });
-  calcClose();
-}
+  // 1) Lis le montant tapé
+  const input = parseInt(
+    document.getElementById("calc-display").textContent,
+    10
+  );
+  if (!input || input <= 0) {
+    return alert("Entrez un montant de mise supérieur à 0 !");
+  }
 
-/** Overlay victoire */
-function showVictory(name) {
-  const ov = document.createElement("div");
-  ov.id = "victory-overlay";
-  ov.innerHTML = `<div id="victory-text">${name} WIN! 🎉</div>`;
-  document.body.appendChild(ov);
-  requestAnimationFrame(() => ov.classList.add("show"));
+  // 2) Émets directement un vrai RAISE sur ce montant
+  console.log("[client] → RAISE", input);
+  socket.emit("playerAction", {
+    type:   "raise",
+    amount: input
+  });
+
+  // 3) Ferme la modale
+  calcClose();
 }
 
 /** Désactive / réactive Raise */
@@ -829,36 +1325,121 @@ function enableRaiseButton() {
   btn.onclick = show_custom_raise;
 }
 
-/** Overlay défaite */
-function showLosing() {
-  if (loserAnnounced) return;
-  loserAnnounced = true;
+/** Overlay ARCADE — commun */
+function makeArcadeOverlay(kind, html) {
+  // nettoie un ancien overlay éventuel
+  const old1 = document.getElementById('victory-overlay');
+  const old2 = document.getElementById('losing-overlay');
+  old1?.remove(); old2?.remove();
 
-  const winnerMsg = document.getElementById("end-game-message")?.textContent || "";
-  const extra = winnerMsg
-    ? `<p style="
-         font-size:2rem;
-         color:white;
-         margin-top:2rem;
-         text-align:center;
-       ">${winnerMsg}</p>`
-    : "";
-
-  const ov = document.createElement("div");
-  ov.id = "losing-overlay";
+  const ov = document.createElement('div');
+  ov.id  = kind === 'win' ? 'victory-overlay' : 'losing-overlay';
+  ov.className = 'arcade-overlay ' + (kind === 'win' ? 'win' : 'lose');
   ov.innerHTML = `
-    <div id="losing-text">
-      <p style="
-         font-size:5rem;
-         color:#ff9100;
-         margin:1rem 0;
-         text-align:center;
-       ">
-        Vous êtes à sec ! Partie terminée.
-      </p>
-      ${extra}
-    </div>
-  `;
+    <div class="ao-bg"></div>
+    <div class="ao-card">
+      <div class="ao-head">
+        <h1 class="ao-title">${kind === 'win' ? 'YOU WIN!' : 'GAME OVER'}</h1>
+        <button class="ao-x" aria-label="Fermer" onclick="this.closest('.arcade-overlay').remove()">×</button>
+      </div>
+      <div class="ao-body">${html}</div>
+      <div class="ao-confetti" aria-hidden="true"></div>
+    </div>`;
   document.body.appendChild(ov);
-  requestAnimationFrame(() => ov.classList.add("show"));
+  requestAnimationFrame(() => ov.classList.add('show'));
+
+  // === FX dynamiques pour le banner ===
+initEndBannerFX(ov, { kind, autoCloseSec: 0 }); // mets 3..5 pour activer l'autoclose
+
+
+  // confettis si win
+  if (kind === 'win') {
+    const box = ov.querySelector('.ao-confetti');
+    const colors = ['#48d2ff','#7e59ff','#ffd447','#2bd38a','#ff6e5b'];
+    for (let i=0;i<36;i++){
+      const s = 8 + Math.random()*8;
+      const el = document.createElement('i');
+      el.style.cssText = `
+        position:absolute; width:${s}px; height:${s*1.4}px; border-radius:2px;
+        left:${(Math.random()*96+2)}%; top:-10vh; background:${colors[i%colors.length]};
+        animation: ao-fall 1.6s ease-out ${Math.random()*0.6}s forwards`;
+      box.appendChild(el);
+    }
+  }
+}
+
+/** Overlay victoire (remplace l’ancienne) */
+function showVictory(name) {
+  // ancien appel passait "YOU" ou le label — on compose le sous-titre
+  const sub = `<p class="ao-sub">🎉 ${name} wins the hand! 🎉</p>`;
+  makeArcadeOverlay('win', sub);
+}
+
+/** Overlay défaite (remplace l’ancienne) */
+function showLosing() {
+  if (typeof loserAnnounced !== 'undefined' && loserAnnounced) return;
+  if (typeof loserAnnounced !== 'undefined') loserAnnounced = true;
+
+  const winnerMsg = document.getElementById('end-game-message')?.textContent || '';
+  const html = `
+    <p class="ao-sub lose-main">Vous êtes à sec ! Partie terminée.</p>
+    ${winnerMsg ? `<p class="ao-sub extra">${winnerMsg}</p>` : ''}`;
+  makeArcadeOverlay('lose', html);
+}
+
+// add right after you append the overlay in makeArcadeOverlay(...)
+if (kind === 'win') {
+  const fx = ov.querySelector('.ao-confetti');
+  fx.innerHTML = '';
+
+  // 1) confetti (keep your current loop if you prefer)
+  const colors = ['#48d2ff','#7e59ff','#ffd447','#2bd38a','#ff6e5b'];
+  for (let i=0;i<28;i++){
+    const s = 8 + Math.random()*8;
+    const el = document.createElement('i');
+    el.style.cssText = `
+      position:absolute;width:${s}px;height:${s*1.4}px;border-radius:2px;
+      left:${(Math.random()*96+2)}%; top:-10vh; background:${colors[i%colors.length]};
+      animation: ao-fall 1.6s ease-out ${Math.random()*0.6}s forwards`;
+    fx.appendChild(el);
+  }
+
+  // 2) chips burst
+  const chipClasses = ['chip-50','chip-100','chip-200','chip-500','chip-1000'];
+  for (let j=0;j<16;j++){
+    const c = document.createElement('div');
+    c.className = `chip-fx ${chipClasses[j % chipClasses.length]}`;
+    c.style.left = (Math.random()*90 + 5) + '%';
+    c.style.top  = '-8vh';
+    c.style.animationDelay = (Math.random()*0.5 + 0.05) + 's';
+    const inner = document.createElement('span'); c.appendChild(inner);
+    fx.appendChild(c);
+  }
+}
+
+function syncNonMySeatCardSize(){
+  const table = document.querySelector('#poker_table, .poker-table');
+  const ref = document.querySelector('#flop1, #board .boardcard, .board .card');
+  if (!table || !ref) return;
+  const r = ref.getBoundingClientRect();
+  table.style.setProperty('--board-card-w', Math.round(r.width) + 'px');
+  table.style.setProperty('--board-card-h', Math.round(r.height) + 'px');
+}
+window.addEventListener('load', syncNonMySeatCardSize);
+window.addEventListener('resize', syncNonMySeatCardSize);
+// appelle aussi cette fonction juste après le reveal du board
+
+
+function showErrorToast(msg){
+  let t = document.getElementById('toast');
+  if (!t){
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.className = 'toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(()=> t.classList.remove('show'), 2200);
 }

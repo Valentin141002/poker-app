@@ -87,6 +87,46 @@ function saveLevels() {
   fs.writeFileSync(levelsFile, JSON.stringify(playerLevels, null, 2), 'utf8');
 }
 
+// Heads-up : déclencher reveal si un joueur est ALL-IN et l'autre vient de s'aligner
+function shouldRevealNowAfterCall(gs){
+  if (!gs || !Array.isArray(gs.players)) return false;
+
+  // joueurs encore en lice
+  const alive = gs.players.filter(p => p && p.status !== 'FOLD' && p.status !== 'BUST');
+  if (alive.length !== 2) return false;
+
+  const [A, B] = alive;
+  const isAllInA = (A.status === 'ALLIN') || ((A.bankroll|0) === 0);
+  const isAllInB = (B.status === 'ALLIN') || ((B.bankroll|0) === 0);
+
+  // exactement UN seul all-in
+  if (isAllInA === isAllInB) return false;
+
+  // celui qui n'est pas all-in vient de couvrir la mise ET il lui reste des jetons
+  const currentBet = gs.current_bet || Math.max(A.subtotal_bet||0, B.subtotal_bet||0);
+  const caller = isAllInA ? B : A;
+
+  const hasCovered = (caller.subtotal_bet || 0) >= currentBet;
+  const stillHasChips = (caller.bankroll || 0) > 0;
+
+  return hasCovered && stillHasChips;
+}
+
+// Utilise la même fonction que ton "double all-in" (ADAPTE LE NOM CI-DESSOUS)
+function triggerRunoutAndReveal(gs, emitFn){
+  // 👉 remplace par TA fonction existante (celle appelée quand les deux sont all-in) :
+  if (typeof runAutoRunoutAndReveal === 'function') {
+    runAutoRunoutAndReveal(gs, emitFn);
+  } else if (typeof fastForwardToShowdown === 'function') {
+    fastForwardToShowdown(gs, emitFn);
+  } else {
+    // fallback très basique
+    gs.phase = 'reveal';
+    if (emitFn) emitFn('updateTable', gs);
+  }
+}
+
+
 // ──────────────────────────────────────────────────────────────
 // 4) États en mémoire pour les parties en cours
 // ──────────────────────────────────────────────────────────────
@@ -242,6 +282,53 @@ app.delete('/admin/deleteProfile/:name', (req, res) => {
   res.json({ ok: true });
 });
 
+// 8bis) Gate HTTP : si partie finie ou joueur BUST, on sert directement la page de fin
+app.get('/', (req, res, next) => {
+  const { table, match2, seat } = req.query;
+  const id = table || match2;
+
+  // Pas d’ID ou pas de seat → laissez le front normal se charger
+  if (!id || seat === undefined) return next();
+
+  // État courant et config
+  const state = gameStateByTable[id];
+  const cfg   = tablesConfig[id] || matches2Config[id];
+
+  // Table introuvable/fermée → page de fin "perdu"
+  if (!cfg && !state) {
+    res.set('Cache-Control', 'no-store');
+    return res.send(renderEndArcade({
+      mode: 'lose',
+      title: 'Partie introuvable',
+      detail: "La table est fermée (inactivité) ou l’ID est périmé."
+    }));
+  }
+
+  // Si pas encore d’état en mémoire, laissez le front gérer l’attente
+  if (!state) return next();
+
+  const idx = Number(seat);
+  const me  = state.players[idx];
+  if (!Number.isInteger(idx) || !me) return next();
+
+  const survivors = state.players.filter(p => p.status !== 'BUST');
+  const gameOver  = survivors.length === 1;
+
+  // Cas 1 : partie terminée → win/lose selon le statut du joueur
+  if (gameOver) {
+    const iWin = me.status !== 'BUST';
+    res.set('Cache-Control', 'no-store');
+    return res.send(renderEndArcade({
+      mode:   iWin ? 'win' : 'lose',
+      title:  iWin ? 'La partie est terminée, vous avez gagné 🎉' : 'Vous avez été éliminé.',
+      detail: iWin ? 'Bravo !' : 'Merci d’avoir joué !'
+    }));
+  }
+
+  // Sinon : laissez le front se charger normalement
+  return next();
+});
+
 
 // ──────────────────────────────────────────────────────────────
 // 8) Static files & fallback
@@ -330,8 +417,14 @@ function serverBet(roomID, idx, amount) {
   p.subtotal_bet += amount;
   p.bankroll    -= amount;
   G.pot         += amount;
+  p.total_bet_hand = (p.total_bet_hand || 0) + amount;  // ← NEW
   G.current_bet  = cb;
 
+  // Si le stack tombe à zéro, le joueur EST all-in (même si c'était un CALL exact)
+if ((p.bankroll | 0) === 0 && p.status !== 'FOLD' && p.status !== 'BUST') {
+  p.status = 'ALLIN';
+}
+  
   // 3) on stocke dans le bon store
   if (isMatch2) {
     currentBetByMatch2[roomID]      = cb;
@@ -342,41 +435,103 @@ function serverBet(roomID, idx, amount) {
   }
 
   // 4) on notifie les clients et relance le timer adapté
-  if (isMatch2) {
-    io.to(roomID).emit('updateMatch2',   { matchID: roomID, gameState: G });
-    io.to('admin').emit('updateMatch2',   { matchID: roomID, gameState: G });
-    resetTurnTimer2(roomID);
-  } else {
-    io.to(roomID).emit('updateTable',     G);
-    io.to('admin').emit('updateTable',    { tableID: roomID, gameState: G });
-    resetTurnTimer(roomID);
-  }
+// 4) on notifie les clients (PAS de reset du timer ici !)
+if (isMatch2) {
+  io.to(roomID).emit('updateMatch2',   { matchID: roomID, gameState: G });
+  io.to('admin').emit('updateMatch2',  { matchID: roomID, gameState: G });
+} else {
+  io.to(roomID).emit('updateTable',    G);
+  io.to('admin').emit('updateTable',   { tableID: roomID, gameState: G });
+}
 
   return true;
 }
 
-function isRoundComplete(tableID) {
-  const G = gameStateByTable[tableID];
+function isRoundComplete(roomID) {
+  const G = gameStateByTable[roomID];
+  if (!G) return false;
+  const isMatch2 = Boolean(matches2Config[roomID]);
+
+  const cb = (isMatch2 ? currentBetByMatch2[roomID] : currentBetByTable[roomID]) || 0;
+
+  // joueurs encore en lice
   const active = G.players.filter(p => p.status !== 'FOLD' && p.status !== 'BUST');
-  const cb = currentBetByTable[tableID] || 0;
-  if (cb > 0) return active.every(p => p.subtotal_bet === cb);
-  return G.checkCount >= active.length;
+
+  // acteurs = peuvent encore agir (ni ALLIN, ni 0 stack)
+  const actors = active.filter(p => !isSkippablePlayer(p)); // <= AU LIEU de juste '!== ALLIN'
+
+  if (cb > 0) {
+    // !!! IMPORTANT: s'il n'y a AUCUN acteur, ce n'est pas "complet" (sinon vacuité => true)
+    if (actors.length === 0) return false;
+    // fin du tour quand tous les acteurs ont couvert la mise courante
+    return actors.every(p => (p.subtotal_bet || 0) === cb);
+  } else {
+    // pas de mise : fin du tour quand tous les acteurs ont CHECK
+    const requiredChecks = actors.length;
+    if (requiredChecks === 0) return false; // pas d'acteurs => ne PAS avancer
+    return (G.checkCount || 0) >= requiredChecks;
+  }
+}
+
+// Helpers de sièges actifs + rotation (à mettre en haut du fichier, avant configureBlinds)
+function isSeatActive(state, i) {
+  const p = state.players[i];
+  return !!p && p.status !== 'BUST' && ((p.bankroll | 0) > 0);
+}
+
+function nextActiveSeat(state, from) {
+  const N = state.players.length;
+  for (let step = 1; step <= N; step++) {
+    const j = ((from + step) % N + N) % N;
+    if (isSeatActive(state, j)) return j;
+  }
+  return -1; // si personne
+}
+
+function firstActiveSeat(state) {
+  return nextActiveSeat(state, -1);
+}
+
+// Applique une blind en gérant le cas short stack → ALLIN
+function applyBlind(st, seat, amt) {
+  const p = st.players[seat];
+  if (!p) return 0;
+  const post = Math.min(amt, Math.max(0, p.bankroll | 0));
+  if (post <= 0) return 0;
+
+  p.subtotal_bet   = (p.subtotal_bet   || 0) + post;
+  p.total_bet_hand = (p.total_bet_hand || 0) + post;
+  p.bankroll      -= post;
+  st.pot          += post;
+
+  if (post < amt || (p.bankroll | 0) === 0) p.status = 'ALLIN';
+  return post;
 }
 
 // ──────────────────────────────────────────────────────────────
 // configureBlinds: double les blinds tous les 10 rounds pour 3 modes
 // ──────────────────────────────────────────────────────────────
 function configureBlinds(state, tableID) {
+  // Helper local : applique une blind proprement
+  function applyBlind(st, seat, amt) {
+    const p = st.players[seat];
+    p.subtotal_bet   = (p.subtotal_bet || 0) + amt;
+    p.total_bet_hand = (p.total_bet_hand || 0) + amt; // ← utile pour side-pots
+    p.bankroll      -= amt;
+    st.pot          += amt;
+  }
+
+  // Détermination du mode via la config
   let mode;
-  if (tablesConfig[tableID])      mode = tablesConfig[tableID].mode;
-  else if (matches2Config[tableID]) mode = matches2Config[tableID].mode;
+  if (tablesConfig[tableID])         mode = tablesConfig[tableID].mode;
+  else if (matches2Config[tableID])  mode = matches2Config[tableID].mode;
   else {
     state.dealerIndex = state.current_bettor_index = -1;
-    state.smallBlind = state.bigBlind = 0;
+    state.smallBlind  = state.bigBlind = 0;
     return;
   }
 
-  // factor = 2^floor((roundNumber-1)/10) pour les 3 modes ciblés
+  // Blinds de base (+ éventuellement facteur d’augmentation)
   let { SB, BB } = BLINDS[mode];
   if (['beginner','normal','turbo'].includes(mode)) {
     const factor = 2 ** Math.floor((state.roundNumber - 1) / 10);
@@ -384,42 +539,79 @@ function configureBlinds(state, tableID) {
     BB *= factor;
   }
 
-  // places actives
+  // Sièges encore actifs (non BUST et avec des jetons)
+  // Rotation déterministe du bouton dealer (saute les joueurs BUST/0 stack)
   const activeSeats = state.players
-    .map((p,i) => ({p,i}))
-    .filter(o => o.p.status!=='BUST' && o.p.bankroll>0)
+    .map((p, i) => ({ i, p }))
+    .filter(o => o.p && o.p.status !== 'BUST' && ((o.p.bankroll|0) > 0))
     .map(o => o.i);
+
   if (activeSeats.length < 2) {
-    state.dealerIndex = state.current_bettor_index = -1;
-    state.smallBlind = state.bigBlind = 0;
+    // Pas assez de joueurs pour poser des blinds → on sort
     return;
   }
 
-  // choix aléatoire du dealer
-  const dealer = activeSeats[Math.floor(Math.random() * activeSeats.length)];
-  state.dealerIndex = dealer;
-  state.smallBlind  = SB;
-  state.bigBlind    = BB;
-
-  // on trouve SB et BB seats
-  const next = (i, step=1) =>
+  // ⚠️ Déclaré AVANT la première utilisation pour éviter le TDZ
+  const nextActive = (i, step = 1) =>
     activeSeats[(activeSeats.indexOf(i) + step) % activeSeats.length];
-  const sbSeat = next(dealer,1), bbSeat = next(dealer,2);
 
-  // application des blinds
-  [ {seat:sbSeat,amt:SB}, {seat:bbSeat,amt:BB} ].forEach(({seat,amt})=>{
-    state.players[seat].subtotal_bet += amt;
-    state.players[seat].bankroll    -= amt;
-    state.pot                       += amt;
-  });
+  const lastDealer = state.dealerIndex;
+  let dealer;
 
-  // mise à jour des compteurs
-  currentBetByTable[tableID]      = BB;
-  currentMinRaiseByTable[tableID] = BB;
-  state.current_bet         = BB;
-  state.current_bettor_index= next(bbSeat,1);
-  state.checkCount          = 0;
+  // Si on a déjà un dealer : on donne le bouton au prochain joueur actif à gauche
+  if (Number.isInteger(lastDealer)) {
+    if (activeSeats.includes(lastDealer)) {
+      dealer = nextActive(lastDealer, 1); // "ex-SB" devient dealer si toujours actif
+    } else {
+      // Le dealer précédent a bust : on prend le 1er actif après son index, sinon le 1er actif
+      const after = activeSeats.find(i => i > lastDealer);
+      dealer = (after !== undefined) ? after : activeSeats[0];
+    }
+  // Première main : on prend simplement le 1er actif (le plus petit index)
+  } else {
+    dealer = activeSeats[0];
+  }
+
+  state.dealerIndex = dealer; // on persiste le dealer pour la main suivante
+
+  // Trouve SB et BB autour du dealer
+  let sbSeat, bbSeat;
+
+  const onlyTwo = activeSeats.length === 2;
+  if (onlyTwo) {
+    // Heads-up : le dealer POSTE la SB, l’autre poste la BB
+    sbSeat = dealer;
+    bbSeat = nextActive(dealer, 1);
+  } else {
+    // 3 joueurs et + : SB/BB classiques à gauche du dealer
+    sbSeat = nextActive(dealer, 1);
+    bbSeat = nextActive(dealer, 2);
+  }
+
+  state.smallBlindIndex = sbSeat;
+  state.bigBlindIndex   = bbSeat;
+
+  // Appliquer les blinds (met à jour pot, bankroll, subtotal_bet, total_bet_hand)
+  applyBlind(state, sbSeat, SB);
+  applyBlind(state, bbSeat, BB);
+
+  // Met à jour les compteurs de mises courantes
+  const isMatch2 = Boolean(matches2Config[tableID]);
+  state.current_bet = BB;
+
+  if (isMatch2) {
+    currentBetByMatch2[tableID]      = BB;
+    currentMinRaiseByMatch2[tableID] = BB;
+  } else {
+    currentBetByTable[tableID]       = BB;
+    currentMinRaiseByTable[tableID]  = BB;
+  }
+
+  // Le premier à parler = joueur après la BB (actif)
+  state.current_bettor_index = nextActive(bbSeat, 1);
+  state.checkCount           = 0;
 }
+
 
 function handleHyperTie(tableID) {
   const state = gameStateByTable[tableID];
@@ -575,6 +767,7 @@ function tryStartGame(tableID) {
       status:       '',
       subtotal_bet: 0,
       missedCount:  0,
+      warned: false,       // ← nouvelle propriété
       seat:         i,
     })),
     pot:                  0,
@@ -617,6 +810,7 @@ function tryStartGame(tableID) {
         p.status       = 'ALLIN';
         p.subtotal_bet = p.bankroll;
         state.pot     += p.bankroll;
+        total_bet_hand: 0;   // ← NEW
         p.bankroll     = 0;
         currentBetByTable[tableID] = state.current_bet = Math.max(
           currentBetByTable[tableID] || 0,
@@ -695,6 +889,7 @@ function tryStartMatch2(matchID) {
       status:       '',
       subtotal_bet: 0,
       missedCount:  0,
+      warned: false,       // ← nouvelle propriété
       seat:         i
     })),
     pot:                  0,
@@ -787,6 +982,71 @@ function tryStartMatch2(matchID) {
 }
 
 
+// ───────────────────────────────
+// SIDE POTS — helpers
+// ───────────────────────────────
+function buildSidePots(state) {
+  // contribution par joueur (0 si FOLD/BUST)
+  const contribs = state.players.map(p =>
+    (['FOLD','BUST'].includes(p.status) ? 0 : (p.total_bet_hand || 0))
+  );
+
+  // niveaux de cap triés (ex: 1000, 2500, 4000 …)
+  const caps = [...new Set(contribs.filter(c => c > 0))].sort((a, b) => a - b);
+
+  const pots = [];
+  let prev = 0;
+
+  for (const cap of caps) {
+    let amount = 0;
+    const eligible = [];
+    state.players.forEach((p, i) => {
+      const c = contribs[i];
+      if (c > prev) amount += Math.min(c, cap) - prev;
+      if (!['FOLD','BUST'].includes(p.status) && c >= cap) {
+        eligible.push(i);
+      }
+    });
+    if (amount > 0 && eligible.length > 0) {
+      pots.push({ amount, eligible }); // eligible = indices de joueurs qui peuvent gagner ce pot
+    }
+    prev = cap;
+  }
+  return pots;
+}
+
+function solveHands(state) {
+  const conv = c => {
+    const s = c[0], r = parseInt(c.slice(1), 10);
+    const M = {14:'A',13:'K',12:'Q',11:'J',10:'T'};
+    return (M[r] || r) + s;
+  };
+  const solved = state.players.map(p =>
+    ['FOLD','BUST'].includes(p.status) ? null
+      : Hand.solve([p.carda, p.cardb, ...state.board].map(conv))
+  );
+  return solved;
+}
+
+// split équitable en entiers ; distribue les restes +1 en round-robin
+function distributeChipsEvenly(playersIdx, amount, state) {
+  if (playersIdx.length === 0 || amount <= 0) return;
+  const base = Math.floor(amount / playersIdx.length);
+  let rem    = amount - base * playersIdx.length;
+
+  playersIdx.forEach(i => state.players[i].bankroll += base);
+  for (let k = 0; k < rem; k++) {
+    state.players[ playersIdx[k % playersIdx.length] ].bankroll += 1;
+  }
+}
+
+function isSkippablePlayer(p){
+  return p.status === 'FOLD'
+      || p.status === 'BUST'
+      || p.status === 'ALLIN'
+      || ((p.bankroll | 0) === 0); // 0 jeton => jamais la main
+}
+
 // ──────────────────────────────────────────────────────────────
 // 10) evaluateRound: showdown, pot, stats, notification
 // ──────────────────────────────────────────────────────────────
@@ -850,8 +1110,48 @@ function evaluateRound(tableID) {
   });
 
   // ── 5) Partage du pot ──
-  const share = Math.floor(state.pot / (widx.length || 1));
-  widx.forEach(i => state.players[i].bankroll += share);
+// === NEW: SIDE-POTS aware distribution ===
+const pots   = buildSidePots(state);
+
+// On marque le nom de main du (des) gagnant(s) par pot, et on distribue pot par pot
+pots.forEach((pot, potIdx) => {
+  // Trouve les meilleurs parmi les éligibles de ce pot
+  const eligibleHands = pot.eligible
+    .map(i => ({ i, h: solved[i] }))
+    .filter(o => o.h); // garde seulement ceux qui ont une main valable
+
+  if (eligibleHands.length === 0) return;
+
+  const bestHands = Hand.winners(eligibleHands.map(o => o.h));
+  const winnerIdxs = eligibleHands
+    .filter(o => bestHands.includes(o.h))
+    .map(o => o.i);
+
+  // Optionnel: mémorise le nom de la main sur chaque gagnant (prend le premier nom)
+  const name = bestHands[0]?.name;
+  winnerIdxs.forEach(i => state.players[i].handName = name);
+
+  // Split du pot (entier) avec gestion du reliquat
+  distributeChipsEvenly(winnerIdxs, pot.amount, state);
+});
+
+// Tout le pot global a été ventilé via side-pots
+state.pot = 0;
+
+// Statuts finaux (WINNER / BUST / '')
+const stillIn = state.players
+  .map((p,i)=>({p,i}))
+  .filter(o => !['FOLD','BUST'].includes(o.p.status));
+
+if (stillIn.length) {
+  // marque WINNER ceux qui ont pris au moins 1 jeton sur une répartition
+  // (façon simple: ceux dont bankroll a augmenté pendant evaluateRound)
+  // Pour rester simple ici, on marque WINNER ceux qui ne sont pas bust et étaient en showdown
+  stillIn.forEach(o => { if (o.p.inShowdown) o.p.status = 'WINNER'; });
+}
+state.players.forEach(p => {
+  if (p.status !== 'WINNER') p.status = p.bankroll > 0 ? '' : 'BUST';
+});
 
   // ── 6) Éliminer les autres ou reset pour la main suivante ──
   state.players.forEach((p, i) => {
@@ -1185,6 +1485,7 @@ function dealNextHand(tableID) {
   // 3) réinitialisation du statut des joueurs
   state.players.forEach(p => {
     p.subtotal_bet = 0;
+      p.total_bet_hand = 0;   // ← NEW
     if (p.status !== 'BUST') p.status = '';
   });
 
@@ -1211,123 +1512,261 @@ if (matches2Config[tableID]) {
  * (Re)lance le timeout de 30s pour le prochain joueur de la table à 10 joueurs,
  * et élimine en cas de 5 passes consécutives.
  */
+// ──────────────────────────────────────────────────────────────
+// Table 10 joueurs
+// ──────────────────────────────────────────────────────────────
+// Table 10 joueurs
+// POUR LES PARTIES 10 JOUEURS
+// ── Table 10 joueurs ──
 function resetTurnTimer(tableID) {
+  // — Helper local : un joueur à ignorer pour l'action (ALLIN, FOLD, BUST, ou stack = 0)
+  function isSkippablePlayer(p){
+    return p.status === 'FOLD'
+        || p.status === 'BUST'
+        || p.status === 'ALLIN'
+        || ((p.bankroll | 0) === 0);
+  }
+
   clearTimeout(turnTimersByTable[tableID]);
+
   const s = gameStateByTable[tableID];
   if (!s) return;
 
-  const j = s.current_bettor_index;
-  // garde-fou : l’indice doit être un entier valide
-  if (!Number.isInteger(j) || j < 0 || j >= s.players.length) {
-    console.warn(`resetTurnTimer: indice invalide (${j}) pour table ${tableID}`);
-    return;
+  const N = s.players.length;
+  const curIdx = s.current_bettor_index;
+  if (!Number.isInteger(curIdx) || curIdx < 0 || curIdx >= N) return;
+
+  const p = s.players[curIdx];
+
+  // Si le joueur courant ne doit pas parler, saute immédiatement au suivant éligible
+  if (isSkippablePlayer(p)) {
+    let nextIdx = curIdx, guard = 0;
+    do {
+      nextIdx = (nextIdx + 1) % N;
+      if (++guard > N) return; // sécurité anti-boucle
+    } while (isSkippablePlayer(s.players[nextIdx]));
+    s.current_bettor_index = nextIdx;
+    return resetTurnTimer(tableID);
   }
 
-    // ─── NOUVEAU : on mémorise le début du tour courant ───
-  // (permettra au client de recalculer le temps restant à la reconnexion)
-  s.turnStartTime    = Date.now();
-  s.turnDuration     = 30_000; // 30 secondes
-  // ─────────────────────────────────────────────────────
+  // Alerte d’élimination
+  if ((p.missedCount || 0) === 4 && !p.warned) {
+    io.to(p.id).emit('warningElimination', {
+      message: "⚠️ **Attention : si vous ne jouez pas ce tour, vous serez éliminé !**"
+    });
+    p.warned = true;
+  }
+
+  // Horloge serveur pour le client
+  s.turnStartTime = Date.now();
+  s.turnDuration  = 45_000;
 
   turnTimersByTable[tableID] = setTimeout(() => {
-    const p = s.players[j];
-    // nouveau garde-fou : s.players[j] doit exister
-    if (!p) {
-      console.warn(`resetTurnTimer: aucun joueur à l’indice ${j} pour table ${tableID}`);
+    // 1) Passe manquée → incrément
+    p.missedCount = (p.missedCount || 0) + 1;
+
+    // 1bis) Runout auto uniquement s’il ne reste que 0 ou 1 joueur avec des jetons
+    {
+      const cbNow     = (currentBetByTable[tableID] || 0);
+      const aliveNow  = s.players.filter(pl => pl.status !== 'FOLD' && pl.status !== 'BUST');
+      if (aliveNow.length >= 2) {
+        const withChips    = aliveNow.filter(pl => (pl.bankroll || 0) > 0);
+        const nbWithChips  = withChips.length;
+        if (nbWithChips <= 1) {
+          const covered = withChips.every(pl => (pl.subtotal_bet || 0) >= cbNow);
+          if (covered) return startRevealAllIn(tableID);
+        }
+      }
+    }
+
+    // 2) Action forcée : on cherche le dernier joueur "acteur" (non skippable)
+    let k = (curIdx - 1 + N) % N, guardPrev = 0;
+    while (isSkippablePlayer(s.players[k])) {
+      k = (k - 1 + N) % N;
+      if (++guardPrev > N) { k = null; break; } // personne avant → traite comme CHECK
+    }
+    const prevAct = k === null ? 'CHECK' : s.players[k].status;
+
+    if ((s.current_bet || 0) === 0 || prevAct === 'CHECK') {
+      p.status     = 'CHECK';
+      s.checkCount = (s.checkCount || 0) + 1;
+    } else {
+      if ((p.missedCount || 0) >= 5) { p.status = 'BUST'; p.bankroll = 0; }
+      else                            { p.status = 'FOLD'; }
+    }
+
+    // Clear warning
+    if (p.warned) io.to(p.id).emit('clearWarningElimination');
+    p.warned = false;
+
+    // 3) Showdown all-in ?
+    const alive = s.players.filter(x => x.status !== 'FOLD' && x.status !== 'BUST');
+    if (alive.length > 0 && alive.every(x => x.status === 'ALLIN' || ((x.bankroll|0)===0))) {
+      return startRevealAllIn(tableID);
+    }
+
+    // 4) Un seul survivant ?
+    if (alive.length === 1) {
+      return startReveal(tableID);
+    }
+
+    // 5) Fin de tour → phase suivante
+    if (isRoundComplete(tableID)) {
+      const PH = ['preflop','flop','turn','river','reveal'];
+      const i  = PH.indexOf(s.phase);
+      if (i >= 0 && i < PH.length - 1) {
+        s.phase = PH[i + 1];
+
+        // Reset des mises de la street & normalisation des statuts
+        s.players.forEach(pl => {
+          pl.subtotal_bet = 0;
+          if (!['FOLD','BUST','ALLIN'].includes(pl.status)) pl.status = '';
+          // garde-fou : si plus de stack, on force ALLIN (skippable aux prochains tours)
+          if ((pl.bankroll | 0) === 0 && pl.status !== 'BUST') pl.status = 'ALLIN';
+        });
+
+        currentBetByTable[tableID]      = 0;
+        currentMinRaiseByTable[tableID] = 0;
+        s.current_bet                   = 0;
+        s.checkCount                    = 0;
+      }
+
+      if (s.phase === 'reveal') {
+        return startReveal(tableID);
+      }
+
+      // Repart sur la nouvelle phase (le prochain à parler ne sera pas skippable)
+      resetTurnTimer(tableID);
+      io.to(tableID).emit('updateTable', s);
+      io.to('admin').emit('updateTable', { tableID, gameState: s });
       return;
     }
 
-    // 1) on incrémente le compteur de passes
-    p.missedCount = (p.missedCount || 0) + 1;
-
-    if (p.missedCount >= 5) {
-      // → élimination définitive
-      p.status   = 'BUST';
-      p.bankroll = 0;
-
-      // si, après ça, un seul survivant reste → fin de partie
-      const alive = s.players.filter(pl => pl.status !== 'BUST');
-      if (alive.length === 1) {
-        startReveal(tableID);
-      } else {
-        handlePostFold(tableID);
-      }
-
-    } else {
-      // → fold forcé classique
-      p.status = 'FOLD';
-
-      handlePostFold(tableID);
+    // 6) Sinon, main courante continue → joueur suivant (en sautant les skippables)
+    {
+      let guardNext = 0;
+      do {
+        s.current_bettor_index = (s.current_bettor_index + 1) % N;
+        if (++guardNext > N) return; // sécurité anti-boucle
+      } while (isSkippablePlayer(s.players[s.current_bettor_index]));
     }
-  }, 30_000);
+
+    resetTurnTimer(tableID);
+    io.to(tableID).emit('updateTable', s);
+    io.to('admin').emit('updateTable', { tableID, gameState: s });
+  }, 45_000);
 }
 
-/**
- * (Re)lance le timeout de 30s pour le prochain joueur
- * dans un duel (match2), et élimine après 5 passes.
- */
+
+// ── Duel 2 joueurs ──
 function resetTurnTimer2(matchID) {
   clearTimeout(turnTimersByMatch2[matchID]);
   const s = gameStateByTable[matchID];
   if (!s) return;
-
   const j = s.current_bettor_index;
-  if (!Number.isInteger(j) || j < 0 || j >= s.players.length) {
-    console.warn(`resetTurnTimer2: indice invalide (${j}) pour match2 ${matchID}`);
-    return;
+  if (!Number.isInteger(j) || j < 0 || j >= s.players.length) return;
+  const p = s.players[j];
+
+  // → Avertissement au début du 5ᵉ tour
+  if (p.missedCount === 4 && !p.warned) {
+    io.to(p.id).emit('warningElimination', {
+      message: "⚠️ **Attention : si vous ne jouez pas ce tour, vous serez éliminé !**"
+    });
+    p.warned = true;
   }
 
-    // ─── NOUVEAU : début du tour pour le match 2 ───
-    s.turnStartTime    = Date.now();
-    s.turnDuration     = 30_000;
-    // ─────────────────────────────────────────────────
+  // on stocke le début du tour pour le client
+  s.turnStartTime = Date.now();
+  s.turnDuration  = 45_000;
 
   turnTimersByMatch2[matchID] = setTimeout(() => {
-    const p = s.players[j];
-    if (!p) {
-      console.warn(`resetTurnTimer2: aucun joueur à l’indice ${j} pour match2 ${matchID}`);
+    // 1) incrémente le compteur de passes
+    p.missedCount = (p.missedCount || 0) + 1;
+
+    // 2) action forcée
+    const prevIdx = (j - 1 + s.players.length) % s.players.length;
+    const prevAct = s.players[prevIdx].status;
+
+    if (s.current_bet === 0 || prevAct === 'CHECK') {
+      // si pas de pari en cours, OU le précédent a CHECK → forced CHECK
+      p.status     = 'CHECK';
+      s.checkCount = (s.checkCount || 0) + 1;
+    } else {
+      // sinon, fold forcé ou bust
+      if (p.missedCount >= 5) {
+        p.status   = 'BUST';
+        p.bankroll = 0;
+      } else {
+        p.status = 'FOLD';
+      }
+    }
+
+    // on clear l’avertissement
+    p.warned && io.to(p.id).emit('clearWarningElimination');
+    p.warned = false;
+
+    // 3) Si tout le monde est ALLIN → showdown all-in
+    const alive = s.players.filter(x => x.status !== 'FOLD' && x.status !== 'BUST');
+    if (alive.length > 0 && alive.every(x => x.status === 'ALLIN')) {
+      return startRevealAllIn(matchID);
+    }
+
+    // 4) Si un seul survivant → showdown
+    if (alive.length === 1) {
+      return startReveal(matchID);
+    }
+
+    // 5) Si tout le monde a joué (pari = égalité & checks) → on avance de phase
+    if (isRoundComplete(matchID)) {
+      // même code que dans playerAction pour passer de preflop→flop→etc
+      const PH = ['preflop','flop','turn','river','reveal'];
+      const i  = PH.indexOf(s.phase);
+      if (i >= 0 && i < PH.length - 1) {
+        s.phase = PH[i + 1];
+s.players.forEach(pl => {
+  pl.subtotal_bet = 0;
+  if (!['FOLD','BUST','ALLIN'].includes(pl.status)) pl.status = '';
+});
+        currentBetByMatch2[matchID]      = 0;
+        currentMinRaiseByMatch2[matchID] = 0;
+        s.current_bet                   = 0;
+        s.checkCount                    = 0;
+      }
+      if (s.phase === 'reveal') {
+        return startReveal(matchID);
+      }
+      // émet la phase suivante
+      resetTurnTimer2(matchID);
+      io.to(matchID).emit('updateMatch2', { matchID, gameState: s });
+      io.to('admin').emit('updateMatch2', { matchID, gameState: s });
       return;
     }
 
-    p.missedCount = (p.missedCount || 0) + 1;
+    // 6) Sinon, on passe au joueur suivant
+    s.current_bettor_index = (j + 1) % s.players.length;
+    resetTurnTimer2(matchID);
+    io.to(matchID).emit('updateMatch2', { matchID, gameState: s });
+    io.to('admin').emit('updateMatch2', { matchID, gameState: s });
 
-    if (p.missedCount >= 5) {
-      p.status   = 'BUST';
-      p.bankroll = 0;
-
-      handlePostFold2(matchID, s);
-    } else {
-      p.status = 'FOLD';
-
-      handlePostFold2(matchID, s);
-    }
-  }, 30_000);
+  }, 45_000);
 }
-
 
 /**
  * Passe au joueur suivant actif dans une table à 10 joueurs,
  * émet l’update et relance le timer.
  */
 function advanceTurn(tableID) {
-  const state = gameStateByTable[tableID];
-  if (!state) return;
-
-  const N = state.players.length;
-  let idx = state.current_bettor_index;
-  do {
-    idx = (idx + 1) % N;
-  } while (['FOLD','BUST'].includes(state.players[idx].status));
-
-  state.current_bettor_index = idx;
-
-  // 1) On appelle d’abord resetTurnTimer pour mettre à jour state.turnStartTime & state.turnDuration
+  const s = gameStateByTable[tableID];
+  const N = s.players.length;
+  let idx = s.current_bettor_index;
+  do { idx = (idx + 1) % N; }
+  while (['FOLD','BUST','ALLIN'].includes(s.players[idx].status));
+  s.current_bettor_index = idx;
   resetTurnTimer(tableID);
-
-  // 2) Puis on émet updateTable AVEC le turnStartTime fraîchement calculé
-  io.to(tableID).emit('updateTable', state);
-  io.to('admin').emit('updateTable', { tableID, gameState: state });
+  io.to(tableID).emit('updateTable', s);
+  io.to('admin').emit('updateTable', { tableID, gameState: s });
 }
+
 
 /**
  * Même logique pour les duels 2 joueurs.
@@ -1336,21 +1775,24 @@ function advanceTurn2(matchID) {
   const state = gameStateByTable[matchID];
   if (!state) return;
 
+  // 1) on trouve l’indice du prochain joueur actif
   const N = state.players.length;
   let idx = state.current_bettor_index;
   do {
     idx = (idx + 1) % N;
-  } while (['FOLD','BUST'].includes(state.players[idx].status));
+  } while (['FOLD', 'BUST'].includes(state.players[idx].status));
 
   state.current_bettor_index = idx;
 
-  // 1) On reset d’abord le timer (set turnStartTime = Date.now())
+  // 2) on (re)lance le timer pour ce joueur
   resetTurnTimer2(matchID);
 
-  // 2) Puis on émet l’update AVEC le bon turnStartTime
-  io.to(matchID).emit('updateMatch2', { matchID, gameState: state });
-  io.to('admin').emit('updateMatch2', { matchID, gameState: state });
+  // 3) on avertit s’il en est au 5ᵉ tour (warning déjà géré dans resetTurnTimer2)
+  //    et on notifie le client avec la nouvelle gameState
+  io.to(matchID).emit('updateMatch2',   { matchID, gameState: state });
+  io.to('admin').emit('updateMatch2',   { matchID, gameState: state });
 }
+
 
 /**
  * Après un fold (naturel ou forcé), on gère
@@ -1361,7 +1803,7 @@ function handlePostFold(tableID) {
   const state = gameStateByTable[tableID];
   if (!state) return;
 
-  const alive = state.players.filter(p => !['FOLD','BUST'].includes(p.status));
+const alive = state.players.filter(p => !['FOLD','BUST'].includes(p.status));
   if (alive.length === 1) {
     // plus qu’un survivant → showdown (startReveal appellera à son tour updateTable correctement)
     startReveal(tableID);
@@ -1373,7 +1815,7 @@ function handlePostFold(tableID) {
 }
 
 function handlePostFold2(matchID, state) {
-  const alive = state.players.filter(p => !['FOLD','BUST'].includes(p.status));
+const alive = state.players.filter(p => !['FOLD','BUST'].includes(p.status));
   if (alive.length <= 1) {
     // showdown ou prochaine main
     startReveal(matchID);
@@ -1551,7 +1993,6 @@ function startReveal(tableID) {
   }, finalDelay);
 }
 
-
 // ──────────────────────────────────────────────────────────────
 // 12) Socket.IO handlers
 // ──────────────────────────────────────────────────────────────
@@ -1563,8 +2004,10 @@ io.on('connection', socket => {
     const roomID   = payload.table  ?? payload.match2;
     const isMatch2 = Boolean(payload.match2);
     if (!roomID) {
-      return socket.emit('joinError', 'Aucun tableID ni match2ID fourni.');
-    }
+   // Pas de paramètres → on montre un écran d’accueil lisible
+   return sendEndPage(socket, 'lose',
+     'Aucune partie détectée',
+    'Ouvrez un lien du type /?table=ID&seat=N ou cliquez sur "Retour au lobby".');    }
   
     // 1.1) Si la partie est déjà lancée, on tente une RECONNEXION
     const G = gameStateByTable[roomID];
@@ -1579,26 +2022,18 @@ io.on('connection', socket => {
         return socket.emit('joinError', 'Siège introuvable.');
       }
   
-      // 1.1.b) **NOUVEAU : détecte si la partie est déjà finie (un seul survivant)**
-      const survivors = G.players.filter(player => player.status !== 'BUST');
-      if (survivors.length === 1) {
-        // → La partie est terminée
-        if (p.status !== 'BUST') {
-          // C’est lui le dernier survivant : c’est le gagnant
-          return socket.emit('joinError', 'La partie est terminée, vous avez gagné.');
-        } else {
-          // Lui est busté : maintien du message d’élimination
-          return socket.emit('joinError', 'Vous avez été éliminé.');
-        }
-      }
-  
-      // 1.1.c) Si la partie n’est pas terminée, on retombe sur le code initial :
-      //        - si p.status === 'BUST' on renvoie « Vous avez été éliminé »
-      //        - sinon on fait la reconnexion normalement
-      if (p.status === 'BUST') {
-        return socket.emit('joinError', 'Vous avez été éliminé.');
-      }
-  
+ // 1.1.b) Si la partie est *considérée finie*, on n’envoie PAS de page.
+ //        On renvoie juste l'état + un flag. Le front décidera quoi afficher.
+ const survivors = G.players.filter(player => player.status !== 'BUST');
+   if (survivors.length === 1) {
+     // Affiche une page claire et actionnable
+     if (p.status !== 'BUST') {
+       return sendEndPage(socket, 'win',  'La partie est terminée, vous avez gagné 🎉', 'Bravo !');
+     } else {
+       return sendEndPage(socket, 'lose', 'Vous avez été éliminé.', 'Impossible de réintégrer cette table.');
+     }
+   }
+
       // → Mise à jour de l’ID du socket et renvoi de l’état courant
       p.id = socket.id;
       socket.playerData = { id: socket.id, label: p.label, seat };
@@ -1619,9 +2054,12 @@ io.on('connection', socket => {
     // 2) Sélectionne la config et le buffer d’attente
     const config     = isMatch2 ? matches2Config[roomID]   : tablesConfig[roomID];
     const waitingBuf = isMatch2 ? waitingPlayersByMatch2   : waitingPlayersByTable;
-    if (!config) {
-      return socket.emit('joinError', 'Table ou match introuvable.');
-    }
+ if (!config) {
+   return sendEndPage(socket, 'lose',
+     'Partie introuvable',
+     'La table est fermée (inactivité) ou l’ID est périmé.');
+ }
+
   
     // 3) Nombre de sièges possibles (10 ou 2)
     const totalSeats = config.players.length;
@@ -1671,93 +2109,155 @@ io.on('connection', socket => {
     // 1) Récupération du contexte
     const rooms = [...socket.rooms].filter(r => r !== socket.id);
     if (!rooms.length) return;
-    const table = rooms[0];
-    const state = gameStateByTable[table];
+    const table    = rooms[0];
+    const isMatch2 = Boolean(matches2Config[table]);         // <<< Ajouté
+    const state    = gameStateByTable[table];
     if (!state) return;
     const idx = state.players.findIndex(p => p.id === socket.id);
     if (idx < 0) return;
     const me = state.players[idx];
   
-    // 2) Ajustement du montant du call
+    // 2) Ajustement du montant du call (tient compte de match2)
     if (action.type === 'call') {
-      action.amount = (currentBetByTable[table] || 0) - (me.subtotal_bet || 0);
+      const cb = (isMatch2
+        ? currentBetByMatch2[table]
+        : currentBetByTable[table]
+      ) || 0;
+      action.amount = cb - (me.subtotal_bet || 0);            // <<< Modifié
     }
   
     // 3) Application de l’action
     let ok = false;
     if (action.type === 'fold') {
       me.status = 'FOLD'; ok = true;
-    } else if (action.type === 'check' && me.subtotal_bet === currentBetByTable[table]) {
+  
+    } else if (
+      action.type === 'check' &&
+      me.subtotal_bet === (isMatch2                  // <<< Modifié
+        ? currentBetByMatch2[table]
+        : currentBetByTable[table]
+      )
+    ) {
       me.status = 'CHECK';
       state.checkCount++;
       ok = true;
+  
     } else if (['call','raise'].includes(action.type)) {
       ok = serverBet(table, idx, action.amount);
-    }    
+    }
+  
     if (!ok) return;
 
+     // → Le joueur vient d'agir : on remet à zéro tout avertissement pendu
+     io.to(socket.id).emit('clearWarningElimination');
+
     state.players[idx].missedCount = 0;
+    state.players[idx].warned     = false;
 
-      // 4bis) Si tous les survivants sont ALLIN → showdown immédiat
-      const active = state.players.filter(p => p.status !== 'FOLD' && p.status !== 'BUST');
-      if (active.length > 0 && active.every(p => p.status === 'ALLIN')) {
-        return startRevealAllIn(table); // ← on passe bien l’ID de la table      
+// === [NOUVEAU] TABLE 10 joueurs : ALL-IN "couvert" ⇒ runout + reveal immédiat
+// === [NOUVEAU] TABLE 10 joueurs : auto-runout SEULEMENT si 0 ou 1 joueur a encore des jetons
+if (!isMatch2) {
+  const s  = state;
+  const cb = (currentBetByTable[table] || 0);
+
+  // Survivants en lice
+  const alive = s.players.filter(p => p.status !== 'FOLD' && p.status !== 'BUST');
+
+  if (alive.length >= 2) {
+    // Combien ont ENCORE des jetons ?
+    const withChips = alive.filter(p => (p.bankroll || 0) > 0);
+    const nbWithChips = withChips.length;
+
+    // S'il reste 0 ou 1 joueur avec des jetons, alors plus aucune mise possible
+    if (nbWithChips <= 1) {
+      // Tous les joueurs qui ont encore des jetons ont-ils AU MOINS couvert la mise courante ?
+      const covered = withChips.every(p => (p.subtotal_bet || 0) >= cb);
+
+      if (covered) {
+        return startRevealAllIn(table); // déroule flop/turn/river puis reveal+éval
       }
-
-  // 5) Si plus qu’un survivant → showdown
-  if (active.length === 1) {
-    return startReveal(table);
+    }
   }
- 
+}
+
+    // === HEADS-UP : un seul ALL-IN, l'autre vient de CALL et a encore des jetons → runout + reveal ===
+if (isMatch2) {
+  const aliveHU = state.players.filter(p => p.status !== 'FOLD' && p.status !== 'BUST');
+  if (aliveHU.length === 2) {
+    const [A, B] = aliveHU;
+    const isAllInA = (A.status === 'ALLIN') || ((A.bankroll|0) === 0);
+    const isAllInB = (B.status === 'ALLIN') || ((B.bankroll|0) === 0);
+    // exactement un seul ALL-IN
+    if (isAllInA !== isAllInB) {
+      const caller = isAllInA ? B : A;
+      const cb = (currentBetByMatch2[table] || 0);
+      const covered = (caller.subtotal_bet || 0) >= cb;     // il s'est bien aligné
+      const hasChips = (caller.bankroll || 0) > 0;          // et il lui reste du stack
+      // Le CALL vient d'être posé : status peut être "CALL" (ou "RAISE" si exact match par ton code)
+ if (covered && (caller.status === 'CALL' || caller.status === 'RAISE' || caller.status === 'CHECK')) {        return startRevealAllIn(table);
+      }
+    }
+  }
+}
+  
+    // 4bis) Si tous les survivants sont ALLIN → showdown immédiat
+    const active = state.players.filter(p => p.status !== 'FOLD' && p.status !== 'BUST');
+    if (active.length > 0 && active.every(p => p.status === 'ALLIN')) {
+      return startRevealAllIn(table);
+    }
+  
     // 5) Si plus qu’un survivant → showdown
-    const alive = state.players.filter(p => p.status !== 'FOLD' && p.status !== 'BUST');
-    if (alive.length === 1) {
+    if (active.length === 1) {
       return startReveal(table);
     }
   
-    // 6) Si tout le monde a misé/call (bet > 0) ou checké (bet = 0) → on avance de phase
+    // 6) Avance de phase si tout le monde a misé/call ou checké
     if (isRoundComplete(table)) {
       const PH = ['preflop','flop','turn','river','reveal'];
       const i  = PH.indexOf(state.phase);
       if (i >= 0 && i < PH.length - 1) {
-        // On passe à la phase suivante
         state.phase = PH[i+1];
-        // Réinitialise les petites mises et statuses temporaires
-         state.players.forEach(p => {
-            p.subtotal_bet = 0;
-             // On ne reset que les joueurs encore en lice
-            if (p.status !== 'FOLD' && p.status !== 'BUST') {
-             p.status = '';
-             }
-           });
-        currentBetByTable[table]      = 0;
-        currentMinRaiseByTable[table] = 0;
-        state.current_bet             = 0;
-        state.checkCount              = 0;
+        state.players.forEach(p => {
+          p.subtotal_bet = 0;
+if (p.status !== 'FOLD' && p.status !== 'BUST' && p.status !== 'ALLIN') {
+            p.status = '';
+            if ((p.bankroll | 0) === 0 && p.status !== 'BUST') p.status = 'ALLIN';
+          }
+        });
+        // <<< Modifié pour réinitialisation selon mode
+        if (isMatch2) {
+          currentBetByMatch2[table]     = 0;
+          currentMinRaiseByMatch2[table]= 0;
+        } else {
+          currentBetByTable[table]      = 0;
+          currentMinRaiseByTable[table] = 0;
+        }
+        state.current_bet = 0;
+        state.checkCount  = 0;
       }
-      // Si on vient d’arriver sur reveal → showdown
       if (state.phase === 'reveal') {
         return startReveal(table);
       }
     }
   
-    // 7) On passe au prochain joueur
+    // 7) Passe au joueur suivant
     const N = state.players.length;
     do {
       state.current_bettor_index = (state.current_bettor_index + 1) % N;
-    } while (['FOLD','BUST'].includes(state.players[state.current_bettor_index].status));
+} while (['FOLD','BUST','ALLIN']
+  .includes(state.players[state.current_bettor_index].status));
+
   
-    // 8) Émet les updates
-// 8) On relance d'abord le timer côté serveur, puis on notifie
-if (matches2Config[table]) {
-  resetTurnTimer2(table);
-  io.to(table).emit('updateMatch2',   { matchID: table, gameState: state });
-  io.to('admin').emit('updateMatch2', { matchID: table, gameState: state });
-} else {
-  resetTurnTimer(table);
-  io.to(table).emit('updateTable',   state);
-  io.to('admin').emit('updateTable', { tableID: table, gameState: state });
-}
+    // 8) Émet les updates + reset timer
+    if (isMatch2) {
+      resetTurnTimer2(table);
+      io.to(table).emit('updateMatch2',   { matchID: table, gameState: state });
+      io.to('admin').emit('updateMatch2', { matchID: table, gameState: state });
+    } else {
+      resetTurnTimer(table);
+      io.to(table).emit('updateTable',    state);
+      io.to('admin').emit('updateTable',  { tableID: table, gameState: state });
+    }
   });  
 
   socket.on('disconnect', () => {

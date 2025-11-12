@@ -244,14 +244,25 @@ function gui_hilite_player(hilite_color, name_color, seat) {
 }
 
 function gui_set_bankroll(amount, seat) {
-  var table = document.getElementById('poker_table');
-  var current = 'seat' + seat;
-  var seatloc = table.children[current];
-  var chipsdiv = internal_get_a_class_named(seatloc, 'name-chips');
-  var namediv = internal_get_a_class_named(chipsdiv, 'chips');
-  if (!isNaN(amount) && amount != "") {
-    amount = amount + " <img src='static/images/chip5.png' alt='jeton' style='vertical-align:middle; width:20px; height:20px;'>";  }
-  namediv.innerHTML = amount;
+  const table   = document.getElementById('poker_table');
+  const seatEl  = table.children['seat' + seat];
+  const chipsEl = internal_get_a_class_named(seatEl, 'name-chips');
+  const nameEl  = internal_get_a_class_named(chipsEl, 'chips');
+
+  // Vide ?
+  if (amount == null || amount === '') { 
+    nameEl.textContent = '';
+    return;
+  }
+
+  // Nombre → format "fr-FR" (12 345)
+  const n = Number(amount);
+  if (Number.isFinite(n)) {
+    nameEl.textContent = n.toLocaleString('fr-FR');
+  } else {
+    // Au cas où on reçoit déjà une string non numérique
+    nameEl.textContent = String(amount);
+  }
 }
 
 function gui_set_bet(bet, seat) {
@@ -391,7 +402,8 @@ function gui_setup_fold_call_click(show_fold, call_text, fold_func, call_func, k
   // Utilisation de querySelector pour récupérer le bouton fold par son ID
   var fold = buttons.querySelector('#fold-button');
   // On force show_fold à true pour que le bouton reste affiché,
-  // quel que soit le paramètre passé en argument
+  // quel que soit le paramètre passé 
+  // rgument
   internal_clickin_helper(fold, true, fold_func);
 
   // Pour le bouton call, on continue avec call_text et call_func comme d'habitude

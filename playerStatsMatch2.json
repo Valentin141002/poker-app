@@ -1,163 +1,82 @@
 {
   "1": {
     "name": "1",
-    "gamesPlayed": 61,
-    "wins": 29,
-    "byMode": {
-      "beginner": {
-        "played": 0,
-        "wins": 0
-      },
-      "normal": {
-        "played": 0,
-        "wins": 0
-      },
-      "turbo": {
-        "played": 57,
-        "wins": 27
-      },
-      "highroller": {
-        "played": 0,
-        "wins": 0
-      },
-      "hyper": {
-        "played": 4,
-        "wins": 2
-      }
-    }
-  },
-  "Valentin": {
-    "name": "Valentin",
-    "gamesPlayed": 3321,
-    "wins": 1608,
-    "byMode": {
-      "beginner": {
-        "played": 0,
-        "wins": 0
-      },
-      "normal": {
-        "played": 1,
-        "wins": 0
-      },
-      "turbo": {
-        "played": 3121,
-        "wins": 1514
-      },
-      "highroller": {
-        "played": 19,
-        "wins": 3
-      },
-      "hyper": {
-        "played": 180,
-        "wins": 91
-      }
-    }
-  },
-  "Anna": {
-    "name": "Anna",
-    "gamesPlayed": 67,
-    "wins": 36,
-    "byMode": {
-      "beginner": {
-        "played": 0,
-        "wins": 0
-      },
-      "normal": {
-        "played": 0,
-        "wins": 0
-      },
-      "turbo": {
-        "played": 1,
-        "wins": 0
-      },
-      "highroller": {
-        "played": 13,
-        "wins": 12
-      },
-      "hyper": {
-        "played": 53,
-        "wins": 24
-      }
-    }
-  },
-  "Salut": {
-    "name": "Salut",
-    "gamesPlayed": 35,
+    "gamesPlayed": 30,
     "wins": 17,
     "byMode": {
       "beginner": {
-        "played": 0,
-        "wins": 0
-      },
-      "normal": {
-        "played": 0,
-        "wins": 0
-      },
-      "turbo": {
-        "played": 18,
-        "wins": 9
-      },
-      "highroller": {
-        "played": 0,
-        "wins": 0
-      },
-      "hyper": {
-        "played": 17,
-        "wins": 8
-      }
-    }
-  },
-  "Yoo": {
-    "name": "Yoo",
-    "gamesPlayed": 35,
-    "wins": 18,
-    "byMode": {
-      "beginner": {
-        "played": 0,
-        "wins": 0
-      },
-      "normal": {
-        "played": 0,
-        "wins": 0
-      },
-      "turbo": {
-        "played": 18,
-        "wins": 9
-      },
-      "highroller": {
-        "played": 0,
-        "wins": 0
-      },
-      "hyper": {
-        "played": 17,
-        "wins": 9
-      }
-    }
-  },
-  "Anais": {
-    "name": "Anais",
-    "gamesPlayed": 3246,
-    "wins": 1671,
-    "byMode": {
-      "beginner": {
-        "played": 0,
-        "wins": 0
-      },
-      "normal": {
-        "played": 1,
+        "played": 2,
         "wins": 1
       },
-      "turbo": {
-        "played": 3152,
-        "wins": 1622
+      "normal": {
+        "played": 22,
+        "wins": 12
       },
-      "highroller": {
+      "turbo": {
         "played": 6,
         "wins": 4
       },
+      "highroller": {
+        "played": 0,
+        "wins": 0
+      },
       "hyper": {
-        "played": 87,
-        "wins": 44
+        "played": 0,
+        "wins": 0
+      }
+    }
+  },
+  "2": {
+    "name": "2",
+    "gamesPlayed": 41,
+    "wins": 20,
+    "byMode": {
+      "beginner": {
+        "played": 2,
+        "wins": 1
+      },
+      "normal": {
+        "played": 22,
+        "wins": 10
+      },
+      "turbo": {
+        "played": 17,
+        "wins": 9
+      },
+      "highroller": {
+        "played": 0,
+        "wins": 0
+      },
+      "hyper": {
+        "played": 0,
+        "wins": 0
+      }
+    }
+  },
+  "3": {
+    "name": "3",
+    "gamesPlayed": 11,
+    "wins": 4,
+    "byMode": {
+      "beginner": {
+        "played": 0,
+        "wins": 0
+      },
+      "normal": {
+        "played": 0,
+        "wins": 0
+      },
+      "turbo": {
+        "played": 11,
+        "wins": 4
+      },
+      "highroller": {
+        "played": 0,
+        "wins": 0
+      },
+      "hyper": {
+        "played": 0,
+        "wins": 0
       }
     }
   }

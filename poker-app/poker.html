@@ -57,8 +57,8 @@
 
     #timer-container {
   position: absolute;
-  top: 400px;
-  right: 12px;
+  top: 160px;
+  right: 200px;
   width: 80px;
   height: 80px;
   pointer-events: none; /* laisse passer les clics */
@@ -208,8 +208,8 @@
         <div class="bet"></div>
       </div>
       <!-- Placeholders pour le board -->
-      <div id="board-placeholders">
-        <div id="ph-flop1" class="board-placeholder"></div>
+<div id="board-placeholders" class="board-orange">
+            <div id="ph-flop1" class="board-placeholder"></div>
         <div id="ph-flop2" class="board-placeholder"></div>
         <div id="ph-flop3" class="board-placeholder"></div>
         <div id="ph-turn"  class="board-placeholder"></div>
@@ -273,6 +273,8 @@
     <div id="end-game-modal"></div>
     <div id="user-bar"></div>
   </div>
+
+  <div id="hud-layer" aria-hidden="true"></div>
 
   <!-- Inclusion de Socket.IO : DOIT être placé avant le client.js -->
   <script src="/socket.io/socket.io.js"></script>
