@@ -3,3 +3,5 @@ dist
 build
 .env
 *.zip
+
+poker-app/static/videos/portal-vortex.mp4
