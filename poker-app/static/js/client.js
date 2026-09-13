@@ -7119,10 +7119,10 @@ function playBattleRound() {
     : { table: _tableID, seat: mySeatIndex });
 }
 
-// ── Roue à multiplicateur (vraie roue tournante, valeurs fixes x2/x3/x5/x10) ──
+// ── Roue à multiplicateur (résultats compétitifs x1/x2/x5/x10) ──
 const WHEEL_SEGMENTS = [
-  { value: 2,  angle: 45 },
-  { value: 3,  angle: 135 },
+  { value: 1,  angle: 45 },
+  { value: 2,  angle: 135 },
   { value: 5,  angle: 225 },
   { value: 10, angle: 315 }
 ];
@@ -7156,7 +7156,8 @@ function ensureWheelOverlay() {
   return el;
 }
 
-function spinWheelTo(multiplier, preview) {
+function spinWheelTo(multiplier, preview, reward = {}) {
+  if (!preview && championshipOverlayEl) championshipOverlayEl.remove();
   const overlay = ensureWheelOverlay();
   overlay.querySelector('#wheel-title').textContent = preview ? 'Roue (aperçu)' : 'Roue du multiplicateur';
   const disc = overlay.querySelector('#wheel-disc');
@@ -7188,12 +7189,15 @@ function spinWheelTo(multiplier, preview) {
   setTimeout(() => {
     statusEl.innerHTML = preview
       ? `<div class="battle-outcome win">x${multiplier}</div><div>Ceci est un aperçu, aucun multiplicateur appliqué.</div>`
-      : `<div class="battle-outcome win">x${multiplier}</div><div>Appliqué à vos prochaines Batailles, jusqu'à votre prochaine défaite au poker.</div>`;
+      : `<div class="battle-outcome win">x${multiplier}</div><div>${reward.choiceRequired ? 'Conservez votre multiplicateur actuel ou choisissez ce nouveau bonus.' : 'Votre multiplicateur pour les prochaines récompenses compétitives.'}</div>`;
   }, 3300);
 
   setTimeout(() => {
     overlay.classList.add('fade-out');
-    setTimeout(() => overlay.remove(), 500);
+    setTimeout(() => {
+      overlay.remove();
+      if (!preview && reward.choiceRequired && latestProgressionDashboard?.pendingMultiplier?.choiceId === reward.choiceId) window.IMDCXProgression?.showMultiplierChoice(latestProgressionDashboard.pendingMultiplier);
+    }, 500);
   }, 6800);
 }
 
@@ -7203,10 +7207,24 @@ let championshipHandlersRegistered = false;
 function registerChampionshipHandlers() {
   if (championshipHandlersRegistered) return;
   championshipHandlersRegistered = true;
+  window.IMDCXProgression?.bind(socket, () => currentProgressionName());
+  socket.on('connect', () => identifyProgression(currentProgressionName()));
+  if (socket.connected) identifyProgression(currentProgressionName());
+  socket.on('progression:updated', ({ dashboard, receipt } = {}) => {
+    if (dashboard) applyProgressionDashboard(dashboard);
+    if (receipt?.kind === 'table' || receipt?.kind === 'duel') latestCompetitiveReceipts[receipt.kind] = receipt;
+  });
+  socket.on('finalsWaiting', () => {
+    const overlay = ensureChampionshipOverlay();
+    overlay.querySelector('#champ-status').textContent = 'En attente d’un adversaire pour le face-à-face…';
+  });
+  socket.on('finalsMatchAssigned', ({ matchID, seat }) => {
+    window.location.href = `${window.location.pathname}?match2=${encodeURIComponent(matchID)}&seat=${seat}`;
+  });
 
   socket.on('homeProfile', (data) => {
     lastHomeProfile = data;
-    renderHomeStatsStrip(data);
+    renderHomeStatsStrip(latestProgressionDashboard?.profile || data);
     const modal = document.getElementById('stats-modal-body');
     if (modal) renderStatsModal(data);
   });
@@ -7279,9 +7297,15 @@ function registerChampionshipHandlers() {
     }, 1300);
   });
 
-  socket.on('wheelResult', ({ multiplier, preview }) => {
+  socket.on('wheelResult', (reward = {}) => {
+    const { multiplier, preview, alreadySpun } = reward;
     if (!multiplier) return;
-    spinWheelTo(multiplier, preview);
+    if (alreadySpun) {
+      championshipOverlayEl?.remove();
+      if (reward.choiceRequired) window.IMDCXProgression?.showMultiplierChoice({ choiceId: reward.choiceId, currentMultiplier: reward.previousMultiplier, newMultiplier: multiplier });
+      return;
+    }
+    spinWheelTo(multiplier, preview, reward);
   });
 
   socket.on('championshipUpdated', (list) => {
@@ -7516,8 +7540,49 @@ function updateHomeAvatar(name) {
 }
 
 let lastHomeProfile = null;
+let latestProgressionDashboard = null;
+const latestCompetitiveReceipts = {};
+function currentProgressionName() {
+  const input = document.querySelector('.quickplay-name');
+  if (input) return input.value.trim().slice(0, 24) || 'Joueur';
+  try { return localStorage.getItem('playername') || 'Joueur'; } catch (_) { return 'Joueur'; }
+}
+function identifyProgression(name) {
+  if (!socket) return Promise.resolve();
+  socket._progressionReady = new Promise(resolve => {
+    const timeout = setTimeout(() => resolve({ ok: false }), 10000);
+    socket.emit('progression:identify', { name, clientKey: getOrCreateJoinClientKey() }, response => {
+      clearTimeout(timeout);
+      if (response?.ok) applyProgressionDashboard(response.data);
+      resolve(response);
+    });
+  });
+  return socket._progressionReady;
+}
+function applyProgressionDashboard(dashboard) {
+  latestProgressionDashboard = dashboard;
+  renderHomeStatsStrip(dashboard.profile);
+  const badge = document.getElementById('home-progression-level');
+  if (badge) badge.textContent = `Niv. ${dashboard.profile.level} · ${dashboard.profile.tierTitle}`;
+  const daily = document.getElementById('home-daily-btn');
+  if (daily) daily.classList.toggle('has-reward', !!(dashboard.login?.claimable || dashboard.missions?.some(m => m.claimable)));
+  const resume = document.getElementById('home-resume-btn');
+  if (resume) {
+    resume.hidden = !(dashboard.pendingMultiplier || dashboard.wheelAvailable || dashboard.finalAvailable);
+    resume.textContent = dashboard.pendingMultiplier ? 'Choisir mon multiplicateur' : dashboard.wheelAvailable ? 'Tourner ma roue' : 'Rejoindre ma finale';
+  }
+}
+function resumeCompetitiveReward(action) {
+  if (!socket) return;
+  if (action === 'resume-final') return socket.emit('joinFinals', { clientKey: getOrCreateJoinClientKey() });
+  if (action === 'resume-wheel' || latestProgressionDashboard?.wheelAvailable) socket.emit('spinWheel', {});
+  else if (latestProgressionDashboard?.pendingMultiplier) window.IMDCXProgression?.showMultiplierChoice(latestProgressionDashboard.pendingMultiplier);
+  else socket.emit('joinFinals', { clientKey: getOrCreateJoinClientKey() });
+}
+document.addEventListener('imdcx:resume-reward', event => resumeCompetitiveReward(event.detail));
 function requestHomeProfile(name) {
   if (!socket || !name) return;
+  identifyProgression(name);
   socket.emit('getHomeProfile', { name });
 }
 
@@ -7609,6 +7674,13 @@ function showQuickPlayLobby() {
     </div>
   `;
   window.IMDCXVisuals?.home(wrap);
+  const progressLinks = document.createElement('div');
+  progressLinks.className = 'progression-home-links';
+  progressLinks.innerHTML = '<button type="button" id="home-profile-btn"><span id="home-progression-level">Mon profil</span></button><button type="button" id="home-daily-btn">Défis du jour<span class="progression-home-dot" aria-hidden="true"></span></button><button type="button" id="home-resume-btn" hidden>Reprendre ma récompense</button>';
+  wrap.querySelector('.home-topbar').appendChild(progressLinks);
+  progressLinks.querySelector('#home-profile-btn').addEventListener('click', () => window.IMDCXProgression?.open('profile'));
+  progressLinks.querySelector('#home-daily-btn').addEventListener('click', () => window.IMDCXProgression?.open('daily'));
+  progressLinks.querySelector('#home-resume-btn').addEventListener('click', () => resumeCompetitiveReward());
   document.body.appendChild(wrap);
   ensureLeaderboardModal();
   ensureStatsModal();
@@ -7620,7 +7692,7 @@ function showQuickPlayLobby() {
   const status = wrap.querySelector('.quickplay-status');
 
   wrap.querySelector('#nav-classement-btn').addEventListener('click', () => {
-    openLeaderboardModal();
+    window.IMDCXProgression?.open('leaderboard');
   });
   wrap.querySelector('#nav-stats-btn').addEventListener('click', () => {
     openStatsModal();
@@ -7629,7 +7701,7 @@ function showQuickPlayLobby() {
     openSettingsModal();
   });
   wrap.querySelector('#home-avatar-btn').addEventListener('click', () => {
-    openSettingsModal();
+    window.IMDCXProgression?.open('profile');
   });
   wrap.querySelector('#preview-battle-btn').addEventListener('click', () => {
     socket.emit('startPracticeBattle');
@@ -8037,24 +8109,16 @@ socket.on('match2Finished', (payload = {}) => {
 function joinChampionshipFinals(myLabel) {
   const overlay = ensureChampionshipOverlay();
   overlay.querySelector('#champ-title').textContent = 'Table remportée !';
-  overlay.querySelector('#champ-status').innerHTML = '<div class="battle-points">+30 pts</div><div>Recherche d\'un adversaire pour le face-à-face…</div>';
+  const earned = latestCompetitiveReceipts.table?.competitivePoints ?? 30;
+  overlay.querySelector('#champ-status').innerHTML = `<div class="battle-points">+${earned} pts de table</div><div>Prochaine étape : le duel final, +50 points de base.</div>`;
   socket.emit('joinFinals', { name: myLabel, clientKey: getOrCreateJoinClientKey() });
 }
-
-socket.on('finalsWaiting', () => {
-  const overlay = ensureChampionshipOverlay();
-  const statusEl = overlay.querySelector('#champ-status');
-  if (statusEl) statusEl.innerHTML = '<div>En attente d\'un adversaire pour le face-à-face…</div>';
-});
-
-socket.on('finalsMatchAssigned', ({ matchID, seat }) => {
-  window.location.href = `${window.location.pathname}?match2=${encodeURIComponent(matchID)}&seat=${seat}`;
-});
 
 function promptWheelSpin(myLabel) {
   const overlay = ensureChampionshipOverlay();
   overlay.querySelector('#champ-title').textContent = 'Face-à-face remporté !';
-  overlay.querySelector('#champ-status').innerHTML = '<div class="battle-points">+80 pts</div><div>Tournez la roue du multiplicateur…</div>';
+  const earned = latestCompetitiveReceipts.duel?.competitivePoints ?? 50;
+  overlay.querySelector('#champ-status').innerHTML = `<div class="battle-points">+${earned} pts de finale</div><div>30 + 50 = 80 points de base sur le parcours complet.</div><div>Tournez la roue du multiplicateur…</div>`;
   socket.emit('spinWheel', { name: myLabel });
 }
 

@@ -6,6 +6,9 @@ const http      = require('http');
 const socketIo  = require('socket.io');
 const crypto    = require('crypto');
 const { Hand }  = require('pokersolver');
+const { createProgression } = require('./lib/progression');
+const { registerProgressionSocket } = require('./lib/progression-sockets');
+const { createCompetitiveSettlement } = require('./lib/competitive-settlement');
 const levelsFile    = path.join(__dirname, 'playerLevels.json');
 const DEFAULT_CREDITS = 60;
 const DEFAULT_TIME_CREDITS = 10;
@@ -313,7 +316,9 @@ function saveStatsMatch2() { fs.writeFileSync(statsMatch2File, JSON.stringify(st
 function saveGames()       { fs.writeFileSync(gamesFile,       JSON.stringify(gamesHistory,   null, 2), 'utf8'); }
 function saveMatches2()    { fs.writeFileSync(matches2File,    JSON.stringify(matches2Config, null, 2), 'utf8'); }
 function saveLevels() {
-  fs.writeFileSync(levelsFile, JSON.stringify(playerLevels, null, 2), 'utf8');
+  const temporary = `${levelsFile}.tmp`;
+  fs.writeFileSync(temporary, JSON.stringify(playerLevels, null, 2), 'utf8');
+  fs.renameSync(temporary, levelsFile);
 }
 
 const LEVEL_STAGES = ['Q1', 'Q2', 'T1', 'T2', 'T3', 'T4', 'PASS_T5'];
@@ -719,8 +724,8 @@ function getNextLevel(level) {
 
 function ensurePlayerRecord(name) {
   const key = String(name || '').trim();
-  if (!key) return null;
-  if (!playerLevels[key]) {
+  if (!key || ['__proto__', 'constructor', 'prototype'].includes(key) || /[\u0000-\u001f\u007f]/.test(key)) return null;
+  if (!Object.prototype.hasOwnProperty.call(playerLevels, key)) {
     playerLevels[key] = {
       name: key,
       level: 'Q1',
@@ -792,6 +797,50 @@ function broadcastChampionshipLeaderboard() {
     .slice(0, 20);
   io.emit('championshipUpdated', list);
 }
+
+// Competitive progression is separate from the existing Q/T credit ladder.
+const progression = createProgression({
+  getEntries: () => playerLevels,
+  ensureEntry: ensurePlayerRecord,
+  save: saveLevels
+});
+let progressionBroadcastTimer = null;
+function resolveProgressionName(socket) {
+  const name = socket.playerData?.label || socket.data?.progressionName;
+  return typeof name === 'string' && name.trim() && !/^Seat\s+\d+$/i.test(name) ? name.trim() : null;
+}
+function bindProgressionIdentity(socket, payload = {}) {
+  const name = String(payload.name || '').trim();
+  if (!name || name.length > 24 || !ensurePlayerRecord(name)) {
+    throw Object.assign(new Error('Choisissez un pseudo valide de 1 à 24 caractères.'), { code: 'INVALID_NAME' });
+  }
+  if (socket.playerData?.label && socket.playerData.label !== name) {
+    throw Object.assign(new Error('Votre profil est celui du joueur actuellement à table.'), { code: 'IDENTITY_LOCKED' });
+  }
+  socket.data.progressionName = name;
+  if (typeof payload.clientKey === 'string' && payload.clientKey.length <= 160) socket._clientJoinKey = payload.clientKey;
+  return name;
+}
+function publishProgression(name, receipt = null) {
+  const dashboard = progression.dashboard(name);
+  for (const playerSocket of io.sockets.sockets.values()) {
+    if (resolveProgressionName(playerSocket) === name) playerSocket.emit('progression:updated', { dashboard, receipt });
+  }
+  if (!progressionBroadcastTimer) progressionBroadcastTimer = setTimeout(() => {
+    progressionBroadcastTimer = null;
+    broadcastChampionshipLeaderboard();
+    io.emit('progression:rankingChanged');
+  }, 100);
+}
+const competitiveSettlement = createCompetitiveSettlement({
+  engine: progression, ensureEntry: ensurePlayerRecord, save: saveLevels, publish: publishProgression,
+  onComplete(run) {
+    if (run.kind === 'duel' && matches2Config[run.roomId]) {
+      matches2Config[run.roomId].competitiveFinished = true;
+      saveMatches2();
+    }
+  }
+});
 
 function applyCreditsSet(name, credits) {
   const entry = ensurePlayerRecord(name);
@@ -902,8 +951,8 @@ const BATTLE_HUMAN_WAIT_MS  = 4000;
 const finalsQueue               = []; // [{ label, clientKey }] au plus 1 en attente (paire dès que possible)
 const finalsAssignmentByClientKey = {}; // clientKey -> { matchID, seat } (anti double-appariement au reload)
 const WHEEL_OPTIONS = [
+  { value: 1,  weight: 30 },
   { value: 2,  weight: 40 },
-  { value: 3,  weight: 30 },
   { value: 5,  weight: 20 },
   { value: 10, weight: 10 }
 ];
@@ -1811,6 +1860,7 @@ function handleHyperTie(tableID) {
 
     // On ne garde que ces joueurs pour le tie-breaker
     state.players = tied;
+    if (tied.length > 1) competitiveSettlement.settle(state);
 
     // Reset du meilleur pari
     currentBetByTable[tableID] = state.current_bet =
@@ -1878,6 +1928,7 @@ function handleHyperTie2(matchID) {
 
     // on remplace la liste des joueurs par ces ex-æquo
     state.players = tied;
+    if (tied.length > 1) competitiveSettlement.settle(state);
     // juste après `state.players = tied;`
 state.current_bettor_index = 0;   // ou l’indice que tu veux démarrer
 
@@ -2061,6 +2112,7 @@ if (!forceStart && filledCount < activeSeats) {
   };
 
   // Réinitialisation des montants courants
+  competitiveSettlement.begin(state, { roomId: tableID, eligible: !isTrainingLevel(cfg.level), quickPlay: Boolean(cfg.quickPlay) });
   currentBetByTable[tableID]      = 0;
   currentMinRaiseByTable[tableID] = 0;
 
@@ -2251,6 +2303,7 @@ if ((!forceStart && (waiting.length !== N || takenCount < N)) ||
   };
 
   // 5) Réinitialisation des bets
+  competitiveSettlement.begin(state, { roomId: matchID, isFinal: true, eligible: Boolean(cfg.isChampionshipFinal) && !isTrainingLevel(cfg.level) });
   currentBetByMatch2[matchID]      = 0;
   currentMinRaiseByMatch2[matchID] = 0;
 
@@ -3232,12 +3285,12 @@ state.players.forEach((p, i) => {
   if (['FOLD', 'BUST'].includes(p.status)) return;
   p.status = p.bankroll > 0 ? '' : 'BUST';
   if (p.status === 'BUST' && p.label) {
-    resetMultiplier(p.label);
     newlyBusted.push(p.label);
   }
 });
 
   endIfOnlyOneActiveAndOthersDisconnected(state);
+  competitiveSettlement.settle(state);
 
   // ─────────────────────────────────────────────────────────────────
   // 7) Historique & stats
@@ -3344,16 +3397,7 @@ io.to(`spectate-table:${tableID}`).emit('spectatorState', {  // spectateurs
     io.to('admin').emit('levelsUpdated');
   }
 
-  // — Championnat : points de table (30 pts vainqueur, 10 pts 2e place) —
-  if (survivors.length === 1 && isTable10) {
-    const finalWinnerLabel = survivors[0].label;
-    applyChampionshipPoints(finalWinnerLabel, 30, { applyMultiplier: false });
-    newlyBusted
-      .filter(lbl => lbl !== finalWinnerLabel)
-      .forEach(lbl => applyChampionshipPoints(lbl, 10, { applyMultiplier: false }));
-    saveLevels();
-    broadcastChampionshipLeaderboard();
-  }
+  // Ranking rewards were settled above once per completed competitive game.
 
   // ─────────────────────────────────────────────────────────────────
   // 9) Émission des updates & notification de fin
@@ -3518,13 +3562,12 @@ io.to(`spectate-match2:${matchID}`).emit('spectatorState', {
   // ── 6) Éliminer ou reset les autres ──
   state.players.forEach((p, i) => {
     if (!widx.includes(i)) {
-      const wasBust = p.status === 'BUST';
       if (p.status !== 'WAIT') p.status = p.bankroll > 0 ? '' : 'BUST';
-      if (p.status === 'BUST' && !wasBust && p.label) resetMultiplier(p.label);
     }
   });
 
   endIfOnlyOneActiveAndOthersDisconnected(state);
+  competitiveSettlement.settle(state);
 
   // ─────────────────────────────────────────────────────────────────
   // 7) Historique & stats
@@ -3661,14 +3704,7 @@ io.to(`spectate-match2:${matchID}`).emit('spectatorState', {
     state.gameFinished = true;
     state.winReason = { winnerId: winner?.id, winnerLabel };
 
-    // — Championnat : victoire en face-à-face —
-    if (matches2Config[matchID]?.isChampionshipFinal) {
-      applyChampionshipPoints(winnerLabel, 80, { applyMultiplier: false });
-      const wEntry = ensurePlayerRecord(winnerLabel);
-      if (wEntry) wEntry.needsWheelSpin = true;
-      saveLevels();
-      broadcastChampionshipLeaderboard();
-    }
+    competitiveSettlement.settle(state, { finished: true, winnerName: winnerLabel });
 
     setTimeout(() => {
       const isChampionshipFinal = Boolean(matches2Config[matchID]?.isChampionshipFinal);
@@ -3701,7 +3737,10 @@ io.to(`spectate-match2:${matchID}`).emit('spectatorState', {
 function dealNextHand(tableID) {
   const state = gameStateByTable[tableID];
   if (!state) return;
-  if (state.gameFinished) return;
+  if (state.gameFinished) {
+    competitiveSettlement.settle(state, { finished: true, winnerName: state.winReason?.winnerLabel });
+    return;
+  }
 
   clearRevealSequence(tableID, state);
 
@@ -3740,6 +3779,10 @@ state.add30BonusMs = 0;
     }
   });
 
+  // A reconnectable BUST seat with chips has now been restored. Settle only
+  // permanent eliminations before considering a finish caused by absences.
+  competitiveSettlement.settle(state);
+
   // Si un seul joueur actif reste et que tous les autres sont en BREAK ou hors-ligne,
   // on termine la partie et on declare ce joueur gagnant.
   const activePlayers = state.players.filter(p => p && !p.inactive && p.status !== 'WAIT' && p.status !== 'BUST');
@@ -3761,15 +3804,8 @@ state.add30BonusMs = 0;
       clearTimeout(turnTimersByMatch2[tableID]);
       delete turnTimersByMatch2[tableID];
     }
+    competitiveSettlement.settle(state, { finished: true, winnerName: winner?.label });
     if (matches2Config[tableID]) {
-      otherNonBust.forEach(p => { if (p?.label) resetMultiplier(p.label); });
-      if (matches2Config[tableID]?.isChampionshipFinal && winner?.label) {
-        applyChampionshipPoints(winner.label, 80, { applyMultiplier: false });
-        const wEntry = ensurePlayerRecord(winner.label);
-        if (wEntry) wEntry.needsWheelSpin = true;
-        saveLevels();
-        broadcastChampionshipLeaderboard();
-      }
       io.to(tableID).emit('updateMatch2', { matchID: tableID, gameState: state });
       io.to('admin').emit('updateMatch2', { matchID: tableID, gameState: state });
       setTimeout(() => {
@@ -3779,15 +3815,6 @@ state.add30BonusMs = 0;
         if (winner?.id) io.to(winner.id).emit('match2Finished', { matchID: tableID, winner: winner?.label, isChampionshipFinal });
       }, WINNER_SCREEN_DELAY_MS);
     } else {
-      // — Championnat : winner par abandon des autres (BREAK/déconnexion) —
-      if (winner?.label) applyChampionshipPoints(winner.label, 30, { applyMultiplier: false });
-      otherNonBust.forEach(p => {
-        if (!p?.label) return;
-        applyChampionshipPoints(p.label, 10, { applyMultiplier: false });
-        resetMultiplier(p.label);
-      });
-      saveLevels();
-      broadcastChampionshipLeaderboard();
       io.to(tableID).emit('updateTable', state);
       io.to(`spectate-table:${tableID}`).emit('spectatorState', { type: 'table', tableID, gameState: state });
       io.to('admin').emit('updateTable', { tableID, gameState: state });
@@ -3802,6 +3829,7 @@ state.add30BonusMs = 0;
   }
 
   // 4) redistribution des cartes et nouveaux blinds
+  competitiveSettlement.capture(state);
   distributeCards(state);
   {
     const isMatch2 = Boolean(matches2Config[tableID]);
@@ -4538,6 +4566,10 @@ io.to(`spectate-table:${tableID}`).emit('spectatorState', {  // spectateurs
 // 12) Socket.IO handlers
 // ──────────────────────────────────────────────────────────────
 io.on('connection', socket => {
+registerProgressionSocket(socket, {
+  engine: progression, resolveName: resolveProgressionName, bindIdentity: bindProgressionIdentity,
+  publish: publishProgression, hasPlayer: name => Object.prototype.hasOwnProperty.call(playerLevels, name)
+});
 // Toujours dans io.on('connection', (socket) => { ... })
 
 // Championnat : classement courant envoyé à la connexion.
@@ -4729,9 +4761,11 @@ function tryStartQuickTable(roomID) {
 // Crée les sessions de Bataille (1 ou 2, selon bot/humain) et notifie les joueurs.
 function startBattle(tableID, playerA, playerB) {
   const isBot = !playerB;
+  const progressionEventId = `battle:${crypto.randomUUID()}`;
 
   battleSessionsBySeat[battleSessionKey(tableID, playerA.seat)] = {
     tableID, seat: playerA.seat, myLabel: playerA.label,
+    progressionEventId,
     opponentSeat: isBot ? null : playerB.seat,
     opponentLabel: isBot ? 'Bot' : playerB.label,
     isBot, scoreMine: 0, scoreTheirs: 0, round: 1, myCard: null, done: false
@@ -4744,6 +4778,7 @@ function startBattle(tableID, playerA, playerB) {
   if (!isBot) {
     battleSessionsBySeat[battleSessionKey(tableID, playerB.seat)] = {
       tableID, seat: playerB.seat, myLabel: playerB.label,
+      progressionEventId,
       opponentSeat: playerA.seat, opponentLabel: playerA.label,
       isBot: false, scoreMine: 0, scoreTheirs: 0, round: 1, myCard: null, done: false
     };
@@ -4783,13 +4818,12 @@ function applyBattleRoundResult(session, myCard, theirCard) {
     if (session.isPractice) {
       payload.pointsEarned = 0;
     } else {
-      const basePoints = outcome === 'win' ? 2 : 0;
-      const entry = ensurePlayerRecord(session.myLabel);
-      const multiplier = entry?.multiplier || 1;
-      applyChampionshipPoints(session.myLabel, basePoints, { applyMultiplier: true });
-      saveLevels();
-      broadcastChampionshipLeaderboard();
-      payload.pointsEarned = basePoints * multiplier;
+      const receipt = progression.recordGame(session.myLabel, {
+        eventId: session.progressionEventId, kind: 'battle', won: outcome === 'win',
+        eligible: !isTrainingLevel(tablesConfig[session.tableID]?.level)
+      });
+      if (receipt) publishProgression(session.myLabel, receipt);
+      payload.pointsEarned = receipt?.competitivePoints || 0;
       if (!battleDoneByTable[session.tableID]) battleDoneByTable[session.tableID] = new Set();
       battleDoneByTable[session.tableID].add(session.seat);
       tryStartQuickTable(session.tableID);
@@ -4916,6 +4950,8 @@ socket.on('quickJoin', payload => {
   if (clientKey) socket._clientJoinKey = clientKey;
   let name = String(payload.name || '').trim().slice(0, 24);
   if (!name) name = 'Joueur';
+  try { bindProgressionIdentity(socket, { name, clientKey }); }
+  catch (error) { socket.emit('joinError', error.message); return; }
 
   const isSeatFree = (tableID, seat) => {
     const cfg = tablesConfig[tableID];
@@ -4963,20 +4999,29 @@ socket.on('quickJoin', payload => {
 // Championnat : mise en file du vainqueur d'une table pour le face-à-face.
 socket.on('joinFinals', payload => {
   payload = payload || {};
-  const clientKey = String(payload.clientKey || '').trim();
+  const clientKey = String(payload.clientKey || socket._clientJoinKey || '').trim().slice(0, 160);
   if (clientKey) socket._clientJoinKey = clientKey;
-  const name = String(payload.name || '').trim().slice(0, 24) || 'Joueur';
+  const name = resolveProgressionName(socket);
+  if (!name) return socket.emit('joinError', 'Identifiez-vous avant de rejoindre une finale.');
+  const entry = ensurePlayerRecord(name);
 
-  const prevAssignment = clientKey ? finalsAssignmentByClientKey[clientKey] : null;
-  if (prevAssignment && matches2Config[prevAssignment.matchID]) {
+  const prevAssignment = entry.finalAssignment;
+  if (prevAssignment && matches2Config[prevAssignment.matchID]?.players[prevAssignment.seat] === name && !matches2Config[prevAssignment.matchID].competitiveFinished && !gameStateByTable[prevAssignment.matchID]?.gameFinished) {
     return socket.emit('finalsMatchAssigned', prevAssignment);
   }
+  if (prevAssignment) { delete entry.finalAssignment; saveLevels(); }
+  if (!entry.pendingFinal) return socket.emit('joinError', 'Remportez une table de 10 joueurs pour accéder à la finale.');
 
-  const alreadyQueued = clientKey && finalsQueue.some(e => e.clientKey === clientKey);
+  const alreadyQueued = finalsQueue.find(e => e.label === name);
   if (alreadyQueued) {
+    alreadyQueued.socketId = socket.id;
+    alreadyQueued.clientKey = clientKey;
     return socket.emit('finalsWaiting', {});
   }
 
+  for (let i = finalsQueue.length - 1; i >= 0; i--) {
+    if (!playerLevels[finalsQueue[i].label]?.pendingFinal) finalsQueue.splice(i, 1);
+  }
   if (finalsQueue.length > 0) {
     const opponent = finalsQueue.shift();
     const matchID = crypto.randomBytes(4).toString('hex');
@@ -4991,6 +5036,12 @@ socket.on('joinFinals', payload => {
 
     const assignmentA = { matchID, seat: 0 };
     const assignmentB = { matchID, seat: 1 };
+    const opponentEntry = ensurePlayerRecord(opponent.label);
+    opponentEntry.finalAssignment = assignmentA;
+    entry.finalAssignment = assignmentB;
+    delete opponentEntry.pendingFinal;
+    delete entry.pendingFinal;
+    saveLevels();
     if (opponent.clientKey) finalsAssignmentByClientKey[opponent.clientKey] = assignmentA;
     if (clientKey) finalsAssignmentByClientKey[clientKey] = assignmentB;
 
@@ -5007,19 +5058,11 @@ socket.on('joinFinals', payload => {
 
 // Championnat : tirage de la roue à multiplicateur après une victoire en face-à-face.
 socket.on('spinWheel', payload => {
-  payload = payload || {};
-  const name = String(payload.name || '').trim();
+  const name = resolveProgressionName(socket);
   if (!name) return;
-  const entry = ensurePlayerRecord(name);
-  if (!entry || !entry.needsWheelSpin) {
-    return socket.emit('wheelResult', { multiplier: entry?.multiplier || null, alreadySpun: true });
-  }
-  const value = spinWheelValue();
-  setMultiplier(name, value);
-  entry.needsWheelSpin = false;
-  saveLevels();
-  broadcastChampionshipLeaderboard();
-  socket.emit('wheelResult', { multiplier: value });
+  const result = progression.spin(name, spinWheelValue());
+  socket.emit('wheelResult', result);
+  publishProgression(name, result.receipt || null);
 });
 
 // Test/aperçu (écran d'accueil) : Bataille solo contre un bot, sans impact sur le classement.
@@ -5043,6 +5086,7 @@ socket.on('getHomeProfile', (payload) => {
   const name = String(payload?.name || '').trim();
   if (!name) { socket.emit('homeProfile', null); return; }
   const entry = ensurePlayerRecord(name);
+  if (!entry) { socket.emit('homeProfile', null); return; }
   const sorted = Object.values(playerLevels)
     .filter(e => e && e.name && (e.points || 0) > 0)
     .sort((a, b) => (b.points || 0) - (a.points || 0));
@@ -5073,6 +5117,7 @@ socket.on('playBattleRound', payload => {
   const isPractice = Boolean(payload.practice);
   const tableID = payload.table;
   const seat = parseInt(payload.seat, 10);
+  if (!isPractice && waitingPlayersByTable[tableID]?.[seat]?.id !== socket.id) return;
   const key = isPractice ? `practice:${socket.id}` : battleSessionKey(tableID, seat);
   const session = battleSessionsBySeat[key];
   if (!session || session.done || session.myCard) return;
@@ -5114,6 +5159,9 @@ socket.on('joinGame', payload => {
   // 0) Récupère roomID et type (table VS match2)
   const roomID   = payload.table  ?? payload.match2;
   const isMatch2 = Boolean(payload.match2);
+  if (isMatch2 && matches2Config[roomID]?.competitiveFinished && !gameStateByTable[roomID]) {
+    return socket.emit('joinError', 'Cette finale est terminée. Revenez à l’accueil pour continuer.');
+  }
 
   if (!roomID) {
     // Pas de paramètres → on montre un écran d’accueil lisible
