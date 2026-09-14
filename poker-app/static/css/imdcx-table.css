@@ -1,0 +1,193 @@
+/* STEP 1 — table presentation only. No modal/calculator or animation rules.
+   The existing theme switch, card assets, seat positions and state classes remain authoritative. */
+#poker-game-wrapper {
+  --table-ink: #eef7ff;
+  --table-muted: #aac1d5;
+  --table-accent: #72e3f5;
+  --table-edge: #466478;
+  --table-surface: #101c30;
+  --table-surface-end: #091321;
+  --table-shadow: #02081580;
+  --table-focus: #ffdf95;
+  --table-button: #20364d;
+  --table-button-end: #111e32;
+}
+body.tier-fruity-bg #poker-game-wrapper {
+  --table-ink: #332744;
+  --table-muted: #645170;
+  --table-accent: #ac3771;
+  --table-edge: #c395b0;
+  --table-surface: #fff7eb;
+  --table-surface-end: #f5e3ef;
+  --table-shadow: #58265226;
+  --table-focus: #a35409;
+  --table-button: #fff9dd;
+  --table-button-end: #f3cf85;
+}
+
+/* Keep the two environments, with a quiet center behind the information. */
+body:has(#poker_table):not(.tier-fruity-bg):not(.portal-intro-pending):not(.imdcx-scene-mode):not(:has(.quickplay-lobby)) {
+  background: radial-gradient(ellipse at 50% 45%, #142b3d, #101326 55%, #070d18 100%) !important;
+}
+body.tier-fruity-bg:not(.portal-intro-pending):not(.imdcx-scene-mode):not(:has(.quickplay-lobby)) {
+  background: radial-gradient(ellipse at 50% 44%, #fff5e7 0%, #f9dbe8 48%, #c3e8e9 100%) !important;
+}
+body.tier-fruity-bg #fruit-bg-layer { opacity: .42; }
+body.tier-fruity-bg:not(.portal-intro-pending)::before,
+body.tier-fruity-bg:not(.portal-intro-pending)::after { opacity: .25; }
+
+/* Original oval image and tier colors, with a restrained edge and depth. */
+#poker-game-wrapper #poker_table {
+  border-radius: 48%;
+  box-shadow: 0 24px 40px var(--table-shadow), 0 0 32px #5dcce312 !important;
+  --card-frame-pink: #85d9ec;
+  --card-frame-glow: #65b4d322;
+  --card-frame-width: 2px;
+}
+body.tier-fruity-bg #poker-game-wrapper #poker_table {
+  --card-frame-pink: #ce74a0;
+  --card-frame-glow: #a7437622;
+  box-shadow: 0 24px 40px var(--table-shadow), 0 2px 0 #fff7 !important;
+}
+
+/* Sized within the original seat pitch, so adjacent panels have breathing room. */
+#poker-game-wrapper #poker_table .seat .name-chips {
+  width: 116px;
+  box-sizing: border-box;
+  border: 1px solid var(--table-edge) !important;
+  border-radius: 16px !important;
+  background: linear-gradient(160deg, var(--table-surface), var(--table-surface-end)) !important;
+  box-shadow: inset 0 1px 0 #ffffff21, 0 7px 16px var(--table-shadow) !important;
+}
+#poker-game-wrapper #poker_table .seat:not(.turn):not(.is-allin-bg):not(.status-winner) .name-chips::before {
+  background: linear-gradient(135deg, #ffffff0a, transparent 55%) !important;
+}
+#poker-game-wrapper #poker_table .seat:not(.turn):not(.is-allin-bg):not(.status-winner) .name-chips::after {
+  background: linear-gradient(135deg, var(--table-edge), var(--table-accent), var(--table-edge));
+  box-shadow: 0 0 8px var(--table-shadow) !important;
+  opacity: .65;
+}
+#poker-game-wrapper #poker_table .seat .player-name {
+  color: var(--table-muted);
+  font-family: "Montserrat", Arial, sans-serif;
+  font-size: 19px;
+  letter-spacing: .7px;
+  text-shadow: none;
+}
+#poker-game-wrapper #poker_table .seat .chips {
+  color: var(--table-ink);
+  font-family: "Montserrat", Arial, sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.4px;
+  text-shadow: none;
+}
+#poker-game-wrapper #poker_table .seat .bet {
+  color: var(--table-ink) !important;
+  font-family: "Montserrat", Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 3px var(--table-shadow);
+}
+body.tier-fruity-bg #poker-game-wrapper #poker_table .seat .bet * { color: var(--table-ink) !important; text-shadow: none !important; }
+#poker-game-wrapper #poker_table .seat.turn .name-chips {
+  border-color: #f2cd7c !important;
+  background: linear-gradient(155deg, #4d4130, #1d2732) !important;
+  box-shadow: inset 0 0 0 1px #ffe4a94d, 0 0 0 2px #e9bf6970, 0 0 22px #efc36535, 0 9px 22px var(--table-shadow) !important;
+}
+#poker-game-wrapper #poker_table .seat.turn .player-name,
+#poker-game-wrapper #poker_table .seat.turn .chips {
+  color: #fff0c7 !important;
+  text-shadow: 0 1px 2px #0005 !important;
+}
+body.tier-fruity-bg #poker-game-wrapper #poker_table .seat.turn .name-chips {
+  background: linear-gradient(155deg, #fff9d2, #ffe1a2) !important;
+  border-color: #bf792b !important;
+  box-shadow: inset 0 0 0 2px #fff8, 0 0 0 2px #ebb65e90, 0 9px 22px var(--table-shadow) !important;
+}
+body.tier-fruity-bg #poker-game-wrapper #poker_table .seat.turn .player-name,
+body.tier-fruity-bg #poker-game-wrapper #poker_table .seat.turn .chips {
+  color: #653e13 !important;
+  text-shadow: none !important;
+}
+#poker-game-wrapper #poker_table .seat.is-allin-bg .name-chips { border-color: #ed6383 !important; }
+#poker-game-wrapper #poker_table .seat.inactive-seat .name-chips {
+  opacity: .34;
+  border-style: dashed !important;
+  box-shadow: none !important;
+}
+#poker-game-wrapper #poker_table .seat:is(.waiting-seat, .is-bust) .name-chips { opacity: .6; }
+
+/* Three distinct information lines plus a compact two-card slot during betting.
+   Reveal/final states retain their existing full-size card layout. */
+body:not(.is-reveal):not(.final-end-ui) #poker-game-wrapper #poker_table .seat:nth-child(-n+5) .player-name { top: 8px !important; }
+body:not(.is-reveal):not(.final-end-ui) #poker-game-wrapper #poker_table .seat:nth-child(-n+5) .chips { top: 36px !important; }
+body:not(.is-reveal):not(.final-end-ui) #poker-game-wrapper #poker_table .seat:nth-child(-n+5) .bet { top: calc(var(--table-panel-top, -10px) + 65px) !important; }
+body:not(.is-reveal):not(.final-end-ui) #poker-game-wrapper #poker_table .seat:nth-child(n+6) .player-name { top: 128px !important; }
+body:not(.is-reveal):not(.final-end-ui) #poker-game-wrapper #poker_table .seat:nth-child(n+6) .chips { top: 96px !important; }
+body:not(.is-reveal):not(.final-end-ui) #poker-game-wrapper #poker_table .seat:nth-child(n+6) .bet { top: calc(var(--table-panel-top, 80px) + 8px) !important; }
+body:not(.is-reveal):not(.final-end-ui) #poker-game-wrapper #poker_table .seat .bet { font-size: 18px !important; line-height: 22px !important; }
+
+/* Keep pot details and live status in their existing shared center position. */
+#poker-game-wrapper #poker_table #pot {
+  color: #f5fcff;
+  font-family: "Montserrat", Arial, sans-serif;
+  font-size: 29px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.5px;
+  text-shadow: 0 2px 6px #00151ec0;
+}
+#poker-game-wrapper #pot #pot-breakdown-trigger {
+  background: linear-gradient(var(--table-button), var(--table-button-end));
+  color: var(--table-ink);
+  border: 1px solid var(--table-edge);
+  border-radius: 9px;
+  min-height: 32px;
+  font-size: 12px;
+  letter-spacing: .6px;
+}
+#poker-game-wrapper #poker_table #center-message-zone {
+  border-radius: 26px;
+}
+#poker-game-wrapper #poker_table #center-message-zone.turn {
+  background: linear-gradient(135deg, #173d52f2, #232b51f2);
+  box-shadow: inset 0 0 0 1px #88dcf47a, inset 0 1px 0 #ffffff30, 0 10px 26px #00132350;
+}
+#poker-game-wrapper #poker_table #center-message-text {
+  font-family: "Montserrat", Arial, sans-serif;
+  font-weight: 800;
+  letter-spacing: .2px;
+  line-height: 1.35;
+  padding: 8px 18px;
+  text-wrap: balance;
+}
+body.tier-fruity-bg #poker-game-wrapper #poker_table #center-message-zone.turn {
+  background: linear-gradient(135deg, #fff4d9f5, #ffe7f0f5);
+  box-shadow: inset 0 0 0 1px #b47c8e, inset 0 2px 0 #fff, 0 10px 26px #58265226;
+}
+body.tier-fruity-bg #poker-game-wrapper #center-message-zone.turn #center-message-text { color: #683452; text-shadow: none; }
+
+/* Only table utilities; the calculator's buttons and sizing are deliberately outside these selectors. */
+#poker-game-wrapper #action-options > button:not(#reveal-hide-btn):not(#reveal-show-btn) {
+  color: var(--table-ink) !important;
+  background: linear-gradient(150deg, var(--table-button), var(--table-button-end)) !important;
+  border: 1px solid var(--table-edge) !important;
+  box-shadow: inset 0 1px 0 #fff5, 0 4px 9px var(--table-shadow) !important;
+  font-family: "Montserrat", Arial, sans-serif;
+  font-weight: 800;
+  text-shadow: none;
+  touch-action: manipulation;
+}
+#poker-game-wrapper #action-options > #sos-help-btn { color: #fff !important; background: linear-gradient(145deg, #ba3557, #852344) !important; }
+#poker-game-wrapper #action-options > :is(button, a, .action-button):focus-visible,
+#poker-game-wrapper #pot-breakdown-trigger:focus-visible { outline: 3px solid var(--table-focus); outline-offset: 4px; }
+#poker-game-wrapper #action-options > :is(button, a, .action-button) { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+
+@media (pointer: coarse) and (max-width: 1000px) {
+  #poker-game-wrapper #poker_table .seat .player-name { font-size: 22px; letter-spacing: .1px; }
+  #poker-game-wrapper #poker_table .seat .chips { font-size: 26px; }
+  #poker-game-wrapper #poker_table .seat .name-chips { border-width: 2px !important; }
+  #poker-game-wrapper #poker_table #pot { font-size: 30px; }
+  #poker-game-wrapper #pot #pot-breakdown-trigger { min-height: 38px; font-size: 14px; }
+}

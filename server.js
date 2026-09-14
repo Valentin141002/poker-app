@@ -9,6 +9,7 @@ const { Hand }  = require('pokersolver');
 const { createProgression } = require('./lib/progression');
 const { registerProgressionSocket } = require('./lib/progression-sockets');
 const { createCompetitiveSettlement } = require('./lib/competitive-settlement');
+const { registerDemoController } = require('./lib/demo-controller');
 const levelsFile    = path.join(__dirname, 'playerLevels.json');
 const DEFAULT_CREDITS = 60;
 const DEFAULT_TIME_CREDITS = 10;
@@ -855,7 +856,7 @@ function applyCreditsSet(name, credits) {
 function syncCreditsOnPlayers(players) {
   if (!Array.isArray(players)) return;
   players.forEach(p => {
-    if (!p || !p.label) return;
+    if (!p || !p.label || p.demo) return;
     const entry = ensurePlayerRecord(p.label);
     if (entry) {
       p.credits = totalCredits(entry);
@@ -869,7 +870,7 @@ function decrementCreditsForPlayers(players) {
   if (!Array.isArray(players)) return;
   let changed = false;
   players.forEach(p => {
-    if (!p || !p.id || !p.label) return;
+    if (!p || !p.id || !p.label || p.demo) return;
     const entry = ensurePlayerRecord(p.label);
     if (!entry) return;
     removeOneCredit(entry);
@@ -1979,10 +1980,11 @@ function buildPlayersFromWaiting(cfg, waiting, totalSeats, activeSeats = totalSe
     if (sock && sock.playerData) {
       const label = cfg.players[i] || sock.playerData.label || `Player ${i + 1}`;
       const isPlaceholder = /^Seat\s+\d+$/i.test(label);
-      const entry = isPlaceholder ? null : ensurePlayerRecord(label);
+      const entry = cfg.demo || isPlaceholder ? null : ensurePlayerRecord(label);
       const forceJoinState = Boolean(joinSeats && joinSeats[i] === true);
       return {
         id:           sock.playerData.id,
+        ...(cfg.demo ? { demo: true } : {}),
         label,
         credits:      entry ? entry.credits : 0,
         subscription: entry ? (entry.subscription || 'standard') : 'standard',
@@ -2001,7 +2003,7 @@ function buildPlayersFromWaiting(cfg, waiting, totalSeats, activeSeats = totalSe
     }
     const label = cfg.players[i] || `Seat ${i + 1}`;
     const isPlaceholder = /^Seat\s+\d+$/i.test(label);
-    const entry = isPlaceholder ? null : ensurePlayerRecord(label);
+    const entry = cfg.demo || isPlaceholder ? null : ensurePlayerRecord(label);
     return {
       id:           null,
       label,
@@ -2080,6 +2082,7 @@ if (!forceStart && filledCount < activeSeats) {
   // Initialisation de l'état de jeu (tous les sièges sont désormais remplis)
   // ──────────────────────────────────────────────────────────────
   const state = gameStateByTable[tableID] = {
+    ...(cfg.demo ? { demo: true, demoRoomID: tableID, demoRevision: 0 } : {}),
     roundNumber: 1,
     players,
     pot:                  0,
@@ -2112,7 +2115,7 @@ if (!forceStart && filledCount < activeSeats) {
   };
 
   // Réinitialisation des montants courants
-  competitiveSettlement.begin(state, { roomId: tableID, eligible: !isTrainingLevel(cfg.level), quickPlay: Boolean(cfg.quickPlay) });
+  competitiveSettlement.begin(state, { roomId: tableID, eligible: !cfg.demo && !isTrainingLevel(cfg.level), quickPlay: Boolean(cfg.quickPlay) });
   currentBetByTable[tableID]      = 0;
   currentMinRaiseByTable[tableID] = 0;
 
@@ -2273,6 +2276,7 @@ if ((!forceStart && (waiting.length !== N || takenCount < N)) ||
   const players = buildPlayersFromWaiting(cfg, waiting, N, N, opts);
   syncCreditsOnPlayers(players);
   const state = gameStateByTable[matchID] = {
+    ...(cfg.demo ? { demo: true, demoRoomID: matchID, demoRevision: 0, totalSeats: N, activeSeats: N } : {}),
     roundNumber: 1,
     players,
     pot:                  0,
@@ -2303,7 +2307,7 @@ if ((!forceStart && (waiting.length !== N || takenCount < N)) ||
   };
 
   // 5) Réinitialisation des bets
-  competitiveSettlement.begin(state, { roomId: matchID, isFinal: true, eligible: Boolean(cfg.isChampionshipFinal) && !isTrainingLevel(cfg.level) });
+  competitiveSettlement.begin(state, { roomId: matchID, isFinal: true, eligible: !cfg.demo && Boolean(cfg.isChampionshipFinal) && !isTrainingLevel(cfg.level) });
   currentBetByMatch2[matchID]      = 0;
   currentMinRaiseByMatch2[matchID] = 0;
 
@@ -2682,6 +2686,7 @@ function clearRevealSequence(roomID, state) {
 }
 
 function scheduleRevealDecisionTimeout(roomID, isMatch2, seat, ms) {
+  if (gameStateByTable[roomID]?.demo) return;
   if (revealTimersByRoom[roomID]) {
     clearTimeout(revealTimersByRoom[roomID]);
     delete revealTimersByRoom[roomID];
@@ -2916,7 +2921,7 @@ function advanceRevealSequence(roomID, isMatch2) {
 
   const seat = seq.order[seq.index];
   seq.activeSeat = seat;
-  seq.deadline = Date.now() + REVEAL_DECISION_MS;
+  seq.deadline = state.demo ? null : Date.now() + REVEAL_DECISION_MS;
 
   const player = state.players[seat];
   if (player && (player.revealStatus === 'show' || player.revealStatus === 'hide')) {
@@ -3317,6 +3322,7 @@ io.to(`spectate-table:${tableID}`).emit('spectatorState', {  // spectateurs
     ? tablesConfig[tableID].mode
     : matches2Config[tableID].mode;
   const winnerLabel = state.players[widx[0]].label;
+  if (!state.demo) {
 
   // Enregistre la partie
   gamesHistory.push({
@@ -3351,13 +3357,14 @@ io.to(`spectate-table:${tableID}`).emit('spectatorState', {  // spectateurs
   statsWinner.wins++;
   statsWinner.byMode[mode].wins++;
   if (isTable10) saveStatsTable(); else saveStatsMatch2();
+  }
 
   // ─────────────────────────────────────────────────────────────────
   // 8) Tables 10 joueurs : BO3 de promotion + joker T1
   // ─────────────────────────────────────────────────────────────────
   const survivors   = state.players.filter(p => p && !p.inactive && p.status !== 'BUST' && p.status !== 'WAIT');
   const tableLevel = isTable10 ? normalizeCreditLevel(tablesConfig[tableID]?.level) : null;
-  if (survivors.length === 1 && isTable10 && !isTrainingLevel(tableLevel)) {
+  if (!state.demo && survivors.length === 1 && isTable10 && !isTrainingLevel(tableLevel)) {
     const finalWinner = survivors[0];
     state.players.forEach(p => {
       if (!p || !p.label || p.status === 'WAIT') return;
@@ -3605,6 +3612,7 @@ io.to(`spectate-match2:${matchID}`).emit('spectatorState', {
   const mode        = matches2Config[matchID].mode;
   const winnerLabel = winner.label;
   const loserLabel  = loser.label;
+  if (!state.demo) {
 
   gamesHistory.push({
     type:      'match2',
@@ -3632,12 +3640,13 @@ io.to(`spectate-match2:${matchID}`).emit('spectatorState', {
   statsMatch2[winnerLabel].wins++;
   statsMatch2[winnerLabel].byMode[mode].wins++;
   saveStatsMatch2();
+  }
 
   // ─────────────────────────────────────────────────────────────────
   // 8) Duels (1v1) : promotion en 2 victoires sur 3 + joker T1
   // ─────────────────────────────────────────────────────────────────
   const surv = state.players.filter(p => p && !p.inactive && p.status !== 'BUST' && p.status !== 'WAIT');
-  if (surv.length === 1) {
+  if (!state.demo && surv.length === 1) {
     [winner, loser].forEach(p => ensurePlayerRecord(p.label));
     const matchLevel = normalizeCreditLevel(matches2Config[matchID]?.level);
     const isTraining = isTrainingLevel(matchLevel);
@@ -3737,6 +3746,7 @@ io.to(`spectate-match2:${matchID}`).emit('spectatorState', {
 function dealNextHand(tableID) {
   const state = gameStateByTable[tableID];
   if (!state) return;
+  if (state.demo) state.demoRunningOut = false;
   if (state.gameFinished) {
     competitiveSettlement.settle(state, { finished: true, winnerName: state.winReason?.winnerLabel });
     return;
@@ -3883,6 +3893,7 @@ if (matches2Config[tableID]) {
 // ── Table 10 joueurs ──
 // ── Table 10 joueurs ──
 function resetTurnTimer(tableID, isTimeExtension = false, preserveTurnFlags = false, overrideTiming = null) {
+  if (gameStateByTable[tableID]?.demo) return;
   // Helper local : un joueur à ignorer pour l'action
   function isSkippablePlayer(p){
     return p.status === 'FOLD'
@@ -4104,6 +4115,7 @@ io.to(`spectate-table:${tableID}`).emit('spectatorState', {  // spectateurs
 // ── Duel 2 joueurs ──
 // ── Duel 2 joueurs ──
 function resetTurnTimer2(matchID, isTimeExtension = false, preserveTurnFlags = false, overrideTiming = null) {
+  if (gameStateByTable[matchID]?.demo) return;
   clearTimeout(turnTimersByMatch2[matchID]);
 
   const s = gameStateByTable[matchID];
@@ -4361,6 +4373,7 @@ const alive = state.players.filter(p => !['FOLD','BUST','WAIT'].includes(p.statu
 function startRevealAllIn(tableID) {
   const state = gameStateByTable[tableID];
   if (!state) return;
+  if (state.demo) state.demoRunningOut = true;
   const alivePlayers = state.players.filter(p => p && !p.inactive && !['FOLD','BUST','WAIT'].includes(p.status));
   const hasMultipleAlive = alivePlayers.length > 1;
   const revealOpts = hasMultipleAlive
@@ -4411,6 +4424,7 @@ io.to(`spectate-table:${tableID}`).emit('spectatorState', {  // spectateurs
   phasesÀJouer.forEach((phase, idx) => {
     const délai = idx * 2500;
     setTimeout(() => {
+      if (state.demo && gameStateByTable[tableID] !== state) return;
       state.phase = phase;
 io.to(tableID).emit('updateTable', state);   // joueurs
 
@@ -4433,6 +4447,7 @@ io.to(`spectate-table:${tableID}`).emit('spectatorState', {  // spectateurs
     : 0;
 
   setTimeout(() => {
+    if (state.demo && gameStateByTable[tableID] !== state) return;
     state.phase = 'reveal';
     if (!state.roundEvaluated) markInShowdown(state, false);
     if (!state.revealSeq || state.revealSeq.done) {
@@ -4462,6 +4477,7 @@ io.to(`spectate-table:${tableID}`).emit('spectatorState', {  // spectateurs
 function startReveal(tableID, opts = {}) {
   const state = gameStateByTable[tableID];
   if (!state) return;
+  if (state.demo) state.demoRunningOut = true;
 
   // 1) Si on est déjà en 'reveal', on n’a plus qu’à évaluer tout de suite
   if (state.phase === 'reveal') {
@@ -4519,6 +4535,7 @@ io.to(`spectate-table:${tableID}`).emit('spectatorState', {  // spectateurs
   phasesÀJouer.forEach((phase, idx) => {
     const délai = idx * 2500; // 0ms pour la première (flop), 2500ms pour la suivante (turn), etc.
     setTimeout(() => {
+      if (state.demo && gameStateByTable[tableID] !== state) return;
       state.phase = phase;
 io.to(tableID).emit('updateTable', state);   // joueurs
 
@@ -4542,6 +4559,7 @@ io.to(`spectate-table:${tableID}`).emit('spectatorState', {  // spectateurs
     : 0;
 
   setTimeout(() => {
+    if (state.demo && gameStateByTable[tableID] !== state) return;
     state.phase = 'reveal';
     if (!state.roundEvaluated) markInShowdown(state, false);
     if (!state.revealSeq || state.revealSeq.done) {
@@ -4566,6 +4584,19 @@ io.to(`spectate-table:${tableID}`).emit('spectatorState', {  // spectateurs
 // 12) Socket.IO handlers
 // ──────────────────────────────────────────────────────────────
 io.on('connection', socket => {
+registerDemoController(socket, {
+  tables: tablesConfig, matches: matches2Config, states: gameStateByTable,
+  tableWaiting: waitingPlayersByTable, matchWaiting: waitingPlayersByMatch2,
+  startTable: tryStartGame, startMatch: tryStartMatch2, next: dealNextHand,
+  clear(id, state) {
+    clearRevealSequence(id, state);
+    for (const timers of [turnTimersByTable, turnTimersByMatch2]) {
+      clearTimeout(timers[id]);
+      delete timers[id];
+    }
+    for (const bets of [currentBetByTable, currentBetByMatch2, currentMinRaiseByTable, currentMinRaiseByMatch2]) delete bets[id];
+  }
+});
 registerProgressionSocket(socket, {
   engine: progression, resolveName: resolveProgressionName, bindIdentity: bindProgressionIdentity,
   publish: publishProgression, hasPlayer: name => Object.prototype.hasOwnProperty.call(playerLevels, name)
@@ -5473,18 +5504,25 @@ socket.on('joinGame', payload => {
 });
 
 socket.on('playerAction', action => {
+  if (!action || typeof action !== 'object') return;
   // 1) Récupération du contexte
   const rooms = [...socket.rooms].filter(r => r !== socket.id);
   if (!rooms.length) return;
 
-  const table    = rooms[0];
+  const table    = socket.demoRoomID || rooms[0];
   const isMatch2 = Boolean(matches2Config[table]);
   const state    = gameStateByTable[table];
   if (!state) return;
   if (state.adminPaused) return;
 
-  const idx = state.players.findIndex(p => p.id === socket.id);
+  const idx = state.demo && socket.demoRoomID === table
+    ? state.current_bettor_index : state.players.findIndex(p => p.id === socket.id);
   if (idx < 0) return;
+  if (state.demo && (state.gameFinished || state.demoRunningOut ||
+      !['preflop', 'flop', 'turn', 'river'].includes(state.phase) ||
+      action.demoRoomID !== table || action.demoRevision !== state.demoRevision ||
+      action.demoRound !== state.roundNumber || action.demoSeat !== idx ||
+      (action.type === 'raise' && (!Number.isFinite(action.amount) || action.amount < 0)))) return;
 
   const me = state.players[idx];
 
@@ -5533,6 +5571,7 @@ socket.on('playerAction', action => {
   }
 
   if (!ok) return;
+  if (state.demo) state.demoRevision++;
 
   if (state.phase === 'preflop') {
     if (idx === state.bigBlindIndex) state.bbOptionPending = false;
@@ -5909,13 +5948,15 @@ socket.on('revealChoice', (payload = {}) => {
   const rooms = [...socket.rooms].filter(r => r !== socket.id);
   if (!rooms.length) return;
 
-  const roomID   = rooms[0];
+  const roomID   = socket.demoRoomID || rooms[0];
   const isMatch2 = Boolean(matches2Config[roomID]);
   const state = gameStateByTable[roomID];
   if (!state || !state.revealSeq) return;
   if (state.adminPaused) return;
 
-  const idx = state.players.findIndex(p => p && p.id === socket.id);
+  const idx = state.demo && socket.demoRoomID === roomID
+    ? state.revealSeq.activeSeat : state.players.findIndex(p => p && p.id === socket.id);
+  if (state.demo && (payload.demoRoomID !== roomID || payload.demoRound !== state.roundNumber || payload.demoSeat !== idx)) return;
   if (idx < 0) return;
 
   applyRevealChoice(roomID, isMatch2, idx, !!payload.hide);
@@ -6022,6 +6063,7 @@ socket.on('toggleBreak', (payload = {}) => {
 });
 
   socket.on('disconnect', () => {
+    if (socket.demoOnly) return;
     // ——————————————————————————————————————————
     // Déconnexion d’un socket
     // ——————————————————————————————————————————

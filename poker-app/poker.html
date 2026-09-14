@@ -26,9 +26,12 @@
   <link rel="shortcut icon" href="static/images/chip5.png" />
   <link rel="stylesheet" href="static/css/phone.css" type="text/css"
         media="only screen and (max-width: 1400px)">
-  <!-- Optional visual refinement: remove this stylesheet and imdcx-visuals.js to restore the previous UI. -->
-  <link rel="stylesheet" href="static/css/imdcx-premium.css" type="text/css">
+  <!-- Shared presentation and dedicated application scenes. Keep the scene assets together. -->
+  <link rel="stylesheet" href="static/css/imdcx-premium.css?v=20260914-scenes-fix" type="text/css">
   <link rel="stylesheet" href="static/css/progression.css" type="text/css">
+  <link rel="stylesheet" href="static/css/imdcx-scenes.css?v=20260914-scenes-fix" type="text/css">
+  <link rel="stylesheet" href="static/css/imdcx-demo.css" type="text/css">
+  <link rel="stylesheet" href="static/css/imdcx-table.css?v=20260914-step1" type="text/css">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Bangers&display=swap" rel="stylesheet">
   <!-- Vos anciens scripts de logique de jeu -->
   <script charset="UTF-8" src="static/js/gui_if.js"></script>
@@ -2696,12 +2699,19 @@
   <!-- Inclusion de Socket.IO : DOIT Ãªtre placÃ© avant le client.js -->
   <script src="/socket.io/socket.io.js"></script>
   <!-- Inclusion du fichier client.js pour gÃ©rer la connexion et la salle d'attente -->
-  <script src="static/js/imdcx-visuals.js"></script>
+  <script src="static/js/imdcx-scenes.js?v=20260914-scenes-fix"></script>
+  <script src="static/js/imdcx-visuals.js?v=20260914-scenes-fix"></script>
   <script src="static/js/progression-ui.js"></script>
-  <script src="static/js/client.js"></script>
+  <script src="static/js/client.js?v=20260914-scenes-fix"></script>
+  <script src="static/js/imdcx-demo.js"></script>
+  <script src="static/js/imdcx-table.js?v=20260914-step1"></script>
   <script>
     (function () {
       window.__portalIntroDone = false;
+      // Dedicated scenes (battle/wheel) call this before taking over the page, so the
+      // reveal below is never left mid-fade behind them. Safe no-op until the point
+      // where finishIntro() below can actually run (its variables exist by then).
+      window.__imdcxFinishPortalIntro = function () {};
       const intro = document.getElementById('portal-intro');
       if (!intro) return;
       const SIMPLE_VIDEO_INTRO = true;
@@ -3173,6 +3183,12 @@
           intro.remove();
         }, removeIntroDelayMs);
       }
+
+      // Past this point finishIntro()'s closured state (finished/body/timers/videos) is
+      // initialized, so it is now safe for a dedicated scene to force the reveal early.
+      window.__imdcxFinishPortalIntro = function () {
+        try { finishIntro(); } catch (e) {}
+      };
 
       function schedule(ms, fn) {
         timers.push(window.setTimeout(fn, ms));

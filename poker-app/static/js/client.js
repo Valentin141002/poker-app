@@ -290,7 +290,7 @@ function applyTableBackgroundForLevel(levelRaw) {
   const tableEl = document.getElementById('poker_table');
   if (!tableEl) return;
   const normalizedLevel = normalizeTableLevel(levelRaw);
-  const imageUrl = TABLE_IMAGE_BY_LEVEL[normalizedLevel] || '/static/images/poker_table.png';
+  const imageUrl = TABLE_IMAGE_BY_LEVEL[normalizedLevel] || TABLE_IMAGE_BY_LEVEL.T1;
   tableEl.style.setProperty('background-image', `url("${imageUrl}")`, 'important');
 }
 
@@ -4288,12 +4288,15 @@ function shouldUseMobileWinnerFx() {
 }
 
 function applyResponsiveScale() {
-  attachActionOptionsToGameContainer();
-  initializeSponsorImageFallbacks();
-
   const wrapper = document.getElementById('poker-game-wrapper');
   const game = document.getElementById('game-container');
   if (!wrapper || !game) return;
+  // A dedicated scene removes the table from layout. Measuring it then would
+  // discard the bounds of seats, personal cards and action buttons.
+  if (document.body.classList.contains('imdcx-scene-mode') || !game.getClientRects().length) return;
+
+  attachActionOptionsToGameContainer();
+  initializeSponsorImageFallbacks();
 
   const vv = window.visualViewport;
   const ua = navigator.userAgent || '';
@@ -4312,7 +4315,7 @@ function applyResponsiveScale() {
   // Narrow desktop windows must stay in desktop layout mode.
   const isSmallScreen = isTouchMobileLayout(vw);
   const padX = isSmallScreen
-    ? (spectatorMode ? 8 : 0)
+    ? 8
     : (spectatorMode ? 56 : 24);
   const desktopGapY = 20;
   const padY = isSmallScreen
@@ -4414,7 +4417,14 @@ function applyResponsiveScale() {
   }
 
   if (isSmallScreen) {
-    const bounds = getGameplayBounds();
+    let bounds = getGameplayBounds();
+    // Preserve the phone layout, but fit its full height in landscape/short viewports.
+    if (bounds && bounds.height > safeBottom - safeTop) {
+      scale *= (safeBottom - safeTop) / bounds.height;
+      wrapper.style.setProperty('--game-scale', scale.toFixed(4));
+      game.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+      bounds = getGameplayBounds();
+    }
     if (bounds) {
       const viewportCenterY = viewportTop + (vh / 2);
       const gameplayCenterY = (bounds.top + bounds.bottom) / 2;
@@ -4866,6 +4876,14 @@ window.addEventListener('resize', scheduleResponsiveScale);
 window.addEventListener('orientationchange', scheduleResponsiveScale);
 window.visualViewport?.addEventListener('resize', scheduleResponsiveScale);
 window.visualViewport?.addEventListener('scroll', scheduleResponsiveScale);
+document.addEventListener('imdcx:scene-changed', event => {
+  if (event.detail?.screen !== null) return;
+  // The scene manager has restored the real DOM before this notification.
+  // Measure now to avoid a frame at the wrong scale, then settle late layout.
+  applyResponsiveScale();
+  syncNonMySeatCardSize();
+  refreshResponsiveScaleAfterRender();
+});
 window.addEventListener('DOMContentLoaded', initializeResponsiveLayout);
 window.addEventListener('load', initializeResponsiveLayout);
 
@@ -6326,6 +6344,7 @@ function showFinalStatePlaceholder(kind) {
  * ÃƒÂ  partir de gameState.turnStartTime et gameState.turnDuration.
  */
 function startClientTimerFromState(gameState) {
+  if (gameState?.demo) { stopTimerUI(); return; }
   clearInterval(timerInterval);
 
   const circle = document.getElementById('timer-circle');
@@ -6909,6 +6928,7 @@ function maybeResetFinalStateForFreshGame(gs) {
 }
 
 function maybeForceFinalStateFromServer(gs) {
+  if (gs?.demo) return;
   if (suppressFinalReplayAfterClose) return;
   if (endStateLocked) return;
   if (!gs || !Array.isArray(gs.players)) return;
@@ -7029,9 +7049,32 @@ function ensureChampionshipOverlay() {
   return el;
 }
 
-let battleOverlayEl = null;
+let battleViewEl = null;
 let battleResolved = false;
 let battleIsPractice = false;
+let practiceBattleRequested = false;
+
+function sceneHeaderHtml() {
+  return `<header class="scene-header"><div class="scene-brand">${homeIcon('spade')}<span class="scene-brand-wordmark"><strong>IMDCX</strong><small>POKER</small></span><span class="scene-brand-caption">Plus qu’un jeu<br>Une communauté</span></div><button type="button" class="scene-exit" data-scene-action="back">← <span>Retour</span></button></header>`;
+}
+
+function sceneEnvironmentHtml(cards = false) {
+  return `<div class="scene-environment" aria-hidden="true" inert><img class="scene-chip chip-left" src="static/images/phase1-poker-chip.webp" alt="" draggable="false"><img class="scene-chip chip-right" src="static/images/phase1-poker-chip.webp" alt="" draggable="false">${cards ? '<div class="scene-ornament-card card-left">♠</div><div class="scene-ornament-card card-right">♠</div>' : ''}</div>`;
+}
+
+function battleMetricsHtml(profile, side) {
+  const number = value => Number.isFinite(Number(value)) ? Number(value).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) : '—';
+  const values = [profile?.points != null ? number(profile.points) : '—', profile?.rank ? `#${number(profile.rank)}` : '—', profile?.gamesPlayed ? `${number(profile.winRate)} %` : '—'];
+  return ['Points', 'Rang', 'Victoires'].map((label, index) => `<div class="battle-metric">${homeIcon(['trophy', 'chart', 'target'][index])}<strong data-battle-stat="${side}-${index}">${values[index]}</strong><span>${label}</span></div>`).join('');
+}
+
+function setBattleRound(view, round) {
+  view.querySelector('.battle-rounds').setAttribute('aria-label', `Manche ${round}`);
+  view.querySelectorAll('.battle-rounds span').forEach((dot, i) => {
+    dot.classList.toggle('is-active', i === Math.min(round - 1, 4));
+    dot.classList.toggle('is-complete', i < round - 1);
+  });
+}
 
 function battleCardBackHtml() {
   return `
@@ -7063,55 +7106,72 @@ function resetBattleSlot(slotEl) {
   if (slotEl) slotEl.innerHTML = battleCardBackHtml();
 }
 
-function ensureBattleOverlay() {
-  if (battleOverlayEl && document.body.contains(battleOverlayEl)) return battleOverlayEl;
-  let storedName = '';
-  try { storedName = localStorage.getItem('playername') || ''; } catch (e) {}
-  const el = document.createElement('div');
-  el.className = 'battle-overlay';
+function ensureBattleView() {
+  if (battleViewEl && window.IMDCXScenes.isActive(battleViewEl)) return battleViewEl;
+  const el = document.createElement('section');
+  el.className = 'imdcx-scene imdcx-battle';
+  el.dataset.state = 'waiting';
+  el.setAttribute('aria-labelledby', 'battle-title');
   el.innerHTML = `
-    <div class="battle-card-panel">
-      <h2>Bataille</h2>
-      <div class="battle-score" id="battle-score"></div>
-      <div class="battle-versus">
-        <div class="battle-side">
-          <div class="battle-avatar" id="battle-avatar-mine">${(storedName || '?').trim().charAt(0).toUpperCase() || '?'}</div>
-          <div class="battle-name">Vous</div>
-          <div class="battle-slot" id="battle-slot-mine">${battleCardBackHtml()}</div>
-        </div>
-        <div class="battle-vs"><span>VS</span></div>
-        <div class="battle-side">
-          <div class="battle-avatar battle-avatar-opp" id="battle-avatar-theirs">?</div>
-          <div class="battle-name" id="battle-opponent-name">…</div>
-          <div class="battle-slot" id="battle-slot-theirs">${battleCardBackHtml()}</div>
-        </div>
+    ${sceneEnvironmentHtml()}${sceneHeaderHtml()}
+    <div class="scene-content">
+      <div class="battle-heading"><div class="scene-kicker">Championnat · Saison 1</div><h1 id="battle-title">Bataille</h1>
+        <div class="battle-score" id="battle-score" aria-label="Score"><span>Vous</span><strong id="battle-score-mine">0</strong><span aria-hidden="true">—</span><strong id="battle-score-theirs">0</strong><span id="battle-score-opponent">Adversaire</span></div>
       </div>
-      <div class="battle-status" id="battle-status">Recherche d'un adversaire…</div>
-      <button type="button" class="battle-play-btn neon-btn" id="battle-play-btn" hidden><span>Jouer ma carte</span>${homeIcon('arrow')}</button>
+      <div class="battle-versus">
+        <article class="battle-side battle-player">
+          <div class="battle-avatar" id="battle-avatar-mine" aria-hidden="true">${homeIcon('spade')}</div>
+          <h2 class="battle-name">Vous</h2><p class="battle-subtitle">Joueur IMDCX</p>
+          <div class="battle-slot" id="battle-slot-mine">${battleCardBackHtml()}</div>
+          <div class="battle-metrics">${battleMetricsHtml(latestProgressionDashboard?.profile || lastHomeProfile, 'mine')}</div>
+          <p class="battle-quote">« Stratégie · Passion · Progression »</p>
+        </article>
+        <div class="battle-vs" aria-hidden="true"><strong>VS</strong><span class="battle-vs-brand">IMDCX</span><small>POKER<br>Play. Belong. Progress.</small></div>
+        <article class="battle-side battle-opponent">
+          <div class="battle-avatar battle-avatar-opp" id="battle-avatar-theirs" aria-hidden="true">${homeIcon('person')}</div>
+          <h2 class="battle-name" id="battle-opponent-name">Adversaire</h2><p class="battle-subtitle" id="battle-opponent-subtitle">Face-à-face IMDCX</p>
+          <div class="battle-slot" id="battle-slot-theirs">${battleCardBackHtml()}</div>
+          <div class="battle-metrics">${battleMetricsHtml(null, 'theirs')}</div>
+          <p class="battle-quote">« Calcul · Adaptation · Toujours plus loin »</p>
+        </article>
+      </div>
+      <div class="battle-controls">
+        <div class="battle-status" id="battle-status" role="status">Recherche d’un adversaire…</div>
+        <div class="battle-rounds" aria-label="Manche 1">${Array.from({ length: 5 }, (_, i) => `<span class="${i === 0 ? 'is-active' : ''}" aria-hidden="true"></span>`).join('')}</div>
+        <button type="button" class="battle-play-btn scene-action" id="battle-play-btn" hidden><span>Jouer ma carte</span>${homeIcon('arrow')}<span class="btn-spade-badge">${homeIcon('spade')}</span></button>
+      </div>
     </div>
+    <footer class="scene-footer"><p>Des joueurs aujourd’hui<br>Des légendes demain</p><p>♠ IMDCX POKER<br>Play. Belong. Progress.</p></footer>
   `;
   el.querySelector('#battle-play-btn').addEventListener('click', playBattleRound);
+  el.querySelector('.scene-exit').addEventListener('click', () => window.IMDCXScenes.leave(el));
   window.IMDCXVisuals?.battle(el);
-  document.body.appendChild(el);
-  battleOverlayEl = el;
+  window.IMDCXScenes.enter('battle', el, { onLeave: () => { if (battleViewEl === el) battleViewEl = null; practiceBattleRequested = false; } });
+  battleViewEl = el;
   return el;
 }
 
 function updateBattleScore(scoreMine, scoreTheirs, opponentLabel) {
-  const overlay = ensureBattleOverlay();
-  const scoreEl = overlay.querySelector('#battle-score');
-  if (scoreEl) scoreEl.textContent = `Vous ${scoreMine} — ${scoreTheirs} ${opponentLabel || 'Bot'}`;
+  const view = ensureBattleView();
+  view.querySelector('#battle-score-mine').textContent = Number(scoreMine) || 0;
+  view.querySelector('#battle-score-theirs').textContent = Number(scoreTheirs) || 0;
+  view.querySelector('#battle-score-opponent').textContent = opponentLabel || 'Bot';
 }
 
-function showBattleWaitingOverlay() {
+function showBattleWaitingView() {
   if (battleResolved) return;
-  ensureBattleOverlay();
+  battleIsPractice = false;
+  ensureBattleView();
 }
 
 function playBattleRound() {
-  const overlay = ensureBattleOverlay();
+  const overlay = battleViewEl;
+  if (!overlay || !window.IMDCXScenes.isActive(overlay)) return;
   const btn = overlay.querySelector('#battle-play-btn');
+  if (!btn || btn.disabled || btn.hidden) return;
+  if (overlay.dataset.state === 'result') { window.IMDCXScenes.leave(overlay); return; }
   if (btn) { btn.disabled = true; btn.hidden = true; }
+  overlay.dataset.state = 'waiting';
   const statusEl = overlay.querySelector('#battle-status');
   if (statusEl) statusEl.textContent = 'Vous jouez votre carte…';
   socket.emit('playBattleRound', battleIsPractice
@@ -7121,22 +7181,29 @@ function playBattleRound() {
 
 // ── Roue à multiplicateur (résultats compétitifs x1/x2/x5/x10) ──
 const WHEEL_SEGMENTS = [
-  { value: 1,  angle: 45 },
-  { value: 2,  angle: 135 },
-  { value: 5,  angle: 225 },
-  { value: 10, angle: 315 }
+  { value: 1,  angle: 180 },
+  { value: 2,  angle: 270 },
+  { value: 5,  angle: 90 },
+  { value: 10, angle: 0 }
 ];
-let wheelOverlayEl = null;
-function ensureWheelOverlay() {
-  if (wheelOverlayEl && document.body.contains(wheelOverlayEl)) return wheelOverlayEl;
+let wheelViewEl = null;
+let wheelViewReward = null;
+let wheelPreview = false;
+function ensureWheelView(preview = false) {
+  if (wheelViewEl && window.IMDCXScenes.isActive(wheelViewEl) && wheelPreview === preview) return wheelViewEl;
+  wheelPreview = preview;
   const labels = WHEEL_SEGMENTS.map(seg =>
     `<div class="wheel-seg-label" data-angle="${seg.angle}" style="transform: rotate(${seg.angle}deg) translate(0,-65px) rotate(-${seg.angle}deg);">x${seg.value}</div>`
   ).join('');
-  const el = document.createElement('div');
-  el.className = 'battle-overlay';
+  const el = document.createElement('section');
+  el.className = 'imdcx-scene imdcx-wheel';
+  el.dataset.state = 'ready';
+  el.setAttribute('aria-labelledby', 'wheel-title');
   el.innerHTML = `
-    <div class="battle-card-panel wheel-panel">
-      <h2 id="wheel-title">Roue du multiplicateur</h2>
+    ${sceneEnvironmentHtml(true)}${sceneHeaderHtml()}
+    <div class="scene-content">
+      <div class="wheel-heading"><div class="scene-kicker">Championnat · Saison 1</div><h1 id="wheel-title">Roue du multiplicateur</h1></div>
+      <div class="wheel-stage">
       <div class="wheel-wrap">
         <div class="wheel-glow"></div>
         <div class="wheel-pointer"></div>
@@ -7147,19 +7214,120 @@ function ensureWheelOverlay() {
         </div>
         <div class="wheel-center">${homeIcon('spade')}</div>
       </div>
-      <div class="wheel-status" id="wheel-status">Tirage en cours…</div>
+      <div class="wheel-pedestal" aria-hidden="true"></div></div>
+      <div class="wheel-result"><span>Multiplicateur sélectionné</span><strong class="wheel-result-value" id="wheel-result-value">—</strong></div>
+      <div class="wheel-status" id="wheel-status" role="status">${preview ? 'Entraînement · aucun multiplicateur appliqué.' : 'Votre roue est prête.'}</div>
+      <div class="wheel-choice" id="wheel-choice" hidden><p>Choisissez le multiplicateur de vos prochaines récompenses.</p><div class="wheel-choice-actions"><button type="button" data-wheel-choice="keep"></button><button type="button" data-wheel-choice="replace"></button></div></div>
+      <button type="button" id="wheel-action-btn" class="scene-action"><span>Faire tourner</span><span class="btn-spade-badge">${homeIcon('spade')}</span></button>
     </div>
+    <footer class="scene-footer"><p>IMDCX POKER<br>Play. Belong. Progress.</p></footer>
   `;
+  el.querySelector('.scene-exit').addEventListener('click', () => window.IMDCXScenes.leave(el));
+  el.querySelectorAll('[data-wheel-choice]').forEach(button => button.addEventListener('click', () => chooseWheelMultiplier(el, button.dataset.wheelChoice)));
+  el.querySelector('#wheel-action-btn').addEventListener('click', event => {
+    if (event.detail > 1) return;
+    const button = el.querySelector('#wheel-action-btn');
+    if (button.disabled || !window.IMDCXScenes.isActive(el)) return;
+    if (el.dataset.state === 'result') { finishWheelView(el); return; }
+    if (el.dataset.state !== 'ready') return;
+    button.disabled = true;
+    if (wheelViewReward) animateWheelView(el, wheelViewReward);
+    else {
+      el.dataset.state = 'waiting';
+      el.querySelector('#wheel-status').textContent = 'Préparation du tirage…';
+      socket.emit(preview ? 'previewSpinWheel' : 'spinWheel', {});
+      window.IMDCXScenes.schedule(el, () => {
+        if (el.dataset.state !== 'waiting') return;
+        el.dataset.state = 'ready';
+        button.disabled = false;
+        el.querySelector('#wheel-status').textContent = 'Connexion interrompue. Réessayez.';
+      }, 12000);
+    }
+  });
   window.IMDCXVisuals?.wheel(el, WHEEL_SEGMENTS);
-  document.body.appendChild(el);
-  wheelOverlayEl = el;
+  window.IMDCXScenes.enter('wheel', el, { onLeave: () => { window.IMDCXVisuals?.cancelSpin(el); if (wheelViewEl === el) { wheelViewEl = null; wheelViewReward = null; } } });
+  wheelViewEl = el;
   return el;
 }
 
 function spinWheelTo(multiplier, preview, reward = {}) {
   if (!preview && championshipOverlayEl) championshipOverlayEl.remove();
-  const overlay = ensureWheelOverlay();
-  overlay.querySelector('#wheel-title').textContent = preview ? 'Roue (aperçu)' : 'Roue du multiplicateur';
+  // Preview replies are relevant only while this particular view is waiting.
+  if (preview && (!wheelViewEl || !window.IMDCXScenes.isActive(wheelViewEl) || wheelViewEl.dataset.state !== 'waiting' || !wheelPreview)) return;
+  const overlay = ensureWheelView(preview);
+  wheelPreview = !!preview;
+  wheelViewReward = { ...reward, multiplier, preview: !!preview };
+  if (preview || overlay.dataset.state === 'waiting') animateWheelView(overlay, wheelViewReward);
+}
+
+function finishWheelView(view) {
+  window.IMDCXScenes.leave(view, 'continue');
+}
+
+function renderWheelChoice(view, reward) {
+  if (reward.preview || !reward.choiceRequired || !reward.choiceId) return;
+  const pending = latestProgressionDashboard?.pendingMultiplier;
+  const current = reward.previousMultiplier || (pending?.choiceId === reward.choiceId ? pending.currentMultiplier : latestProgressionDashboard?.profile?.multiplier) || 1;
+  view.querySelector('#wheel-choice').hidden = false;
+  view.querySelector('[data-wheel-choice=keep]').textContent = `Conserver x${current}`;
+  view.querySelector('[data-wheel-choice=replace]').textContent = `Choisir x${reward.multiplier}`;
+  view.querySelector('#wheel-action-btn > span').textContent = 'Décider plus tard';
+}
+
+function chooseWheelMultiplier(view, choice) {
+  if (!window.IMDCXScenes.isActive(view) || view.dataset.choiceBusy === 'true' || !wheelViewReward?.choiceId) return;
+  const reward = wheelViewReward;
+  view.dataset.choiceBusy = 'true';
+  const controls = view.querySelectorAll('#wheel-choice button, #wheel-action-btn');
+  controls.forEach(button => { button.disabled = true; });
+  const status = view.querySelector('#wheel-status');
+  status.textContent = 'Enregistrement du multiplicateur…';
+  let answered = false;
+  const showError = message => {
+    if (!window.IMDCXScenes.isActive(view)) return;
+    view.dataset.choiceBusy = 'false';
+    controls.forEach(button => { button.disabled = false; });
+    status.textContent = message;
+  };
+  window.IMDCXScenes.schedule(view, () => { if (!answered) showError('Connexion interrompue. Votre choix reste disponible, réessayez.'); }, 12000);
+  socket.emit('progression:chooseMultiplier', { choiceId: reward.choiceId, choice }, response => {
+    if (answered) return;
+    answered = true;
+    if (!response?.ok) { showError(response?.error || 'Impossible d’enregistrer ce choix. Réessayez.'); return; }
+    const dashboard = response.data?.dashboard || response.data;
+    if (dashboard?.profile) applyProgressionDashboard(dashboard);
+    if (!window.IMDCXScenes.isActive(view)) return;
+    view.dataset.choiceBusy = 'false';
+    wheelViewReward = { ...reward, choiceRequired: false };
+    view.querySelector('#wheel-choice').hidden = true;
+    controls.forEach(button => { button.disabled = false; });
+    view.querySelector('#wheel-action-btn > span').textContent = 'Continuer';
+    status.textContent = `Multiplicateur x${dashboard?.profile?.multiplier || 1} actif. Prêt pour vos prochaines récompenses.`;
+  });
+}
+
+function showPendingWheelChoice(pending) {
+  if (!pending?.choiceId) return;
+  const view = ensureWheelView(false);
+  const multiplier = pending.newMultiplier;
+  const segment = WHEEL_SEGMENTS.find(s => s.value === multiplier);
+  if (segment) window.IMDCXVisuals?.spin(view, segment, 5 * 360 + (360 - segment.angle), 0);
+  view.dataset.state = 'result';
+  wheelViewReward = { multiplier, choiceId: pending.choiceId, previousMultiplier: pending.currentMultiplier, choiceRequired: true, preview: false };
+  view.querySelector('#wheel-result-value').textContent = `x${multiplier}`;
+  view.querySelector('#wheel-status').textContent = 'Vos points sont acquis. Choisissez votre multiplicateur.';
+  const action = view.querySelector('#wheel-action-btn');
+  action.disabled = false;
+  renderWheelChoice(view, wheelViewReward);
+}
+
+function animateWheelView(overlay, reward) {
+  const { multiplier, preview } = reward;
+  if (overlay.dataset.state === 'spinning' || overlay.dataset.state === 'result') return;
+  overlay.dataset.state = 'spinning';
+  const action = overlay.querySelector('#wheel-action-btn');
+  action.disabled = true;
+  action.querySelector('span').textContent = 'Tirage en cours';
   const disc = overlay.querySelector('#wheel-disc');
   const labels = overlay.querySelectorAll('.wheel-seg-label');
   const statusEl = overlay.querySelector('#wheel-status');
@@ -7186,19 +7354,19 @@ function spinWheelTo(multiplier, preview, reward = {}) {
     });
   }
 
-  setTimeout(() => {
-    statusEl.innerHTML = preview
-      ? `<div class="battle-outcome win">x${multiplier}</div><div>Ceci est un aperçu, aucun multiplicateur appliqué.</div>`
-      : `<div class="battle-outcome win">x${multiplier}</div><div>${reward.choiceRequired ? 'Conservez votre multiplicateur actuel ou choisissez ce nouveau bonus.' : 'Votre multiplicateur pour les prochaines récompenses compétitives.'}</div>`;
-  }, 3300);
-
-  setTimeout(() => {
-    overlay.classList.add('fade-out');
-    setTimeout(() => {
-      overlay.remove();
-      if (!preview && reward.choiceRequired && latestProgressionDashboard?.pendingMultiplier?.choiceId === reward.choiceId) window.IMDCXProgression?.showMultiplierChoice(latestProgressionDashboard.pendingMultiplier);
-    }, 500);
-  }, 6800);
+  const presentResult = () => {
+    if (!window.IMDCXScenes.isActive(overlay)) return;
+    overlay.dataset.state = 'result';
+    overlay.querySelector('#wheel-result-value').textContent = `x${multiplier}`;
+    statusEl.textContent = preview ? 'Ceci est un aperçu, aucun multiplicateur appliqué.' : reward.choiceRequired ? 'Conservez votre multiplicateur actuel ou choisissez ce nouveau bonus.' : 'Votre multiplicateur pour les prochaines récompenses compétitives.';
+    action.disabled = false;
+    action.querySelector('span').textContent = 'Continuer';
+    renderWheelChoice(overlay, reward);
+  };
+  const queueResult = () => window.IMDCXScenes.schedule(overlay, presentResult, 0);
+  if (overlay.classList.contains('is-settled')) queueResult();
+  else overlay.addEventListener('imdcx:spin-settled', queueResult, { once: true });
+  if (!window.IMDCXVisuals) window.IMDCXScenes.schedule(overlay, presentResult, 3300);
 }
 
 // Enregistre les handlers championnat sur le socket courant — appelé depuis l'écran
@@ -7230,12 +7398,20 @@ function registerChampionshipHandlers() {
   });
 
   socket.on('battleStart', payload => {
+    if (payload.practice && !practiceBattleRequested) return;
     battleResolved = false;
     battleIsPractice = Boolean(payload.practice);
-    const overlay = ensureBattleOverlay();
+    const overlay = ensureBattleView();
+    overlay.dataset.state = 'ready';
     overlay.querySelector('#battle-opponent-name').textContent = payload.opponentLabel || 'Bot';
     const oppAvatar = overlay.querySelector('#battle-avatar-theirs');
-    if (oppAvatar) oppAvatar.textContent = (payload.opponentLabel || '?').trim().charAt(0).toUpperCase() || '?';
+    if (oppAvatar) {
+      if (payload.practice || /^bot$/i.test(payload.opponentLabel || 'Bot')) {
+        oppAvatar.innerHTML = '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M32 8v9M28 8a4 4 0 1 0 8 0a4 4 0 1 0-8 0"/><rect x="12" y="18" width="40" height="33" rx="12"/><path d="M7 28v13m50-13v13M22 43h20M22 55h20"/><circle cx="23" cy="32" r="3" fill="currentColor"/><circle cx="41" cy="32" r="3" fill="currentColor"/></svg>';
+      } else oppAvatar.textContent = (payload.opponentLabel || '?').trim().charAt(0).toUpperCase() || '?';
+    }
+    overlay.querySelector('#battle-opponent-subtitle').textContent = payload.practice ? 'Entraînement · Sans impact' : 'Joueur IMDCX';
+    setBattleRound(overlay, payload.round || 1);
     overlay.querySelector('#battle-status').textContent = `Manche ${payload.round || 1} — à vous de jouer !`;
     resetBattleSlot(overlay.querySelector('#battle-slot-mine'));
     resetBattleSlot(overlay.querySelector('#battle-slot-theirs'));
@@ -7245,13 +7421,16 @@ function registerChampionshipHandlers() {
   });
 
   socket.on('battleRoundWaiting', () => {
-    const overlay = ensureBattleOverlay();
+    const overlay = battleViewEl;
+    if (!overlay || !window.IMDCXScenes.isActive(overlay)) return;
+    overlay.dataset.state = 'waiting';
     const statusEl = overlay.querySelector('#battle-status');
     if (statusEl) statusEl.textContent = "En attente de l'adversaire…";
   });
 
   socket.on('battleAlreadyDone', () => {
-    const overlay = ensureBattleOverlay();
+    const overlay = battleViewEl;
+    if (!overlay || !window.IMDCXScenes.isActive(overlay)) return;
     overlay.querySelector('#battle-status').textContent = 'Bataille déjà jouée — en attente des autres joueurs…';
     const btn = overlay.querySelector('#battle-play-btn');
     if (btn) btn.hidden = true;
@@ -7259,11 +7438,14 @@ function registerChampionshipHandlers() {
   });
 
   socket.on('battleRoundResult', payload => {
-    const overlay = ensureBattleOverlay();
+    const overlay = battleViewEl;
+    if (!overlay || !window.IMDCXScenes.isActive(overlay) || battleResolved) return;
+    overlay.dataset.state = 'revealing';
     const slotMine = overlay.querySelector('#battle-slot-mine');
     const slotTheirs = overlay.querySelector('#battle-slot-theirs');
     const statusEl = overlay.querySelector('#battle-status');
     const btn = overlay.querySelector('#battle-play-btn');
+    if (btn) { btn.disabled = true; btn.hidden = true; }
 
     revealBattleCard(slotMine, payload.myCard);
     revealBattleCard(slotTheirs, payload.theirCard);
@@ -7277,21 +7459,21 @@ function registerChampionshipHandlers() {
 
     if (payload.matchOver) {
       battleResolved = true;
-      setTimeout(() => {
+      window.IMDCXScenes.schedule(overlay, () => {
+        overlay.dataset.state = 'result';
         const outcomeLabel = payload.outcome === 'win' ? 'Victoire !' : 'Défaite';
         statusEl.innerHTML = `<div class="battle-outcome ${payload.outcome}">${outcomeLabel}</div>` +
-          (battleIsPractice ? '<div class="battle-points">(mode test, sans impact)</div>' : `<div class="battle-points">+${payload.pointsEarned} pts</div>`);
-        setTimeout(() => {
-          overlay.classList.add('fade-out');
-          setTimeout(() => overlay.remove(), 500);
-        }, 2200);
+          (battleIsPractice ? '<div class="battle-points">Entraînement · sans impact</div>' : `<div class="battle-points">+${Number(payload.pointsEarned) || 0} pts</div>`);
+        if (btn) { btn.querySelector('span').textContent = 'Continuer'; btn.disabled = false; btn.hidden = false; }
       }, 1100);
       return;
     }
 
-    setTimeout(() => {
+    window.IMDCXScenes.schedule(overlay, () => {
       resetBattleSlot(slotMine);
       resetBattleSlot(slotTheirs);
+      overlay.dataset.state = 'ready';
+      setBattleRound(overlay, payload.round || 1);
       statusEl.textContent = `Manche ${payload.round} — à vous de jouer !`;
       if (btn) { btn.hidden = false; btn.disabled = false; }
     }, 1300);
@@ -7302,7 +7484,8 @@ function registerChampionshipHandlers() {
     if (!multiplier) return;
     if (alreadySpun) {
       championshipOverlayEl?.remove();
-      if (reward.choiceRequired) window.IMDCXProgression?.showMultiplierChoice({ choiceId: reward.choiceId, currentMultiplier: reward.previousMultiplier, newMultiplier: multiplier });
+      if (reward.choiceRequired) showPendingWheelChoice({ choiceId: reward.choiceId, currentMultiplier: reward.previousMultiplier, newMultiplier: multiplier });
+      else if (wheelViewEl) window.IMDCXScenes.leave(wheelViewEl, 'already-spun');
       return;
     }
     spinWheelTo(multiplier, preview, reward);
@@ -7575,8 +7758,8 @@ function applyProgressionDashboard(dashboard) {
 function resumeCompetitiveReward(action) {
   if (!socket) return;
   if (action === 'resume-final') return socket.emit('joinFinals', { clientKey: getOrCreateJoinClientKey() });
-  if (action === 'resume-wheel' || latestProgressionDashboard?.wheelAvailable) socket.emit('spinWheel', {});
-  else if (latestProgressionDashboard?.pendingMultiplier) window.IMDCXProgression?.showMultiplierChoice(latestProgressionDashboard.pendingMultiplier);
+  if (action === 'resume-wheel' || latestProgressionDashboard?.wheelAvailable) ensureWheelView(false);
+  else if (latestProgressionDashboard?.pendingMultiplier) showPendingWheelChoice(latestProgressionDashboard.pendingMultiplier);
   else socket.emit('joinFinals', { clientKey: getOrCreateJoinClientKey() });
 }
 document.addEventListener('imdcx:resume-reward', event => resumeCompetitiveReward(event.detail));
@@ -7671,6 +7854,7 @@ function showQuickPlayLobby() {
     <div class="home-dev-rail">
       <button type="button" class="home-dev-btn" id="preview-battle-btn" title="Tester la Bataille">${homeIcon('cards')}</button>
       <button type="button" class="home-dev-btn" id="preview-wheel-btn" title="Tester la roue">${homeIcon('wheel')}</button>
+      <button type="button" class="home-dev-btn" id="manual-demo-btn">DÉMO</button>
     </div>
   `;
   window.IMDCXVisuals?.home(wrap);
@@ -7704,11 +7888,16 @@ function showQuickPlayLobby() {
     window.IMDCXProgression?.open('profile');
   });
   wrap.querySelector('#preview-battle-btn').addEventListener('click', () => {
+    practiceBattleRequested = true;
+    battleIsPractice = true;
+    const view = ensureBattleView();
+    view.querySelector('#battle-status').textContent = 'Recherche d’un adversaire…';
     socket.emit('startPracticeBattle');
   });
   wrap.querySelector('#preview-wheel-btn').addEventListener('click', () => {
-    socket.emit('previewSpinWheel');
+    ensureWheelView(true);
   });
+  wrap.querySelector('#manual-demo-btn').addEventListener('click', () => window.IMDCXDemo.selection());
 
   nameInput.addEventListener('blur', () => {
     const name = (nameInput.value || '').trim();
@@ -7751,6 +7940,8 @@ function initGame() {
   console.log("[client] initGame()");
 
   const earlyParams = new URLSearchParams(window.location.search);
+  const demoSeats = Number(earlyParams.get('demo'));
+  if ([2, 10].includes(demoSeats)) { window.IMDCXDemo.start(demoSeats); return; }
   const hasRoomParam = Boolean(earlyParams.get("table") || earlyParams.get("match2"));
   const spectatorEarly = ["1", "true", "yes", "on"].includes((earlyParams.get("spectator") || "").toLowerCase());
   if (!hasRoomParam && !spectatorEarly) {
@@ -8190,7 +8381,7 @@ socket.on("updateWaitingRoom", data => {
   if (isPublicSpectator) return;
   renderWaitingState(data);
   if (data && data.quickPlay && !battleResolved && Number.isInteger(mySeatIndex)) {
-    showBattleWaitingOverlay();
+    showBattleWaitingView();
   }
 });
 
@@ -9064,7 +9255,7 @@ gameState.players.forEach((player, i) => {
     }
   
     // Ã¢â€ Â ici on passe seatIdx, pas i
-    gui_set_player_name(displayName, seatIdx);
+    gui_set_player_name(gameState.demo ? p.label : displayName, seatIdx);
     const displayStack = (p.status === 'BUST')
       ? 0
       : ((p.bankroll || 0) + (p.subtotal_bet || 0));
@@ -9751,6 +9942,7 @@ function shouldShowTurnHighlight(gameState) {
   if (status === 'WAIT' || status === 'BUST' || status === 'FOLD' || status === 'ALLIN') return false;
 
   const turnStartTime = Number(gameState.turnStartTime);
+  if (gameState.demo) return !gameState.demoRunningOut && !gameState.gameFinished;
   const turnDuration = Number(gameState.turnDuration);
   if (!Number.isFinite(turnStartTime) || !Number.isFinite(turnDuration) || turnDuration <= 0) return false;
 
@@ -11857,6 +12049,7 @@ function playLoseImpactFX() {
 }
 
 function showVictory(name) {
+  if (currentGameState?.demo) return;
   // EmpÃƒÂªche d'afficher plusieurs fois l'overlay de victoire
   if (typeof winnerAnnounced !== 'undefined' && winnerAnnounced) return;
   if (typeof winnerAnnounced !== 'undefined') winnerAnnounced = true;
@@ -11900,6 +12093,7 @@ function showVictory(name) {
 
 /** Overlay dÃƒÂ©faite (remplace lÃ¢â‚¬â„¢ancienne) */
 function showLosing(final = false) {
+  if (currentGameState?.demo) return;
   // EmpÃƒÂªche d'afficher plusieurs fois lÃ¢â‚¬â„¢overlay de dÃƒÂ©faite
   if (typeof loserAnnounced !== 'undefined' && loserAnnounced) return;
   if (typeof loserAnnounced !== 'undefined') loserAnnounced = true;
@@ -12042,6 +12236,8 @@ function syncNonMySeatCardSize(){
   const table = document.querySelector('#poker_table, .poker-table');
   const ref = document.querySelector('#flop1, #board .boardcard, .board .card');
   if (!table || !ref) return;
+  if (document.body.classList.contains('imdcx-scene-mode') || !table.getClientRects().length) return;
+  if (window.IMDCXTable?.layoutSeatCards(table, currentGameState)) return;
   const boardW = Math.max(42, Math.round(ref.offsetWidth || ref.getBoundingClientRect().width || 0));
   const boardH = Math.max(58, Math.round(ref.offsetHeight || ref.getBoundingClientRect().height || 0));
   table.style.setProperty('--board-card-w', boardW + 'px');
@@ -12275,11 +12471,16 @@ function centerTableOnce() {
 
     const table = document.getElementById('poker_table');
     if (!table) return;
+    if (document.body.classList.contains('imdcx-scene-mode') || !table.getClientRects().length) return;
 
     _centeredTableOnce = true;
 
     // on laisse le layout se poser
     setTimeout(() => {
+      if (document.body.classList.contains('imdcx-scene-mode') || !table.getClientRects().length) {
+        _centeredTableOnce = false;
+        return;
+      }
       const rect     = table.getBoundingClientRect();
       const pageTop  = window.scrollY + rect.top;
       const pageLeft = window.scrollX + rect.left;
@@ -12648,6 +12849,7 @@ function hideRevealButton() {
   }
   if (revealHideBtn) revealHideBtn.style.display = 'none';
   if (revealShowBtn) revealShowBtn.style.display = 'none';
+
   if (revealPromptTimer) {
     clearInterval(revealPromptTimer);
     revealPromptTimer = null;
@@ -12673,6 +12875,14 @@ function showRevealButton(ms) {
   }
   if (revealHideBtn) revealHideBtn.style.display = 'none';
   if (revealShowBtn) revealShowBtn.style.display = 'none';
+
+  if (currentGameState?.demo) {
+    if (revealPromptTimer) clearInterval(revealPromptTimer);
+    revealPromptDeadline = null;
+    if (hideBtn) hideBtn.textContent = 'HIDE';
+    if (showBtn) showBtn.textContent = 'SHOW';
+    return;
+  }
 
   const tick = () => {
     ensureRevealCardButtons();

@@ -29,6 +29,7 @@ class SocketClient {
         else if (frame.startsWith('40')) { clearTimeout(timer); resolve(this); }
         else if (frame.startsWith('42')) {
           const [name, payload] = JSON.parse(frame.slice(frame.indexOf('[')));
+          if (name === 'demo:ready') this.demoRoomID = payload.roomID;
           const waiter = this.waiters.get(name)?.shift();
           if (waiter) { clearTimeout(waiter.timer); waiter.resolve(payload); }
           else {
@@ -92,7 +93,7 @@ function isolatedServer(initialPlayers) {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'imdcx-progression-server-'));
   fs.copyFileSync(path.join(repository, 'server.js'), path.join(directory, 'server.js'));
   fs.mkdirSync(path.join(directory, 'lib'));
-  for (const filename of ['progression.js', 'progression-sockets.js', 'competitive-settlement.js']) {
+  for (const filename of ['progression.js', 'progression-sockets.js', 'competitive-settlement.js', 'demo-controller.js']) {
     fs.copyFileSync(path.join(repository, 'lib', filename), path.join(directory, 'lib', filename));
   }
   const fixtureData = {
@@ -129,7 +130,7 @@ function isolatedServer(initialPlayers) {
     child.stdout.on('data', chunk => { output = (output + chunk).slice(-12000); });
     child.stderr.on('data', chunk => { output = (output + chunk).slice(-12000); });
     port = await new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error(`Isolated server did not start: ${output}`)), timeoutMs);
+      const timer = setTimeout(() => reject(new Error(`Isolated server did not start: ${output}`)), 30000);
       child.once('error', error => { clearTimeout(timer); reject(error); });
       child.once('exit', code => { clearTimeout(timer); reject(new Error(`Isolated server exited (${code}): ${output}`)); });
       child.once('message', message => { clearTimeout(timer); resolve(message.port); });
@@ -171,6 +172,117 @@ function isolatedServer(initialPlayers) {
     read: filename => JSON.parse(fs.readFileSync(path.join(directory, filename), 'utf8'))
   };
 }
+
+test('manual demo uses the live engine for every seat without writing accounts or statistics', { timeout: 100000 }, async t => {
+  const isolated = isolatedServer({ P1: { name: 'P1', level: 'Q1', points: 123, multiplier: 5 } });
+  t.after(() => isolated.cleanup());
+  await isolated.start();
+  const files = ['playerLevels.json', 'gamesHistory.json', 'playerStatsTable.json', 'playerStatsMatch2.json', 'tablesConfig.json', 'matches2Config.json'];
+  const before = files.map(file => isolated.read(file));
+  const clients = [];
+  const send = (client, event, payload) => client.ws.send(`42${JSON.stringify([event, payload])}`);
+  const waitState = async (client, seats, predicate) => {
+    let last;
+    for (let n = 0; n < 100; n++) {
+      const packet = await client.next(seats === 2 ? 'updateMatch2' : 'updateTable').catch(error => {
+        throw new Error(`${error.message}; ${predicate}; last=${JSON.stringify(last)}`);
+      });
+      const state = seats === 2 ? packet.gameState : packet;
+      if (state.demoRoomID !== client.demoRoomID) continue;
+      last = { room: state.demoRoomID, phase: state.phase, revision: state.demoRevision, actor: state.current_bettor_index, statuses: state.players.map(p => p.status) };
+      if (predicate(state)) return state;
+    }
+    assert.fail('Expected demo state was not received');
+  };
+  const decision = (state, extra) => ({ demoRoomID: state.demoRoomID, demoRound: state.roundNumber,
+    demoRevision: state.demoRevision, demoSeat: state.current_bettor_index, ...extra });
+
+  for (const seats of [2, 10]) {
+    t.diagnostic(`Playing ${seats} demo seats through all streets`);
+    const client = await isolated.connect();
+    clients.push(client);
+    assert.equal((await client.request('demo:start', { seats })).ok, true);
+    let state = (await client.next('startGame')).gameState;
+    assert.equal(state.players.length, seats);
+    assert.equal(state.demo, true);
+    assert.equal(state.turnDuration, undefined);
+    assert.deepEqual(state.players.map(p => p.label), Array.from({ length: seats }, (_, i) => `P${i + 1}`));
+    assert.ok(state.players.every(p => p.demo && !p.bot && !p.isBot));
+    assert.equal(new Set(state.players.flatMap(p => [p.carda, p.cardb]).concat(state.board)).size, seats * 2 + 5);
+    const phases = new Set();
+    const controlled = new Set();
+    // Exercise the same call/check/raise handler through all four betting streets.
+    for (let n = 0; state.phase !== 'reveal' && n < 80; n++) {
+      phases.add(state.phase);
+      controlled.add(state.current_bettor_index);
+      const actor = state.players[state.current_bettor_index];
+      const action = n === 0 ? { type: 'raise', amount: 300 - actor.subtotal_bet }
+        : { type: state.current_bet > actor.subtotal_bet ? 'call' : 'check' };
+      send(client, 'playerAction', decision(state, action));
+      const revision = state.demoRevision;
+      state = await waitState(client, seats, s => s.demoRevision > revision);
+    }
+    assert.equal(state.phase, 'reveal');
+    assert.deepEqual([...phases], ['preflop', 'flop', 'turn', 'river']);
+    assert.equal(controlled.size, seats);
+    while (!state.revealSeqDone) {
+      const seat = state.revealSeq.activeSeat;
+      send(client, 'revealChoice', decision(state, { demoSeat: seat, hide: false }));
+      state = await waitState(client, seats, s => s.revealSeqDone || s.revealSeq?.activeSeat !== seat);
+    }
+    if (!state.roundEvaluated) state = await waitState(client, seats, s => s.roundEvaluated);
+    assert.equal(state.players.reduce((sum, p) => sum + p.bankroll, 0) + state.pot, 20000 * seats);
+
+    const previous = state;
+    assert.equal((await client.request('demo:next')).ok, true);
+    state = await waitState(client, seats, s => s.demoRoomID !== previous.demoRoomID);
+    assert.equal(state.roundNumber, previous.roundNumber + 1);
+    assert.notEqual(state.dealerIndex, previous.dealerIndex);
+    assert.equal(state.players.reduce((sum, p) => sum + p.bankroll, 0) + state.pot, 20000 * seats);
+    // A stale decision must not control the next hand, nor can this socket claim rewards.
+    send(client, 'playerAction', decision(previous, { type: 'fold' }));
+    assert.equal((await client.request('progression:claimLogin', { name: 'P1' })).ok, false);
+    assert.equal((await client.request('joinGame', { table: state.demoRoomID, seat: 0 })).ok, false);
+    assert.equal((await client.request('demo:restart')).ok, true);
+    state = (await client.next('startGame')).gameState;
+    assert.equal(state.roundNumber, 1);
+    assert.ok(state.players.every(p => p.bankroll + p.subtotal_bet === 20000));
+
+    // Every all-in remains manual. The engine performs the board runout and payout.
+    t.diagnostic(`Playing ${seats} manual all-ins`);
+    for (let n = 0; n < seats; n++) {
+      send(client, 'playerAction', decision(state, { type: 'raise', amount: state.players[state.current_bettor_index].bankroll }));
+      const revision = state.demoRevision;
+      state = await waitState(client, seats, s => s.demoRevision > revision);
+    }
+    state = await waitState(client, seats, s => s.roundEvaluated);
+    assert.equal(state.players.reduce((sum, p) => sum + p.bankroll, 0) + state.pot, 20000 * seats);
+    assert.ok(state.players.some(p => p.status === 'WINNER'));
+
+    assert.equal((await client.request('demo:restart')).ok, true);
+    state = (await client.next('startGame')).gameState;
+    // Fold all but one player, then reset during the existing timed runout.
+    t.diagnostic(`Resetting ${seats} seats during fold runout`);
+    for (let n = 0; n < seats - 1; n++) {
+      send(client, 'playerAction', decision(state, { type: 'fold' }));
+      const revision = state.demoRevision;
+      state = await waitState(client, seats, s => s.demoRevision > revision);
+    }
+    assert.equal((await client.request('demo:next')).ok, true);
+    state = await waitState(client, seats, s => s.demoRoomID !== state.demoRoomID);
+    assert.equal(state.players.reduce((sum, p) => sum + p.bankroll, 0) + state.pot, 20000 * seats);
+  }
+  // Wait past the normal 30-second turn timeout. There must be no automatic action
+  // and no stale runout/next-hand update after the manual reset.
+  clients.forEach(client => client.events.clear());
+  await new Promise(resolve => setTimeout(resolve, 31000));
+  clients.forEach(client => {
+    assert.equal(client.events.get('updateTable')?.length || 0, 0);
+    assert.equal(client.events.get('updateMatch2')?.length || 0, 0);
+  });
+  assert.deepEqual(files.map(file => isolated.read(file)), before);
+  for (const client of clients) assert.equal((await client.request('demo:quit')).ok, true);
+});
 
 test('real server progression sockets persist rewards and finals inside an isolated fixture', { timeout: 40000 }, async t => {
   const day = new Date().toISOString().slice(0, 10);

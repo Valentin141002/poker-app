@@ -1,0 +1,12 @@
+.imdcx-home .home-dev-rail #manual-demo-btn { width: auto; min-width: 60px; padding: 0 10px; border-radius: 18px; font-size: 12px; }
+.demo-selection { min-height: 100dvh; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 24px; color: #eee; background: #100d1c; text-align: center; }
+.demo-selection button, #manual-demo-tools button { color: #eee; background: #252032; border: 1px solid #80708e; border-radius: 6px; padding: 10px 14px; cursor: pointer; }
+.demo-selection button { max-width: 100%; width: 340px; }
+#manual-demo-tools { position: fixed; top: max(8px, env(safe-area-inset-top)); left: 8px; right: 8px; z-index: 2147483647; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px 16px; padding: 8px; border-radius: 8px; color: #eee; background: #100d1cf2; font: 13px Arial, sans-serif; }
+#manual-demo-tools label { display: flex; align-items: center; gap: 6px; }
+#manual-demo-tools [data-cards] { flex-basis: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 20px; }
+#manual-demo-tools [hidden] { display: none; }
+#manual-demo-tools button:disabled { opacity: .5; cursor: default; }
+.manual-demo-mode :is(#timer-container, #btn-time, #btn-add30, #break-btn) { display: none !important; }
+@media (min-width: 1401px) { #manual-demo-tools { right: auto; width: min(260px, 18vw); box-sizing: border-box; } }
+@media (max-width: 600px) { #manual-demo-tools { font-size: 11px; gap: 6px; } #manual-demo-tools button { font-size: 11px; padding: 6px; } }
