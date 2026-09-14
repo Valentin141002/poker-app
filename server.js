@@ -2773,7 +2773,7 @@ function applyRevealChoice(roomID, isMatch2, seat, hide) {
       state.revealSeqDone = true;
 
       emitRoomState(roomID, isMatch2);
-      if (!revealFinishTimersByRoom[roomID]) {
+      if (!state.demo && !revealFinishTimersByRoom[roomID]) {
         state.revealWinnerDeadline = Date.now() + REVEAL_WINNER_MS;
         revealFinishTimersByRoom[roomID] = setTimeout(() => {
           delete revealFinishTimersByRoom[roomID];
@@ -2815,7 +2815,7 @@ function applyRevealChoice(roomID, isMatch2, seat, hide) {
       state.revealSeqDone = true;
 
       emitRoomState(roomID, isMatch2);
-      if (!revealFinishTimersByRoom[roomID]) {
+      if (!state.demo && !revealFinishTimersByRoom[roomID]) {
         state.revealWinnerDeadline = Date.now() + REVEAL_WINNER_MS;
         revealFinishTimersByRoom[roomID] = setTimeout(() => {
           delete revealFinishTimersByRoom[roomID];
@@ -2909,7 +2909,8 @@ function advanceRevealSequence(roomID, isMatch2) {
     state.revealSeqDone = true;
     finalizeRevealWinners(roomID, isMatch2);
     emitRoomState(roomID, isMatch2);
-    if (!revealFinishTimersByRoom[roomID]) {
+    // Manual demos keep the completed hand available for inspection until demo:next.
+    if (!state.demo && !revealFinishTimersByRoom[roomID]) {
       state.revealWinnerDeadline = Date.now() + REVEAL_WINNER_MS;
       revealFinishTimersByRoom[roomID] = setTimeout(() => {
         delete revealFinishTimersByRoom[roomID];

@@ -57,6 +57,138 @@ function internal_FixTheSuiting(suit) {
   return suit;
 }
 
+function internal_IsFruityCardThemeActive() {
+  return !!document.body?.classList.contains('tier-fruity-bg');
+}
+
+function internal_GetDisplayRank(rank) {
+  if (rank === 'ace') return 'A';
+  if (rank === 'king') return 'K';
+  if (rank === 'queen') return 'Q';
+  if (rank === 'jack') return 'J';
+  if (String(rank) === '10') return 'T';
+  return String(rank).toUpperCase();
+}
+
+function internal_GetRankValue(rank) {
+  if (rank === 'ace') return 1;
+  if (rank === 'jack') return 11;
+  if (rank === 'queen') return 12;
+  if (rank === 'king') return 13;
+  return Number(rank) || 0;
+}
+
+function internal_GetFruitSuitPalette(suit) {
+  if (suit === 'hearts') {
+    return { rank: '#d96b43', border: '#1d1d1d', tint: '#fffdfa', shadow: '#f6d0b2' };
+  }
+  if (suit === 'diamonds') {
+    return { rank: '#d63f50', border: '#1d1d1d', tint: '#fffdfd', shadow: '#f6c5cc' };
+  }
+  if (suit === 'clubs') {
+    return { rank: '#2f984a', border: '#1d1d1d', tint: '#fcfffc', shadow: '#d0edcf' };
+  }
+  return { rank: '#5c7147', border: '#1d1d1d', tint: '#fcfdf9', shadow: '#d7e6ca' };
+}
+
+function internal_GetFruitSuitAssetPath(suit) {
+  const relPathBySuit = {
+    hearts: 'static/images/fruitcoeur.png',
+    diamonds: 'static/images/fruitcarreau.png',
+    clubs: 'static/images/fruittr%C3%A8fle.png',
+    spades: 'static/images/fruitpique.png'
+  };
+  const relPath = relPathBySuit[suit] || relPathBySuit.spades;
+  return `${window.location.origin}/${relPath}`;
+}
+
+const internal_FruitySuitAssetsPreloaded = new Set();
+
+function internal_PreloadFruitySuitAssets() {
+  ['hearts', 'diamonds', 'clubs', 'spades'].forEach((suit) => {
+    const src = internal_GetFruitSuitAssetPath(suit);
+    if (!src || internal_FruitySuitAssetsPreloaded.has(src)) return;
+    internal_FruitySuitAssetsPreloaded.add(src);
+    const img = new Image();
+    img.decoding = 'async';
+    img.loading = 'eager';
+    img.src = src;
+  });
+}
+
+function internal_GetFruitPipLayout(rankValue) {
+  const layouts = {
+    1: [{ x: 0, y: 0, s: 1.22 }],
+    2: [{ x: 0, y: -138, s: 0.92 }, { x: 0, y: 138, s: 0.92, r: 180 }],
+    3: [{ x: 0, y: -150, s: 0.88 }, { x: 0, y: 0, s: 0.96 }, { x: 0, y: 150, s: 0.88, r: 180 }],
+    4: [{ x: -96, y: -132, s: 0.84 }, { x: 96, y: -132, s: 0.84 }, { x: -96, y: 132, s: 0.84, r: 180 }, { x: 96, y: 132, s: 0.84, r: 180 }],
+    5: [{ x: -96, y: -132, s: 0.8 }, { x: 96, y: -132, s: 0.8 }, { x: 0, y: 0, s: 0.9 }, { x: -96, y: 132, s: 0.8, r: 180 }, { x: 96, y: 132, s: 0.8, r: 180 }],
+    6: [{ x: -96, y: -152, s: 0.76 }, { x: 96, y: -152, s: 0.76 }, { x: -96, y: 0, s: 0.76 }, { x: 96, y: 0, s: 0.76 }, { x: -96, y: 152, s: 0.76, r: 180 }, { x: 96, y: 152, s: 0.76, r: 180 }],
+    7: [{ x: -96, y: -152, s: 0.72 }, { x: 96, y: -152, s: 0.72 }, { x: 0, y: -70, s: 0.72 }, { x: -96, y: 0, s: 0.72 }, { x: 96, y: 0, s: 0.72 }, { x: -96, y: 152, s: 0.72, r: 180 }, { x: 96, y: 152, s: 0.72, r: 180 }],
+    8: [{ x: -96, y: -154, s: 0.68 }, { x: 96, y: -154, s: 0.68 }, { x: 0, y: -84, s: 0.68 }, { x: -96, y: 0, s: 0.68 }, { x: 96, y: 0, s: 0.68 }, { x: 0, y: 84, s: 0.68, r: 180 }, { x: -96, y: 154, s: 0.68, r: 180 }, { x: 96, y: 154, s: 0.68, r: 180 }],
+    9: [{ x: -96, y: -160, s: 0.64 }, { x: 96, y: -160, s: 0.64 }, { x: 0, y: -100, s: 0.64 }, { x: -96, y: -28, s: 0.64 }, { x: 96, y: -28, s: 0.64 }, { x: 0, y: 52, s: 0.64, r: 180 }, { x: -96, y: 160, s: 0.64, r: 180 }, { x: 96, y: 160, s: 0.64, r: 180 }, { x: 0, y: 126, s: 0.64, r: 180 }],
+    10: [{ x: -96, y: -164, s: 0.6 }, { x: 96, y: -164, s: 0.6 }, { x: 0, y: -110, s: 0.6 }, { x: -96, y: -40, s: 0.6 }, { x: 96, y: -40, s: 0.6 }, { x: -96, y: 40, s: 0.6, r: 180 }, { x: 96, y: 40, s: 0.6, r: 180 }, { x: 0, y: 110, s: 0.6, r: 180 }, { x: -96, y: 164, s: 0.6, r: 180 }, { x: 96, y: 164, s: 0.6, r: 180 }]
+  };
+  return layouts[rankValue] || layouts[1];
+}
+
+function internal_BuildFruityCardBaseSvg(palette, rankLabel) {
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 605 725">
+      <defs>
+        <linearGradient id="cardBg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#ffffff"/>
+          <stop offset="100%" stop-color="${palette.tint}"/>
+        </linearGradient>
+        <radialGradient id="glow" cx="50%" cy="44%" r="54%">
+          <stop offset="0%" stop-color="${palette.shadow}" stop-opacity=".35"/>
+          <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <rect x="10" y="10" width="585" height="705" rx="34" fill="url(#cardBg)" stroke="${palette.border}" stroke-width="10"/>
+      <rect x="22" y="22" width="561" height="681" rx="28" fill="none" stroke="#ffffff" stroke-opacity=".65" stroke-width="2"/>
+      <circle cx="302.5" cy="362" r="206" fill="url(#glow)"/>
+    </svg>
+  `;
+  return `url("data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}")`;
+}
+
+function internal_BuildFruityCardFaceStyle(suit, rank, compact = false) {
+  internal_PreloadFruitySuitAssets();
+  const palette = internal_GetFruitSuitPalette(suit);
+  const rankLabel = internal_GetDisplayRank(rank);
+  const assetHref = `url("${internal_GetFruitSuitAssetPath(suit)}")`;
+  const smallRankSize = compact ? '34' : '62';
+  const bigRankSize = compact ? '142' : '270';
+  const smallRankX = compact ? '118' : '106';
+  const smallRankY = compact ? '122' : '122';
+  const bigRankY = compact ? '392' : '458';
+  const textSvg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 605 725">
+      <g font-family="Arial Black, Trebuchet MS, Arial, sans-serif" font-weight="900" text-anchor="middle" dominant-baseline="middle">
+        <text x="${smallRankX}" y="${smallRankY}" fill="#ffffff" stroke="${palette.rank}" stroke-width="${compact ? '8' : '10'}" paint-order="stroke fill" font-size="${smallRankSize}">${rankLabel}</text>
+        <text x="302.5" y="${bigRankY}" fill="#ffffff" stroke="${palette.rank}" stroke-width="${compact ? '14' : '22'}" paint-order="stroke fill" font-size="${bigRankSize}">${rankLabel}</text>
+      </g>
+    </svg>
+  `;
+  const textLayer = `url("data:image/svg+xml;charset=UTF-8,${encodeURIComponent(textSvg)}")`;
+  const images = [textLayer, assetHref, textLayer, assetHref, internal_BuildFruityCardBaseSvg(palette, rankLabel)];
+  const sizes = compact
+    ? ['100% 100%', '40px 40px', '100% 100%', '132px 132px', '100% 100%']
+    : ['100% 100%', '78px 78px', '100% 100%', '300px 300px', '100% 100%'];
+  const positions = compact
+    ? ['center center', '46px 60px', 'center center', 'center 72%', 'center center']
+    : ['center center', '58px 88px', 'center center', 'center calc(50% + 32px)', 'center center'];
+  const repeats = ['no-repeat', 'no-repeat', 'no-repeat', 'no-repeat', 'no-repeat'];
+
+  return {
+    backgroundImage: images.join(', '),
+    backgroundSize: sizes.join(', '),
+    backgroundPosition: positions.join(', '),
+    backgroundRepeat: repeats.join(', ')
+  };
+}
+
 function internal_GetCardImageUrl(card) {
   var suit = card.substring(0, 1);
   var rank = parseInt(card.substring(1));
@@ -83,6 +215,10 @@ function internal_clickin_helper(button, button_text, func_on_click) {
       console.log("Ne pas modifier innerHTML pour le fold-button");
     }
     button.onclick = func_on_click;
+    button.ontouchend = function(e) {
+      e.preventDefault();
+      func_on_click(e);
+    };
   }
 }
 
@@ -108,8 +244,9 @@ function gui_set_player_name(name, seat) {
   var chipsdiv = internal_get_a_class_named(seatloc, 'name-chips');
   var namediv = internal_get_a_class_named(chipsdiv, 'player-name');
   
-  // Si aucun nom n'est défini, on masque le siège
-  if (name === "") {
+  // Si aucun nom n'est défini, on masque le siège (sauf si marqué inactif)
+  const isInactive = seatloc.classList.contains('inactive-seat');
+  if (name === "" && !isInactive) {
     seatloc.style.visibility = 'hidden';
   } else {
     seatloc.style.visibility = 'visible';
@@ -160,9 +297,13 @@ function internal_setCard(diva, card, folded, hidden = false) {
   // ← on regarde si cet élément est dans VOTRE seat grâce à la classe .my-seat
   if (diva.closest && diva.closest('.seat.my-seat')) {
     // dos personnalisé pour VOTRE main
-    backImage = diva.classList.contains("holecard1")
-      ? "url('static/images/custom_I.png')"
-      : "url('static/images/custom_M.png')";
+    backImage = (typeof window.getThemeCardAssetCssUrl === 'function')
+      ? (diva.classList.contains("holecard1")
+          ? window.getThemeCardAssetCssUrl('customI')
+          : window.getThemeCardAssetCssUrl('customM'))
+      : (diva.classList.contains("holecard1")
+          ? "url('static/images/custom_I.png')"
+          : "url('static/images/custom_M.png')");
   } else {
     // dos standard pour tous les autres sièges
     backImage = "url('static/images/cardbck.png')";
@@ -172,14 +313,23 @@ function internal_setCard(diva, card, folded, hidden = false) {
   const frontImage = (card && card !== "blinded")
     ? internal_GetCardImageUrl(card)
     : null;
+  const frontSuit = (card && card !== "blinded")
+    ? internal_FixTheSuiting(card.substring(0, 1))
+    : null;
+  const frontRank = (card && card !== "blinded")
+    ? internal_FixTheRanking(parseInt(card.substring(1), 10))
+    : null;
 
   // 3) Si pas de carte, on masque
   if (!card) {
     diva.style.opacity = 0;
     diva.style.backgroundImage = "";
+    delete diva.dataset.cardCode;
     diva.classList.remove("revealed");
     return;
   }
+
+  diva.dataset.cardCode = card;
 
   // 4) Si on affiche le dos (hidden ou “blinded”)
   if (hidden || card === "blinded") {
@@ -190,35 +340,56 @@ function internal_setCard(diva, card, folded, hidden = false) {
   }
 
   // 5) Sinon on affiche la face
-  diva.style.backgroundImage = frontImage;
+  if (frontImage && internal_IsFruityCardThemeActive()) {
+    const fruityFace = internal_BuildFruityCardFaceStyle(
+      frontSuit,
+      frontRank,
+      false
+    );
+    diva.style.backgroundImage = fruityFace.backgroundImage;
+    diva.style.backgroundSize = fruityFace.backgroundSize;
+    diva.style.backgroundPosition = fruityFace.backgroundPosition;
+    diva.style.backgroundRepeat = fruityFace.backgroundRepeat;
+  } else {
+    diva.style.backgroundImage = frontImage;
+    diva.style.backgroundSize = '';
+    diva.style.backgroundPosition = '';
+    diva.style.backgroundRepeat = '';
+  }
   diva.style.opacity = folded ? 0.5 : 1;
   diva.classList.add("revealed");
 }
 
 
-function flipCardsSimultaneously(cardElem1, cardElem2, newCard1, newCard2) {
+function flipCardsSimultaneously(cardElem1, cardElem2, newCard1, newCard2, options = {}) {
+  const isCurrent = options.isCurrent || (() => true);
+  const rotate = (el, value) => el.style.setProperty('transform', value, options.forceTransform ? 'important' : '');
   // 1) Réinitialise la rotation sans transition
   [cardElem1, cardElem2].forEach(el => {
     el.style.transition = 'none';
-    el.style.transform = 'rotateY(0deg)';
+    rotate(el, 'rotateY(0deg)');
   });
+  // Commit the starting pose before SHOW changes both seat ownership and layout.
+  if (options.forceTransform) void cardElem1.offsetWidth;
 
   // 2) Au prochain frame, lance le demi‐flip vers 90°
   requestAnimationFrame(() => {
+    if (!isCurrent()) return;
     [cardElem1, cardElem2].forEach(el => {
       el.style.transition = 'transform 0.3s ease';
-      el.style.transform = 'rotateY(90deg)';
+      rotate(el, 'rotateY(90deg)');
     });
   });
 
   // 3) À mi‐chemin (~300ms), on swap l’image, puis reverse le flip
   setTimeout(() => {
+    if (!isCurrent()) return;
     internal_setCard(cardElem1, newCard1, false);
     internal_setCard(cardElem2, newCard2, false);
 
     [cardElem1, cardElem2].forEach(el => {
       el.style.transition = 'transform 0.3s ease';
-      el.style.transform = 'rotateY(0deg)';
+      rotate(el, 'rotateY(0deg)');
     });
   }, 300);
 }
@@ -672,4 +843,3 @@ function enableRaiseButton() {
     raise.classList.remove('disabled');
   }
 }
-

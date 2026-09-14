@@ -4532,6 +4532,7 @@ function alignMobileActionButtonsToViewportRight({ isSmallScreen, scale }) {
 function alignMobileUtilityButtonsToViewportEdges({ isSmallScreen, scale }) {
   const action = document.getElementById('action-options');
   if (!action) return;
+  if (window.IMDCXTable?.layoutTouchUtilities(action, scale, isSmallScreen)) return;
   if (!isSmallScreen) {
     action.style.removeProperty('--mobile-util-left-shift');
     action.style.removeProperty('--mobile-util-right-shift');
@@ -8592,6 +8593,7 @@ window.initGame = initGame;
 /** RÃƒÂ©initialise tous les backs (pour revealÃ¢â€ â€™preflop) */
 function resetAllBacks(skipSeatIdx = null, sourceState = currentGameState) {
   if (!sourceState || !Array.isArray(sourceState.players)) return;
+  if (sourceState === currentGameState && window.IMDCXDemo?.renderRevealCards(sourceState)) return;
   sourceState.players.forEach((_, seatIdx) => {
     if (Number.isInteger(skipSeatIdx) && seatIdx === skipSeatIdx) return;
     const seatEl = document.getElementById("seat" + seatIdx);
@@ -9573,8 +9575,9 @@ const isMyTurn = (
       });
     }
 
+    window.IMDCXDemo?.renderRevealCards(gameState);
     gameState.players.forEach((p, i) => {
-      if (p?.inactive || (Number.isInteger(activeSeats) && i >= activeSeats)) return;
+      if (gameState.demo || p?.inactive || (Number.isInteger(activeSeats) && i >= activeSeats)) return;
       if (Number.isInteger(lockedWinnerOnlySeat) && i !== lockedWinnerOnlySeat) return;
       const isMe = p && p.id === mySocketId;
       const canShow = (p.revealStatus === 'show') || (
@@ -9701,8 +9704,10 @@ const isMyTurn = (
         if (!isFinalWinner) {
           // Keep my own 2 revealed cards visible until the reveal -> preflop tornado transition.
           resetAllBacks(mySeatIndex, revealState);
-          revealDisplayedCards = {};
-          revealShownSeats.clear();
+          if (!revealState.demo) {
+            revealDisplayedCards = {};
+            revealShownSeats.clear();
+          }
         } else {
           // Final/frozen flow: keep winner-only cards if local player is busted spectator.
           const meRevealPlayer = revealState.players?.[mySeatIndex];
@@ -12230,6 +12235,9 @@ function clearFinalSeatCardLockStyles() {
 }
 
 function syncNonMySeatCardSize(){
+  if (currentGameState?.demo && currentGameState.phase === 'reveal') {
+    if (window.IMDCXTable?.layoutSeatCards(document.getElementById('poker_table'), currentGameState)) return;
+  }
   // During game-over freeze/final lock we keep current seat-card layout untouched.
   if (endStateLocked || gameOverFreezeActive || document.body.classList.contains('final-end-ui')) return;
 

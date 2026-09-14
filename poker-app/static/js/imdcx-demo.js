@@ -5,6 +5,53 @@
   let showAll = false;
   let pending = false;
   let lastPacket = '';
+  const shownCards = new Map();
+
+  // Public seat cards follow the server's SHOW/HIDE decision, independently of
+  // the seat currently controlled by this browser. No poker decisions here.
+  function renderRevealCards(state) {
+    if (!state?.demo || state.phase !== 'reveal') return false;
+    state.players.forEach((player, index) => {
+      const seat = document.getElementById(`seat${index}`);
+      const cards = seat?.querySelectorAll('.holecards .card');
+      if (!cards || cards.length !== 2) return;
+      const shown = player.revealStatus === 'show' && player.carda && player.cardb;
+      const choosing = !state.revealSeq?.done && state.revealSeq?.activeSeat === index;
+      seat.classList.toggle('demo-card-shown', !!shown);
+      seat.classList.toggle('demo-reveal-active', choosing);
+      seat.classList.toggle('demo-has-seat-cards', !!shown || choosing);
+      if (!shown) {
+        cards.forEach(card => {
+          internal_setCard(card, choosing ? 'blinded' : '', false, choosing);
+          card.classList.toggle('visible', choosing);
+        });
+        return;
+      }
+      const key = `${state.demoRoomID}:${state.roundNumber}:${index}:${player.carda}:${player.cardb}`;
+      const stillCurrent = () => currentGameState?.demoRoomID === state.demoRoomID
+        && currentGameState.roundNumber === state.roundNumber
+        && currentGameState.phase === 'reveal'
+        && currentGameState.players[index]?.revealStatus === 'show';
+      const started = shownCards.get(key);
+      if (started === undefined) {
+        shownCards.set(key, performance.now());
+        cards.forEach(card => {
+          internal_setCard(card, 'blinded', false, true);
+          card.classList.add('visible');
+        });
+        flipCardsSimultaneously(cards[0], cards[1], player.carda, player.cardb,
+          { isCurrent: stillCurrent, forceTransform: true });
+      } else if (performance.now() - started >= 650) {
+        // A theme refresh or a legacy winner reset must not put shown cards back.
+        gui_set_player_cards(player.carda, player.cardb, index, false);
+        cards.forEach(card => card.classList.add('visible'));
+      }
+      revealShownSeats.add(index);
+      revealDisplayedCards[index] = { carda: player.carda, cardb: player.cardb };
+    });
+    window.IMDCXTable?.layoutSeatCards(document.getElementById('poker_table'), state);
+    return true;
+  }
 
   function selection() {
     const screen = document.createElement('section');
@@ -56,7 +103,10 @@
     const revealSeat = state.revealSeq?.activeSeat;
     const nextSeat = state.phase === 'reveal' && Number.isInteger(revealSeat)
       ? revealSeat : state.current_bettor_index;
-    if (newRoom || oldSeat !== nextSeat) { myCardAnimRunId++; resetMySeatBacks(); }
+    if (newRoom || oldSeat !== nextSeat) {
+      myCardAnimRunId++;
+      if (newRoom || state.phase !== 'reveal' || currentGameState?.phase !== 'reveal') resetMySeatBacks();
+    }
     if (Number.isInteger(nextSeat) && state.players[nextSeat]) mySeatIndex = nextSeat;
     mySocketId = state.players[mySeatIndex]?.id || '';
     isMatch2 = state.players.length === 2;
@@ -64,6 +114,11 @@
     _match2ID = isMatch2 ? state.demoRoomID : null;
     gameMode = state.mode;
     if (newRoom) {
+      shownCards.clear();
+      revealShownSeats.clear();
+      document.querySelectorAll('#poker_table .seat').forEach(seat => {
+        seat.classList.remove('demo-card-shown', 'demo-reveal-active', 'demo-has-seat-cards');
+      });
       lastPhase = null;
       currentGameState = null;
       revealedAllSeats = false;
@@ -82,6 +137,7 @@
     handleGameStateUpdate(state);
     if (newRoom) { resetAllBacks(null, state); setupBoardBacks(); animateMyCards(); }
     else if (state.phase !== 'reveal') restoreMyCardsIfNeeded(state, { force: true });
+    renderRevealCards(state);
     if (state.phase === 'reveal' && Number.isInteger(revealSeat) && !state.revealSeq.done) showRevealButton();
     else hideRevealButton();
     if (state.demoRunningOut || state.gameFinished) { gui_hide_fold_call_click(); disableRaiseButton(); }
@@ -144,5 +200,5 @@
     socket.on('connect_error', () => { toolbar.querySelector('[data-turn]').textContent = 'Connexion au serveur impossible. Nouvelle tentative…'; });
   }
 
-  window.IMDCXDemo = { selection, start };
+  window.IMDCXDemo = { selection, start, renderRevealCards };
 })();

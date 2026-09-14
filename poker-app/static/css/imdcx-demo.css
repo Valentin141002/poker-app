@@ -8,5 +8,35 @@
 #manual-demo-tools [hidden] { display: none; }
 #manual-demo-tools button:disabled { opacity: .5; cursor: default; }
 .manual-demo-mode :is(#timer-container, #btn-time, #btn-add30, #break-btn) { display: none !important; }
+/* While betting, only the controlled player's existing hand area has cards.
+   Keep legacy resets/animations from exposing backs on the other seats. */
+body.manual-demo-mode #poker-game-wrapper #poker_table:not(.demo-seat-reveal) .seat:not(.my-seat) .holecards,
+body.manual-demo-mode #poker-game-wrapper #poker_table.demo-seat-reveal .seat:not(.demo-has-seat-cards) .holecards {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+body.manual-demo-mode #poker-game-wrapper #poker_table.demo-seat-reveal .seat.demo-has-seat-cards .holecards {
+  visibility: visible !important;
+  z-index: 30 !important;
+  margin: 0 !important;
+}
+body.manual-demo-mode #poker-game-wrapper #poker_table.demo-seat-reveal .seat .player-name {
+  top: 8px !important; bottom: auto !important;
+}
+body.manual-demo-mode #poker-game-wrapper #poker_table.demo-seat-reveal .seat .chips {
+  top: 34px !important; bottom: auto !important;
+}
+body.manual-demo-mode #poker-game-wrapper #poker_table.demo-seat-reveal .seat .bet {
+  top: calc(var(--table-panel-top) + 134px) !important;
+  font-size: 13px !important; line-height: 16px !important;
+}
+body.manual-demo-mode #poker-game-wrapper #poker_table.demo-seat-reveal .seat .holecards .card {
+  border-radius: 7px !important;
+  background-size: 100% 100% !important;
+}
+body.manual-demo-mode #poker-game-wrapper #poker_table .seat.demo-reveal-active .name-chips {
+  outline: 2px solid var(--table-accent);
+  outline-offset: 2px;
+}
 @media (min-width: 1401px) { #manual-demo-tools { right: auto; width: min(260px, 18vw); box-sizing: border-box; } }
 @media (max-width: 600px) { #manual-demo-tools { font-size: 11px; gap: 6px; } #manual-demo-tools button { font-size: 11px; padding: 6px; } }
