@@ -10386,7 +10386,7 @@ function updateCalcSliderFill(slider){
   const val = parseFloat(slider.value || "0");
   const pct = max > min ? Math.round(((val - min) / (max - min)) * 100) : 0;
   slider.style.backgroundImage =
-    `linear-gradient(90deg, #2bffb3 0%, #2bffb3 ${pct}%, #1b2b45 ${pct}%, #1b2b45 100%)`;
+    `linear-gradient(90deg, var(--popup-accent, #2bffb3) 0%, var(--popup-accent, #2bffb3) ${pct}%, var(--popup-panel, #1b2b45) ${pct}%, var(--popup-panel, #1b2b45) 100%)`;
   slider.style.backgroundBlendMode = 'normal';
 }
 
@@ -10461,7 +10461,8 @@ function show_custom_raise(opts = {}) {
   const html = `
     <div class="raise-window ${subClass}">
       <div class="raise-head">
-        <h3 class="raise-title">PLAYER BOARD</h3>
+        <h3 class="raise-title" id="raise-popup-title">PLAYER BOARD</h3>
+        <button class="popup-close" type="button" aria-label="Fermer le panneau de mise" onclick="calcClose()">×</button>
         <div class="calc-head-meta">
           <div class="calc-credits">CREDITS: <span id="credits-display">--</span></div>
           <div class="calc-timer">TIME: <span id="calc-timer">--</span></div>
@@ -10470,16 +10471,16 @@ function show_custom_raise(opts = {}) {
           <div class="calc-joy-base" aria-hidden="true"></div>
           <div class="calc-joy-ring" aria-hidden="true"></div>
           <div class="calc-joy-knob" aria-hidden="true"></div>
-          <button class="calc-move-btn up" type="button" data-dx="0" data-dy="-20" aria-label="Haut">Ã¢â€“Â²</button>
-          <button class="calc-move-btn right" type="button" data-dx="20" data-dy="0" aria-label="Droite">Ã¢â€“Â¶</button>
-          <button class="calc-move-btn down" type="button" data-dx="0" data-dy="20" aria-label="Bas">Ã¢â€“Â¼</button>
-          <button class="calc-move-btn left" type="button" data-dx="-20" data-dy="0" aria-label="Gauche">Ã¢â€”â‚¬</button>
+          <button class="calc-move-btn up" type="button" data-dx="0" data-dy="-20" aria-label="Haut">▲</button>
+          <button class="calc-move-btn right" type="button" data-dx="20" data-dy="0" aria-label="Droite">▶</button>
+          <button class="calc-move-btn down" type="button" data-dx="0" data-dy="20" aria-label="Bas">▼</button>
+          <button class="calc-move-btn left" type="button" data-dx="-20" data-dy="0" aria-label="Gauche">◀</button>
         </div>
         <div id="calc-notice" class="calc-notice"></div>
         <div class="calc-head-actions">
           <button class="calc-btn calc-add30-btn" id="calc-add30-btn" type="button" onclick="calcAdd30Time()">30</button>
           <button class="calc-btn calc-add30-btn" id="calc-proba-btn" type="button" onclick="calcOpenOdds()">%</button>
-          <button class="calc-btn calc-add30-btn" id="calc-opacity-btn" type="button" aria-expanded="false" title="Opacite calculatrice">Ã¢â€”Â</button>
+          <button class="calc-btn calc-add30-btn" id="calc-opacity-btn" type="button" aria-expanded="false" title="Opacite calculatrice">◐</button>
           ${statsBtnHtml}
         </div>
         <div id="calc-opacity-panel" class="calc-opacity-panel" hidden>
@@ -10496,7 +10497,7 @@ function show_custom_raise(opts = {}) {
           <div class="calc-row calc-row-display">
             <div class="calc-display-line">
               <div id="calc-left" class="calc-display-left">--</div>
-              <div id="calc-display" class="calc-display">0</div>
+              <div class="calc-amount-block"><span class="calc-amount-label">MONTANT</span><div id="calc-display" class="calc-display" aria-live="polite">0</div></div>
             </div>
           </div>
           <!-- Ligne principale : actions + chips + pot presets + digits -->
@@ -10531,7 +10532,7 @@ function show_custom_raise(opts = {}) {
               <div class="pot-grid">
                 <button class="calc-btn pot-btn" onclick="calcRaisePrevFactor(2)">x2 mise</button>
                 <button class="calc-btn pot-btn" onclick="calcRaisePrevFactor(4)">x4 mise</button>
-                <button class="calc-btn pot-btn" onclick="calcRaiseHalfPot()">Ã‚Â½ POT</button>
+                <button class="calc-btn pot-btn" onclick="calcRaiseHalfPot()">½ POT</button>
                 <button class="calc-btn pot-btn" onclick="calcRaiseFullPot()">POT</button>
               </div>
             </div>
@@ -10558,7 +10559,7 @@ function show_custom_raise(opts = {}) {
             <div class="calc-slider-track-labels" aria-hidden="true">
               <span>25%</span><span>50%</span><span>75%</span><span>100%</span>
             </div>
-            <input id="calc-slider" type="range" min="0" max="0" value="0" step="1" />
+            <input id="calc-slider" type="range" aria-label="Montant de la mise" min="0" max="0" value="0" step="1" />
             <div class="calc-slider-labels" aria-hidden="true">
               <span>25%</span><span>50%</span><span>75%</span><span>100%</span>
             </div>
@@ -10583,61 +10584,9 @@ function show_custom_raise(opts = {}) {
   overlay.style.visibility = 'hidden';
   overlay.style.display = 'flex';
 
-  // 3) Nettoie tout ancien ancrage "barre du bas"
-  ['bottom','left','right','top','transform','width','height'].forEach(p => overlay.style.removeProperty(p));
-
-  // 4) RÃƒÂ©glages de taille & typo
-  const vvCalc = window.visualViewport;
-  const calcVW = Math.max(
-    320,
-    Math.round(
-      Math.min(
-        vvCalc?.width || Number.POSITIVE_INFINITY,
-        window.innerWidth || Number.POSITIVE_INFINITY,
-        document.documentElement.clientWidth || Number.POSITIVE_INFINITY
-      )
-    )
-  );
-  const calcVH = Math.max(
-    320,
-    Math.round(
-      Math.min(
-        vvCalc?.height || Number.POSITIVE_INFINITY,
-        window.innerHeight || Number.POSITIVE_INFINITY,
-        document.documentElement.clientHeight || Number.POSITIVE_INFINITY
-      )
-    )
-  );
-  const TARGET_WIDTH_PX = 820; // desktop base width
-  const FONT_BUMP_PX   = 2;
-  const isMobileCalc = calcVW <= 900;
-  const rootStyles = window.getComputedStyle(document.documentElement);
-  const gameWidthForPopups = parseFloat(rootStyles.getPropertyValue('--effective-game-width')) || calcVW;
-  const popupPad = parseFloat(rootStyles.getPropertyValue('--popup-game-pad')) || 24;
-  let calcAppliedScale = 1;
-
   const win = overlay.querySelector('.raise-window');
   if (!win) return;
   bindCalcOpacityControls(win);
-  // Disable CSS pop animation because it also animates transform and
-  // conflicts with fit-scale (causes a giant first frame flash).
-  win.style.animation = 'none';
-  if (isMobileCalc) {
-    // On mobile we keep desktop layout unchanged and only scale to fit width.
-    // Use absolute anchoring so flex centering does not create side overflow.
-    win.style.position = 'absolute';
-    win.style.left = '0';
-    win.style.top = '0';
-    win.style.margin = '0';
-    win.style.transform = '';
-    overlay.style.justifyContent = 'flex-start';
-    overlay.style.alignItems = 'flex-start';
-  } else {
-    // Always open centered; player can move it afterwards.
-    overlay.style.justifyContent = '';
-    overlay.style.alignItems = '';
-  }
-  // DÃƒÂ©sactiver CHECK s'il y a quelque chose ÃƒÂ  payer
   let canCheck = false;
   let toCall = 0;
   if (currentGameState) {
@@ -10673,109 +10622,9 @@ function show_custom_raise(opts = {}) {
   refreshCalcTimerDisplay();
   refreshCalcMathDisplay();
 
-  // Keep desktop layout, then scale down uniformly on small screens.
-  win.style.width = TARGET_WIDTH_PX + 'px';
-  win.style.maxWidth = 'none';
-  win.style.maxHeight = 'none';
-  win.style.transform = '';
-  win.style.transformOrigin = isMobileCalc ? 'top left' : 'center center';
-  const raiseBody = win.querySelector('.raise-body');
-  if (raiseBody) raiseBody.style.maxHeight = 'none';
-
-  // Keep calculator layout unchanged, and scale the whole window to fit.
-  const applyCalcFitScale = () => {
-    const overlayRect = overlay.getBoundingClientRect();
-    const overlayStyle = window.getComputedStyle(overlay);
-    const padLeft = parseFloat(overlayStyle.paddingLeft) || 0;
-    const padRight = parseFloat(overlayStyle.paddingRight) || 0;
-    const padTop = parseFloat(overlayStyle.paddingTop) || 0;
-    const padBottom = parseFloat(overlayStyle.paddingBottom) || 0;
-    const innerW = Math.max(280, Math.round((overlayRect.width || calcVW) - padLeft - padRight));
-    const innerH = Math.max(280, Math.round((overlayRect.height || calcVH) - padTop - padBottom));
-    const desktopWidthLimit = Math.max(320, Math.round(gameWidthForPopups - popupPad));
-    const widthLimit = isMobileCalc ? innerW : Math.min(innerW, desktopWidthLimit);
-    const rawW = TARGET_WIDTH_PX; // fixed desktop base
-    const rawH = Math.max(1, win.offsetHeight || Math.round(win.getBoundingClientRect().height) || 1);
-    const fitScale = isMobileCalc
-      ? Math.min(1, widthLimit / rawW, innerH / rawH)
-      : Math.min(1, widthLimit / rawW);
-    calcAppliedScale = fitScale;
-    const scaledW = rawW * fitScale;
-    if (isMobileCalc) {
-      const scaledH = rawH * fitScale;
-      const tx = Math.max(0, Math.round(padLeft + (innerW - scaledW) / 2));
-      const ty = Math.max(0, Math.round(padTop + (innerH - scaledH) / 2));
-      win.style.transform = `translate(${tx}px, ${ty}px) scale(${fitScale.toFixed(4)})`;
-      return;
-    }
-
-    if (fitScale < 0.999) {
-      win.style.position = 'relative';
-      win.style.left = '';
-      win.style.top = '';
-      win.style.margin = '0';
-    }
-    win.style.transform = fitScale < 0.999 ? `scale(${fitScale.toFixed(4)})` : '';
-  };
-  if (calcFitCleanup) {
-    calcFitCleanup();
-    calcFitCleanup = null;
-  }
-  if (isMobileCalc) {
-    let shownOnce = false;
-    const revealWhenReady = () => {
-      if (shownOnce) return;
-      shownOnce = true;
-      overlay.style.visibility = '';
-    };
-    const fitAndMaybeReveal = () => {
-      applyCalcFitScale();
-      revealWhenReady();
-    };
-
-    fitAndMaybeReveal();
-
-    const onViewportChange = () => {
-      applyCalcFitScale();
-    };
-
-    window.addEventListener('resize', onViewportChange);
-    window.addEventListener('orientationchange', onViewportChange);
-    window.visualViewport?.addEventListener('resize', onViewportChange);
-    window.visualViewport?.addEventListener('scroll', onViewportChange);
-
-    const rafId = requestAnimationFrame(fitAndMaybeReveal);
-    const timeoutId = setTimeout(fitAndMaybeReveal, 120);
-
-    calcFitCleanup = () => {
-      window.removeEventListener('resize', onViewportChange);
-      window.removeEventListener('orientationchange', onViewportChange);
-      window.visualViewport?.removeEventListener('resize', onViewportChange);
-      window.visualViewport?.removeEventListener('scroll', onViewportChange);
-      cancelAnimationFrame(rafId);
-      clearTimeout(timeoutId);
-    };
-  } else {
-    applyCalcFitScale();
-    overlay.style.visibility = '';
-  }
-
-  // petit bump de typo
-  const raiseTitle = win.querySelector('.raise-title');
-  if (raiseTitle) raiseTitle.style.fontSize = '';
-  const calcTitle = win.querySelector('.calc-title');
-  if (calcTitle)  calcTitle.style.fontSize  = 'calc(9px  + ' + FONT_BUMP_PX + 'px)';
-  const calcDisplay = win.querySelector('.calc-display');
-  if (calcDisplay)  calcDisplay.style.fontSize  = 'calc(16px + ' + FONT_BUMP_PX + 'px)';
-  win.querySelectorAll('.calc-btn').forEach(b => { b.style.fontSize = 'calc(11px + ' + FONT_BUMP_PX + 'px)'; });
-
-  // 5) Drag & drop (desktop only, mobile keeps centered fit-scale)
-  if (!isMobileCalc && calcAppliedScale >= 0.999) {
-    makeDraggable(win, overlay, win.querySelector('.raise-head'));
-  }
+  if (calcFitCleanup) calcFitCleanup();
+  calcFitCleanup = window.IMDCXPopups.layoutCalculator(win, overlay);
   bindCalcMoveControls(win);
-
-  // 6) Fermer sur clic hors fenÃƒÂªtre + ESC
   overlay.onclick = null;
 }
 
@@ -11283,7 +11132,7 @@ function renderMyStatsCardHtml(meSeat, meStats) {
         const mode = item?.mode ? formatModeLabel(item.mode) : (item?.roomType === 'duel' ? 'Duel' : 'Table');
         return `<span class="result-pill ${win ? 'win' : 'lose'}" title="${escapeHtml(mode)}">${win ? 'W' : 'L'} Ã¢â‚¬Â¢ ${escapeHtml(formatCalcStatsDate(item.ts))}</span>`;
       }).join('')
-    : '<span class="mode-empty">Historique local vide (il se remplira aprÃƒÂ¨s tes prochaines games)</span>';
+    : '<span class="mode-empty">Historique local vide (il se remplira après tes prochaines games)</span>';
 
   return `
     <div class="calc-stat-card me-profile-card${statusLabel === 'BUST' ? ' is-busted' : ''}">

@@ -9,7 +9,8 @@ const root = path.resolve(__dirname, '..');
 const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'imdcx-demo-browser-'));
 const tablePolish = process.argv.includes('--table-polish');
 const revealCards = process.argv.includes('--reveal-cards');
-const output = path.join(root, 'build', revealCards ? 'demo-reveal-review' : tablePolish ? 'table-step1-review' : 'demo-review');
+const popups = process.argv.includes('--popups');
+const output = path.join(root, 'build', popups ? 'popup-review' : revealCards ? 'demo-reveal-review' : tablePolish ? 'table-step1-review' : 'demo-review');
 fs.mkdirSync(output, { recursive: true });
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 let server, chrome, ws;
@@ -86,6 +87,12 @@ async function main() {
   await cdp('Page.enable');
   const checks = [];
   const check = (name, value) => { assert.ok(value, name); checks.push(name); console.log(name); };
+  if (popups) {
+    await require('./verify-popups.cjs')({ cdp, evaluate, wait, screenshot, check, delay, port, output });
+    check('No browser exceptions', errors.length === 0);
+    fs.writeFileSync(path.join(output, 'checks.json'), JSON.stringify({ checks, errors }, null, 2));
+    return;
+  }
   if (revealCards) {
     const metrics = [];
     // The probe paints expected faces through the existing asset renderer. Actual
