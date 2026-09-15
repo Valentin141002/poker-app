@@ -428,6 +428,7 @@ function ensureAllInClashOverlay() {
 }
 
 function triggerAllInClashOverlay() {
+  if (window.IMDCXMotion) return; // Individual all-in feedback replaces the long VS overlay.
   const overlay = ensureAllInClashOverlay();
   if (!overlay) return;
   ensureAllInVsSparkStyle();
@@ -2486,6 +2487,7 @@ function restoreHandTornadoSources(touched) {
 }
 
 function maybeTriggerHandTornado(prevState, nextState, opts = {}) {
+  if (window.IMDCXMotion) return window.IMDCXMotion.newHand(prevState, nextState, opts);
   if (!prevState || !nextState) {
     document.body.classList.remove('hand-tornado-active');
     return false;
@@ -3976,6 +3978,7 @@ function triggerFinalWinnerCinematic(seatIdx, delayMs = 0, theme = 0, scale = 1)
 }
 
 function triggerRevealWinnerFireworks(winnerSeats, options = {}) {
+  if (window.IMDCXMotion) { window.IMDCXMotion.award(winnerSeats); return; }
   if (!Array.isArray(winnerSeats) || winnerSeats.length < 1) return;
   const isFinal = options?.isFinal === true;
   const now = Date.now();
@@ -4022,6 +4025,7 @@ function triggerRevealWinnerFireworks(winnerSeats, options = {}) {
 }
 
 function triggerPotScoopToSeat(seatIdx) {
+  if (window.IMDCXMotion) { window.IMDCXMotion.scoop(seatIdx); return; }
   const seatEl = document.getElementById('seat' + seatIdx);
   const potEl = document.getElementById('pot');
   if (!seatEl || !potEl) return;
@@ -5595,6 +5599,18 @@ function preloadMyCardFace(code) {
 }
 
 function flipMyCardsWithLift3D(c1, c2, cardA, cardB) {
+  if (window.IMDCXMotion && c1 && c2 && cardA && cardB) {
+    const runId = myCardAnimRunId;
+    const index = mySeatIndex;
+    [c1, c2].forEach((el, n) => {
+      const code = n === 0 ? cardA : cardB;
+      window.IMDCXMotion.flip(el, `deal:${runId}:${code}`, () => {
+        internal_setCard(el, code, false);
+        el.classList.add('visible', 'revealed');
+      }, { delay: n * 65, valid: () => runId === myCardAnimRunId && index === mySeatIndex });
+    });
+    return;
+  }
   if (!c1 || !c2 || !cardA || !cardB) {
     if (typeof flipCardsSimultaneously === 'function') {
       flipCardsSimultaneously(c1, c2, cardA, cardB);
@@ -5676,6 +5692,7 @@ function animateMyCards() {
   const [c1, c2] = Array.from(mySeatEl.querySelectorAll(".holecards .card"));
   if (!c1 || !c2) return;
   const revealDelayMs = getMyCardsRevealDelayMs();
+  window.IMDCXMotion?.deal();
   myCardsBackLockUntil = Date.now() + revealDelayMs;
 
   // 1) Fade-in du back
@@ -5709,6 +5726,7 @@ function animateMyCards() {
 
 function resetMySeatBacks() {
   if (mySeatIndex === null) return;
+  myCardAnimRunId += 1; // Invalidate queued visual frames as well as running flips.
   myCardsBackLockUntil = 0;
   const mySeatEl = document.getElementById("seat" + mySeatIndex);
   if (!mySeatEl) return;
@@ -5724,6 +5742,7 @@ function resetMySeatBacks() {
   myCardAnimTimers = [];
   const cards = mySeatEl.querySelectorAll(".holecards .card");
   cards.forEach(card => {
+    window.IMDCXMotion?.cancelCard(card);
     card.style.transition = "";
     card.style.transform  = "";
     card.classList.remove("revealed", "visible");
@@ -6487,6 +6506,7 @@ function handleGameStateUpdate(gs) {
   maybeForceFinalStateFromServer(gs);
   maybeResetFinalStateForFreshGame(gs);
   const prevState = currentGameState;
+  window.IMDCXMotion?.prepare(prevState, gs);
   const isEnteringPreflopNow = (gs.phase === 'preflop' && prevState?.phase !== 'preflop');
   if (isEnteringPreflopNow && !endStateLocked) {
     const applyNewHandAllBacks = () => {
@@ -6523,12 +6543,15 @@ function handleGameStateUpdate(gs) {
   if (!prevState || reloadRestorePending) {
     restoreBetChipPileFromState(gs, { force: reloadRestorePending });
   }
-  maybeTriggerBetBeam(prevState, gs);
-  maybeTriggerFoldDrop(prevState, gs);
-  maybeTriggerCheckPass(prevState, gs);
-  maybeTriggerCallPulse(prevState, gs);
-  maybeTriggerBetPulse(prevState, gs);
-  maybeTriggerRiverRevealBoost(prevState, gs);
+  if (window.IMDCXMotion) window.IMDCXMotion.state(prevState, gs);
+  else {
+    maybeTriggerBetBeam(prevState, gs);
+    maybeTriggerFoldDrop(prevState, gs);
+    maybeTriggerCheckPass(prevState, gs);
+    maybeTriggerCallPulse(prevState, gs);
+    maybeTriggerBetPulse(prevState, gs);
+    maybeTriggerRiverRevealBoost(prevState, gs);
+  }
   document.body.classList.toggle('is-reveal', gs.phase === 'reveal');
   if (gs.phase === 'reveal') {
     document.querySelectorAll('.seat.turn').forEach(seatEl => {
@@ -8594,11 +8617,14 @@ window.initGame = initGame;
 function resetAllBacks(skipSeatIdx = null, sourceState = currentGameState) {
   if (!sourceState || !Array.isArray(sourceState.players)) return;
   if (sourceState === currentGameState && window.IMDCXDemo?.renderRevealCards(sourceState)) return;
-  sourceState.players.forEach((_, seatIdx) => {
+  sourceState.players.forEach((player, seatIdx) => {
     if (Number.isInteger(skipSeatIdx) && seatIdx === skipSeatIdx) return;
+    // A disclosed winning hand stays visible for its short award feedback.
+    if (window.IMDCXMotion && sourceState.phase === 'reveal' && player?.status === 'WINNER' && player.revealStatus === 'show') return;
     const seatEl = document.getElementById("seat" + seatIdx);
     if (!seatEl) return;
     seatEl.querySelectorAll(".holecards .card").forEach(card => {
+      window.IMDCXMotion?.cancelCard(card);
       card.style.transition = "";
       card.style.transform  = "";
       card.classList.remove("revealed", "visible");
@@ -8628,6 +8654,7 @@ function resetBoardRenderState() {
     cancelBoardFaceTimeout(i);
     const slot = document.getElementById(BOARD_IDS[i]);
     if (!slot) continue;
+    window.IMDCXMotion?.cancelCard(slot);
     slot.classList.remove('fy-flip-soft');
     slot.style.removeProperty('--flip-delay');
     slot.style.removeProperty('--flip-dur');
@@ -8700,6 +8727,11 @@ function setBoardFace(i, code, animate = true, delayMs = 0, durMs = 1300){
     forceShow(slot);
   };
 
+  if (window.IMDCXMotion) {
+    window.IMDCXMotion.flip(slot, `board:${renderEpoch}:${i}:${code}`, applyFace,
+      { valid: () => renderEpoch === boardRenderEpoch, delay: Math.min(delayMs, i * 65), instant: !animate });
+    return;
+  }
   if (!animate) { applyFace(); return; }
 
   // flip doux (classe CSS ci-dessous)
@@ -9595,7 +9627,7 @@ const isMyTurn = (
       const c2 = seat.querySelector('.holecard2');
       if (c1 && c2) {
         flipCardsSimultaneously(c1, c2, p.carda, p.cardb);
-        setTimeout(() => gui_set_player_cards(p.carda, p.cardb, i, false), 600);
+        if (!window.IMDCXMotion) setTimeout(() => gui_set_player_cards(p.carda, p.cardb, i, false), 600);
       }
       if (p?.carda && p?.cardb) {
         revealDisplayedCards[i] = { carda: p.carda, cardb: p.cardb };

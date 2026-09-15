@@ -1,0 +1,50 @@
+/* Gameplay feedback only: existing table/card geometry and popup skins stay intact. */
+body.imdcx-motion-enabled {
+  --motion-light: #85ecff; --motion-second: #a59aff; --motion-gold: #ffe2a0;
+  --motion-panel: #102338; --motion-ink: #edfbff; --motion-shadow: #07132270;
+}
+body.imdcx-motion-enabled.tier-fruity-bg {
+  --motion-light: #e65e9b; --motion-second: #edb63e; --motion-gold: #a86516;
+  --motion-panel: #fff5dc; --motion-ink: #652d53; --motion-shadow: #70244940;
+}
+#imdcx-motion-layer { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 2147483000; contain: layout style paint; }
+#imdcx-motion-layer > * { position: absolute; box-sizing: border-box; pointer-events: none; will-change: transform, opacity; }
+#imdcx-motion-layer .motion-ring {
+  border: 1px solid var(--motion-light); border-radius: 50%;
+  box-shadow: inset 0 0 14px var(--motion-shadow), 0 0 12px var(--motion-shadow);
+  background: radial-gradient(circle, transparent 52%, color-mix(in srgb, var(--motion-light) 20%, transparent) 70%, transparent 72%);
+}
+#imdcx-motion-layer .motion-vortex {
+  border: 2px solid var(--motion-light); border-right-color: var(--motion-second); border-left-color: transparent;
+  background: conic-gradient(from 30deg, transparent, color-mix(in srgb, var(--motion-second) 30%, transparent), transparent 55%, color-mix(in srgb, var(--motion-light) 25%, transparent), transparent);
+  box-shadow: inset 0 0 25px var(--motion-shadow), 0 0 20px var(--motion-shadow);
+}
+#imdcx-motion-layer .motion-particle { border-radius: 50%; background: var(--motion-light); box-shadow: 0 0 7px var(--motion-light); }
+#imdcx-motion-layer .motion-particle:nth-child(even) { background: var(--motion-second); box-shadow: 0 0 5px var(--motion-second); }
+body.tier-fruity-bg #imdcx-motion-layer .motion-particle { border-radius: 80% 15% 80% 15%; box-shadow: none; }
+#imdcx-motion-layer .motion-chip { border-radius: 50%; background: radial-gradient(circle, var(--motion-second), var(--motion-panel)); background-size: contain; background-position: center; background-repeat: no-repeat; filter: drop-shadow(0 3px 2px #0004); }
+#imdcx-motion-layer .motion-card-flight { border-radius: 3px; background-size: 100% 100%; box-shadow: 0 3px 5px #0004; }
+#imdcx-motion-layer .motion-action {
+  display: grid; place-items: center; border-radius: 9px; border: 1px solid var(--motion-light);
+  color: var(--motion-ink); background: var(--motion-panel); box-shadow: inset 0 1px 0 #ffffff50, 0 3px 9px var(--motion-shadow);
+  font: 800 11px/1 "Montserrat", Arial, sans-serif; letter-spacing: .7px;
+}
+#imdcx-motion-layer .motion-action-allin { border-color: #f98eb0; }
+#imdcx-motion-layer .motion-action-fold { border-color: #929bb0; }
+#imdcx-motion-layer .motion-action-check { border-color: #6dcfac; }
+body.imdcx-motion-enabled #poker_table .seat .name-chips { animation: none !important; will-change: auto !important; }
+body.imdcx-motion-enabled #poker_table .seat .name-chips::before { animation: none !important; }
+body.imdcx-motion-enabled #poker_table .seat .name-chips::after { animation: none !important; }
+body.imdcx-motion-enabled #poker_table .seat.turn .name-chips::after,
+body.imdcx-motion-enabled #poker_table .seat.demo-reveal-active .name-chips::after { animation: motionTurnGlow 1800ms ease-in-out 2 !important; }
+body.imdcx-motion-enabled #poker_table :is(.allin-burst-effect, .check-tap-overlay) { display: none !important; }
+body.imdcx-motion-enabled #poker_table :is(.holecards, #board) { perspective: 900px; }
+body.imdcx-motion-enabled #poker_table .motion-flipping { backface-visibility: hidden; transform-origin: center; animation: none !important; transition: none !important; }
+body.imdcx-motion-enabled #poker_table .seat.motion-winner .name-chips { outline: 2px solid var(--motion-gold); outline-offset: 2px; }
+body.imdcx-motion-enabled #poker_table .card.motion-winning-card.revealed { outline: 2px solid var(--motion-gold); outline-offset: 2px; }
+@keyframes motionTurnGlow { 0%,100% { opacity: .6; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  body.imdcx-motion-enabled #poker_table .seat.turn .name-chips::after,
+  body.imdcx-motion-enabled #poker_table .seat.demo-reveal-active .name-chips::after { animation: none !important; }
+  #imdcx-motion-layer { display: none; }
+}

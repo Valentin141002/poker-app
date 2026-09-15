@@ -362,6 +362,17 @@ function internal_setCard(diva, card, folded, hidden = false) {
 
 
 function flipCardsSimultaneously(cardElem1, cardElem2, newCard1, newCard2, options = {}) {
+  if (window.IMDCXMotion) {
+    [cardElem1, cardElem2].forEach((el, n) => {
+      const code = n === 0 ? newCard1 : newCard2;
+      if (!el) return;
+      el.style.transition = 'none';
+      el.style.setProperty('transform', 'rotateY(0deg)', options.forceTransform ? 'important' : '');
+      window.IMDCXMotion.flip(el, `show:${code}`, () => internal_setCard(el, code, false),
+        { valid: options.isCurrent || (() => true), delay: n * 45 });
+    });
+    return;
+  }
   const isCurrent = options.isCurrent || (() => true);
   const rotate = (el, value) => el.style.setProperty('transform', value, options.forceTransform ? 'important' : '');
   // 1) Réinitialise la rotation sans transition
@@ -508,6 +519,7 @@ function gui_write_basic_general(pot_size) {
   var total_div = pot_div.children['total-pot'];
   var the_pot = 'Pot : ' + pot_size;
   total_div.innerHTML = the_pot;
+  window.IMDCXMotion?.potChanged(total_div, pot_size);
 }
 
 function gui_write_basic_general_text(text) {

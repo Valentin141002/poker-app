@@ -10,7 +10,8 @@ const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'imdcx-demo-browser-'));
 const tablePolish = process.argv.includes('--table-polish');
 const revealCards = process.argv.includes('--reveal-cards');
 const popups = process.argv.includes('--popups');
-const output = path.join(root, 'build', popups ? 'popup-review' : revealCards ? 'demo-reveal-review' : tablePolish ? 'table-step1-review' : 'demo-review');
+const motion = process.argv.includes('--motion');
+const output = path.join(root, 'build', motion ? 'motion-review' : popups ? 'popup-review' : revealCards ? 'demo-reveal-review' : tablePolish ? 'table-step1-review' : 'demo-review');
 fs.mkdirSync(output, { recursive: true });
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 let server, chrome, ws;
@@ -87,6 +88,12 @@ async function main() {
   await cdp('Page.enable');
   const checks = [];
   const check = (name, value) => { assert.ok(value, name); checks.push(name); console.log(name); };
+  if (motion) {
+    await require('./verify-motion.cjs')({ cdp, evaluate, wait, screenshot, check, delay, port, output });
+    check('No browser exceptions', errors.length === 0);
+    fs.writeFileSync(path.join(output, 'checks.json'), JSON.stringify({ checks, errors }, null, 2));
+    return;
+  }
   if (popups) {
     await require('./verify-popups.cjs')({ cdp, evaluate, wait, screenshot, check, delay, port, output });
     check('No browser exceptions', errors.length === 0);
@@ -207,7 +214,7 @@ async function main() {
                 const cards = [...document.querySelectorAll('#seat${actor} .holecards .card')];
                 const until = performance.now() + 1000;
                 const sample = () => {
-                  __showFlipSamples.push(cards.map(card => getComputedStyle(card).transform));
+                  __showFlipSamples.push(cards.map(card => {const css=getComputedStyle(card);return {transform:css.transform,rotate:css.rotate};}));
                   if (performance.now() < until) requestAnimationFrame(sample);
                 };
                 requestAnimationFrame(sample);
@@ -219,7 +226,7 @@ async function main() {
             await delay(900);
             if (choice === 0 && !mobile) {
               const frames = await evaluate('__showFlipSamples');
-              check(`${label}: SHOW visibly rotates the existing card elements`, frames.some(frame => frame.every(value => value.startsWith('matrix3d('))));
+              check(`${label}: SHOW visibly rotates the existing card elements`, frames.some(frame => frame.every(value => value.transform.startsWith('matrix3d(') || (/^y /.test(value.rotate) && Math.abs(parseFloat(value.rotate.slice(2))) > 5))));
             }
             const info = await evaluate('__cardReview()');
             assertShown(info, shown, hidden, width, height, `${label}/choice${choice}`);
