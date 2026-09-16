@@ -4589,6 +4589,7 @@ registerDemoController(socket, {
   tables: tablesConfig, matches: matches2Config, states: gameStateByTable,
   tableWaiting: waitingPlayersByTable, matchWaiting: waitingPlayersByMatch2,
   startTable: tryStartGame, startMatch: tryStartMatch2, next: dealNextHand,
+  revealWinnerDelayMs: REVEAL_WINNER_MS,
   clear(id, state) {
     clearRevealSequence(id, state);
     for (const timers of [turnTimersByTable, turnTimersByMatch2]) {
