@@ -2686,7 +2686,11 @@ function clearRevealSequence(roomID, state) {
 }
 
 function scheduleRevealDecisionTimeout(roomID, isMatch2, seat, ms) {
-  if (gameStateByTable[roomID]?.demo) return;
+  // Demo rooms show no countdown (a manual tester isn't rushed), but without
+  // this safety timeout an unresolved SHOW/HIDE choice hangs the room forever
+  // -- roundEvaluated/revealSeqDone never flip, so the hand can never finish
+  // or advance. Auto-apply the default choice after the same delay real
+  // rooms use, exactly like the real game already does.
   if (revealTimersByRoom[roomID]) {
     clearTimeout(revealTimersByRoom[roomID]);
     delete revealTimersByRoom[roomID];
