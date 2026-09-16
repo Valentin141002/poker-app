@@ -48,6 +48,7 @@ let myCardAnimRunId = 0;
 const MY_CARDS_REVEAL_DELAY_DEFAULT_MS = 5000;
 const MY_CARDS_REVEAL_DELAY_HYPER_MS = 3000;
 function getMyCardsRevealDelayMs() {
+  if (window.IMDCXMotion) return 900;
   return String(gameMode || '').toLowerCase() === 'hyper'
     ? MY_CARDS_REVEAL_DELAY_HYPER_MS
     : MY_CARDS_REVEAL_DELAY_DEFAULT_MS;
@@ -99,7 +100,7 @@ let pendingBetChipPileAdds = [];
 let betChipPileFlushTimer = null;
 let initialLevelHint = '';
 let fruityBgLayerEl = null;
-let backgroundThemeOverride = 'auto'; // auto | forceDark | forceFruity
+let backgroundThemeOverride = 'forceDark'; // auto | forceDark | forceFruity
 let backgroundToggleResizeBound = false;
 let backgroundToggleReady = false;
 let backgroundToggleCanShow = false;
@@ -290,7 +291,8 @@ function applyTableBackgroundForLevel(levelRaw) {
   const tableEl = document.getElementById('poker_table');
   if (!tableEl) return;
   const normalizedLevel = normalizeTableLevel(levelRaw);
-  const imageUrl = TABLE_IMAGE_BY_LEVEL[normalizedLevel] || TABLE_IMAGE_BY_LEVEL.T1;
+  const imageUrl = backgroundThemeOverride === 'forceDark'
+    ? TABLE_IMAGE_BY_LEVEL.T1 : (TABLE_IMAGE_BY_LEVEL[normalizedLevel] || TABLE_IMAGE_BY_LEVEL.T1);
   tableEl.style.setProperty('background-image', `url("${imageUrl}")`, 'important');
 }
 
@@ -307,12 +309,12 @@ function getBackgroundOverrideStorageKey() {
 
 function loadBackgroundOverride() {
   const key = getBackgroundOverrideStorageKey();
-  if (!key) return 'auto';
+  if (!key) return 'forceDark';
   try {
     const raw = String(localStorage.getItem(key) || '').trim();
     if (raw === 'forceDark' || raw === 'forceFruity') return raw;
   } catch (e) {}
-  return 'auto';
+  return 'forceDark';
 }
 
 function storeBackgroundOverride(mode) {
@@ -428,7 +430,7 @@ function ensureAllInClashOverlay() {
 }
 
 function triggerAllInClashOverlay() {
-  if (window.IMDCXMotion) return; // Individual all-in feedback replaces the long VS overlay.
+  if (window.IMDCXMotion) return;
   const overlay = ensureAllInClashOverlay();
   if (!overlay) return;
   ensureAllInVsSparkStyle();
@@ -5607,7 +5609,8 @@ function flipMyCardsWithLift3D(c1, c2, cardA, cardB) {
       window.IMDCXMotion.flip(el, `deal:${runId}:${code}`, () => {
         internal_setCard(el, code, false);
         el.classList.add('visible', 'revealed');
-      }, { delay: n * 65, valid: () => runId === myCardAnimRunId && index === mySeatIndex });
+      }, { delay: n * 65, valid: () => runId === myCardAnimRunId && index === mySeatIndex
+        && currentGameState?.phase !== 'reveal' });
     });
     return;
   }
@@ -5702,7 +5705,7 @@ function animateMyCards() {
     card.classList.remove("revealed", "visible");
     card.classList.remove("deal-flip");
     internal_setCard(card, "blinded", false, true);
-    requestAnimationFrame(() => card.classList.add("visible"));
+    requestAnimationFrame(() => { if (runId === myCardAnimRunId) card.classList.add("visible"); });
   });
 
   // 2) AprÃƒÂ¨s 5s Ã¢â€ â€™ flip
@@ -5726,7 +5729,8 @@ function animateMyCards() {
 
 function resetMySeatBacks() {
   if (mySeatIndex === null) return;
-  myCardAnimRunId += 1; // Invalidate queued visual frames as well as running flips.
+  myCardAnimRunId += 1;
+  const runId = myCardAnimRunId;
   myCardsBackLockUntil = 0;
   const mySeatEl = document.getElementById("seat" + mySeatIndex);
   if (!mySeatEl) return;
@@ -5751,7 +5755,7 @@ function resetMySeatBacks() {
     card.classList.remove("my-card-halo");
     card.style.removeProperty('--my3d-delay');
     internal_setCard(card, "blinded", false, true);
-    requestAnimationFrame(() => card.classList.add("visible"));
+    requestAnimationFrame(() => { if (runId === myCardAnimRunId) card.classList.add("visible"); });
   });
   mySeatEl.querySelectorAll('.holecard1, .holecard2').forEach((wrap) => {
     wrap.classList.remove('my-card-3d-wrap');
@@ -6500,6 +6504,12 @@ function handleGameStateUpdate(gs) {
     return;
   }
   if (gs.phase === 'reveal' && lastPhase !== 'reveal') {
+    // A pending private-hand flip must never overwrite a later SHOW/HIDE.
+    myCardAnimRunId += 1;
+    clearTimeout(myCardsFlipTimer);
+    myCardsFlipTimer = null;
+    myCardAnimTimers.forEach(clearTimeout);
+    myCardAnimTimers = [];
     revealPhaseStartedAt = Date.now();
     revealSeatShowStartedAt = null;
   }
@@ -6507,7 +6517,8 @@ function handleGameStateUpdate(gs) {
   maybeResetFinalStateForFreshGame(gs);
   const prevState = currentGameState;
   window.IMDCXMotion?.prepare(prevState, gs);
-  const isEnteringPreflopNow = (gs.phase === 'preflop' && prevState?.phase !== 'preflop');
+  const isEnteringPreflopNow = gs.phase === 'preflop' && (prevState?.phase !== 'preflop'
+    || prevState?.roundNumber !== gs.roundNumber || prevState?.demoRoomID !== gs.demoRoomID);
   if (isEnteringPreflopNow && !endStateLocked) {
     const applyNewHandAllBacks = () => {
       resetAllBacks(null, gs);
@@ -8619,18 +8630,19 @@ function resetAllBacks(skipSeatIdx = null, sourceState = currentGameState) {
   if (sourceState === currentGameState && window.IMDCXDemo?.renderRevealCards(sourceState)) return;
   sourceState.players.forEach((player, seatIdx) => {
     if (Number.isInteger(skipSeatIdx) && seatIdx === skipSeatIdx) return;
-    // A disclosed winning hand stays visible for its short award feedback.
-    if (window.IMDCXMotion && sourceState.phase === 'reveal' && player?.status === 'WINNER' && player.revealStatus === 'show') return;
+    if (sourceState.phase === 'reveal' && player?.revealStatus === 'show') return;
     const seatEl = document.getElementById("seat" + seatIdx);
     if (!seatEl) return;
+    seatEl.classList.remove('card-shown');
     seatEl.querySelectorAll(".holecards .card").forEach(card => {
       window.IMDCXMotion?.cancelCard(card);
       card.style.transition = "";
       card.style.transform  = "";
       card.classList.remove("revealed", "visible");
       card.classList.remove("deal-flip", "my-card-3d-wrap", "my-card-landing", "my-card-halo");
-      internal_setCard(card, "blinded", false, true);
-      requestAnimationFrame(() => card.classList.add("visible"));
+      const own = seatIdx === mySeatIndex;
+      internal_setCard(card, own ? "blinded" : "", false, own);
+      card.classList.toggle('visible', own);
     });
   });
 }
@@ -8673,6 +8685,10 @@ function forceShow(el){
 function paintBoardBack(i){
   const slot = document.getElementById(BOARD_IDS[i]);
   if (!slot) return;
+  cancelBoardFaceTimeout(i);
+  window.IMDCXMotion?.cancelCard(slot);
+  delete slot.dataset.cardCode;
+  delete slot.dataset[`face${i}`];
   slot.dataset.hasBack = "1";
   slot.classList.remove('revealed');
   // fond dos visible mÃƒÂªme si lÃ¢â‚¬â„¢intÃƒÂ©rieur est vide
@@ -8721,7 +8737,7 @@ function setBoardFace(i, code, animate = true, delayMs = 0, durMs = 1300){
     } else if (typeof internal_setCard === "function") {
       // si tes slots contiennent une .card interne :
       const inner = slot.querySelector('.card') || slot;
-      internal_setCard(inner, code, false, true);
+      internal_setCard(inner, code, false);
     }
     slot.dataset[faceKey] = code;
     forceShow(slot);
@@ -8729,7 +8745,7 @@ function setBoardFace(i, code, animate = true, delayMs = 0, durMs = 1300){
 
   if (window.IMDCXMotion) {
     window.IMDCXMotion.flip(slot, `board:${renderEpoch}:${i}:${code}`, applyFace,
-      { valid: () => renderEpoch === boardRenderEpoch, delay: Math.min(delayMs, i * 65), instant: !animate });
+      { valid: () => renderEpoch === boardRenderEpoch, delay: Math.min(delayMs, i * 90), instant: !animate });
     return;
   }
   if (!animate) { applyFace(); return; }
@@ -9098,6 +9114,14 @@ function updateInterface(gameState) {
   // 1) Affiche la table
   gui_show_poker_table();
   ensureMySeatClass();
+  if (gameState.phase !== 'reveal' && !endStateLocked && !gameOverFreezeActive) {
+    document.querySelectorAll('#poker_table .seat').forEach(seatEl => {
+      seatEl.classList.remove('card-shown');
+      if (!seatEl.classList.contains('my-seat')) {
+        seatEl.querySelectorAll('.holecards .card').forEach(card => internal_setCard(card, '', false));
+      }
+    });
+  }
   syncNonMySeatCardSize();
   const domSeats = Array.from(document.querySelectorAll('.seat'));
   const totalSeats = Number.isInteger(gameState.totalSeats) ? gameState.totalSeats : domSeats.length;
@@ -9611,23 +9635,39 @@ const isMyTurn = (
     gameState.players.forEach((p, i) => {
       if (gameState.demo || p?.inactive || (Number.isInteger(activeSeats) && i >= activeSeats)) return;
       if (Number.isInteger(lockedWinnerOnlySeat) && i !== lockedWinnerOnlySeat) return;
-      const isMe = p && p.id === mySocketId;
-      const canShow = (p.revealStatus === 'show') || (
-        isMe &&
-        !isLiveBustedSpectator(gameState) &&
-        p.status !== 'FOLD' &&
-        p.carda &&
-        p.cardb
-      );
-      if (!canShow) return;
-      if (revealShownSeats.has(i)) return;
       const seat = document.getElementById('seat' + i);
       if (!seat) return;
       const c1 = seat.querySelector('.holecard1');
       const c2 = seat.querySelector('.holecard2');
-      if (c1 && c2) {
-        flipCardsSimultaneously(c1, c2, p.carda, p.cardb);
-        if (!window.IMDCXMotion) setTimeout(() => gui_set_player_cards(p.carda, p.cardb, i, false), 600);
+      const canShow = p.revealStatus === 'show' && p.carda && p.cardb;
+      const choosing = gameState.revealSeq?.activeSeat === i && !gameState.revealSeq?.done;
+      seat.classList.toggle('card-shown', !!canShow);
+      seat.classList.toggle('reveal-active', choosing);
+      seat.classList.toggle('has-seat-cards', !!canShow || choosing);
+      if (!canShow) {
+        [c1, c2].filter(Boolean).forEach(card => {
+          window.IMDCXMotion?.cancelCard(card);
+          internal_setCard(card, choosing ? 'blinded' : '', false, choosing);
+          card.classList.toggle('visible', choosing);
+        });
+        revealShownSeats.delete(i);
+        delete revealDisplayedCards[i];
+        return;
+      }
+      if (revealShownSeats.has(i)) return;
+      if (c1 && c2 && p.carda && p.cardb) {
+        seat.classList.add('card-shown');
+        const stillCurrent = () => currentGameState?.phase === 'reveal'
+          && currentGameState.roundNumber === gameState.roundNumber
+          && currentGameState.demoRoomID === gameState.demoRoomID
+          && currentGameState.players[i]?.revealStatus === 'show'
+          && currentGameState.players[i]?.carda === p.carda
+          && currentGameState.players[i]?.cardb === p.cardb;
+        [c1, c2].forEach(card => {
+          internal_setCard(card, 'blinded', false, true);
+          card.classList.add('visible');
+        });
+        flipCardsSimultaneously(c1, c2, p.carda, p.cardb, { isCurrent: stillCurrent });
       }
       if (p?.carda && p?.cardb) {
         revealDisplayedCards[i] = { carda: p.carda, cardb: p.cardb };
@@ -9640,14 +9680,7 @@ const isMyTurn = (
       gameState.players.forEach((p, i) => {
         if (p?.inactive || (Number.isInteger(activeSeats) && i >= activeSeats)) return;
         if (Number.isInteger(lockedWinnerOnlySeat) && i !== lockedWinnerOnlySeat) return;
-        const isMe = p && p.id === mySocketId;
-        const canShow = (p.revealStatus === 'show') || (
-          isMe &&
-          !isLiveBustedSpectator(gameState) &&
-          p.status !== 'FOLD' &&
-          p.carda &&
-          p.cardb
-        );
+        const canShow = p.revealStatus === 'show' && p.carda && p.cardb;
         if (canShow) showableSeats.push(i);
       });
       if (showableSeats.length > 0 && showableSeats.every(i => revealShownSeats.has(i))) {
@@ -9663,9 +9696,7 @@ const isMyTurn = (
         : 10000;
       const isHyperReveal = String(gameMode || '').toLowerCase() === 'hyper';
       if (isHyperReveal && !Number.isFinite(revealSeatShowStartedAt)) return;
-      const SEAT_SHOW_MS = isHyperReveal
-        ? 9000
-        : 5000;
+      const SEAT_SHOW_MS = window.IMDCXMotion ? 600 : (isHyperReveal ? 9000 : 5000);
       const REVEAL_NEON_LINGER = 5000;
       const WINNER_MESSAGE_TO_END_MS = isHyperReveal ? 900 : 500;
       const seatShowBaseTs = isHyperReveal
@@ -9684,12 +9715,7 @@ const isMyTurn = (
             if (p.status === 'WAIT') return;
             if (Number.isInteger(lockedWinnerOnlySeat) && i !== lockedWinnerOnlySeat) return;
             if (!Number.isInteger(lockedWinnerOnlySeat)) {
-              const isMe = p && p.id === mySocketId;
-              if (p.revealStatus !== 'show' && !(
-                isMe &&
-                !isLiveBustedSpectator(gameState) &&
-                p.status !== 'FOLD'
-              )) return;
+              if (p.revealStatus !== 'show') return;
             }
             hyperRevealHoldCards[i] = { carda: p.carda, cardb: p.cardb };
           });
@@ -9736,7 +9762,7 @@ const isMyTurn = (
         if (!isFinalWinner) {
           // Keep my own 2 revealed cards visible until the reveal -> preflop tornado transition.
           resetAllBacks(mySeatIndex, revealState);
-          if (!revealState.demo) {
+          if (!revealState.demo && !window.IMDCXMotion) {
             revealDisplayedCards = {};
             revealShownSeats.clear();
           }
@@ -9891,7 +9917,7 @@ if (lastPhase === 'reveal' && phase === 'preflop') {
     if (!endStateLocked) clearLockedFinalWinnerSeatCards();
 
     document.querySelectorAll('.seat').forEach(seatEl => {
-      seatEl.classList.remove('winning-hand', 'losing-hand');
+      seatEl.classList.remove('winning-hand', 'losing-hand', 'card-shown', 'reveal-active', 'has-seat-cards');
       if (!endStateLocked) seatEl.classList.remove('final-winner');
     });
     // New hand hard reset: no leftover reveal faces on any seat.
@@ -9907,11 +9933,12 @@ if (lastPhase === 'reveal' && phase === 'preflop') {
         gui_set_player_cards('', '', i, false);
         return;
       }
-      gui_set_player_cards('blinded', 'blinded', i, false);
+      const own = i === mySeatIndex;
+      gui_set_player_cards(own ? 'blinded' : '', own ? 'blinded' : '', i, false);
       const seatEl = document.getElementById('seat' + i);
       seatEl?.querySelectorAll('.holecards .card').forEach((card) => {
         card.classList.remove('deal-flip', 'revealed');
-        card.classList.add('visible');
+        card.classList.toggle('visible', own);
       });
     });
     if (isLiveBustedSpectator(gameState)) {
@@ -12035,6 +12062,7 @@ function enforceFinalSeatCardLock() {
   if (!endStateLocked && !document.body.classList.contains('final-end-ui')) return;
   const table = document.querySelector('#poker_table, .poker-table');
   if (!table) return;
+  if (window.IMDCXTable?.layoutSeatCards(table, currentGameState)) return;
 
   const setImp = (el, prop, value) => {
     if (!el) return;
@@ -12116,7 +12144,7 @@ function clearFinalSeatCardLockStyles() {
 }
 
 function syncNonMySeatCardSize(){
-  if (currentGameState?.demo && currentGameState.phase === 'reveal') {
+  if (currentGameState?.phase === 'reveal') {
     if (window.IMDCXTable?.layoutSeatCards(document.getElementById('poker_table'), currentGameState)) return;
   }
   // During game-over freeze/final lock we keep current seat-card layout untouched.

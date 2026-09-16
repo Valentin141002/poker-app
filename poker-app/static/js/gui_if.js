@@ -189,12 +189,41 @@ function internal_BuildFruityCardFaceStyle(suit, rank, compact = false) {
   };
 }
 
+const neonCardFaceCache = new Map();
+function internal_BuildNeonCardFace(suit, rank) {
+  const label = internal_GetDisplayRank(rank);
+  const key = `${suit}:${label}`;
+  if (neonCardFaceCache.has(key)) return neonCardFaceCache.get(key);
+  const color = suit === 'hearts' || suit === 'diamonds' ? '#fa003c' : '#111318';
+  const shapes = {
+    hearts: '<path d="M50 93C42 83 6 57 6 31C6 4 39 1 50 24C61 1 94 4 94 31C94 57 58 83 50 93Z"/>',
+    diamonds: '<path d="M50 3L95 50L50 97L5 50Z"/>',
+    spades: '<path d="M50 3C39 23 8 39 8 62C8 86 36 88 46 70C44 83 42 91 31 97H69C58 91 56 83 54 70C64 88 92 86 92 62C92 39 61 23 50 3Z"/>',
+    clubs: '<circle cx="50" cy="25" r="23"/><circle cx="25" cy="59" r="23"/><circle cx="75" cy="59" r="23"/><path d="M43 49H57C53 70 54 86 66 97H34C46 86 47 70 43 49Z"/>'
+  };
+  const shape = shapes[suit];
+  if (!shape) return '';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 147">
+    <defs><linearGradient id="paper" x1="0" y1="0" x2=".85" y2="1"><stop stop-color="#fff"/><stop offset=".7" stop-color="#fff"/><stop offset="1" stop-color="#eaf4ff"/></linearGradient>
+      <g id="suit" fill="${color}">${shape}</g></defs>
+    <rect x="1" y="1" width="118" height="145" rx="8" fill="url(#paper)" stroke="#bdefff" stroke-width="1.5"/>
+    <rect x="3" y="3" width="114" height="141" rx="6" fill="none" stroke="#fff"/>
+    <text x="9" y="39" fill="${color}" font-family="Arial,Helvetica,sans-serif" font-size="40" font-weight="700">${label}</text>
+    <use href="#suit" transform="translate(11 44) scale(.22)"/>
+    <use href="#suit" transform="translate(34 53) scale(.79)"/>
+  </svg>`;
+  const image = `url("data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}")`;
+  neonCardFaceCache.set(key, image);
+  return image;
+}
+
 function internal_GetCardImageUrl(card) {
   var suit = card.substring(0, 1);
   var rank = parseInt(card.substring(1));
   rank = internal_FixTheRanking(rank); // 14 -> 'ace' etc
   suit = internal_FixTheSuiting(suit); // c  -> 'clubs' etc
 
+  if (!internal_IsFruityCardThemeActive()) return internal_BuildNeonCardFace(suit, rank);
   return "url('static/images/" + rank + "_of_" + suit + ".png')";
 }
 
@@ -267,24 +296,24 @@ function gui_set_my_cards(card_a, card_b, seat) {
   const seatElem = document.getElementById("seat" + seat);
   if (!seatElem) return;
   const holecards = seatElem.querySelector(".holecards");
-  const card1 = holecards.querySelector(".holecard1");
-  const card2 = holecards.querySelector(".holecard2");
+  const card1 = holecards?.querySelector(".holecard1");
+  const card2 = holecards?.querySelector(".holecard2");
   if (!card1 || !card2) return;
 
   // 1) Pose la face ou le dos, mais ne lance pas de flip 3D
   internal_setCard(card1, card_a, false);
   internal_setCard(card2, card_b, false);
 
-  // 2) Si on veut juste masquer (pre‐deal ou reset), on retire toute classe
-  card1.classList.remove("deal-flip","revealed","visible");
-  card2.classList.remove("deal-flip","revealed","visible");
+  card1.classList.remove("deal-flip");
+  card2.classList.remove("deal-flip");
+  card1.classList.toggle("visible", !!card_a);
+  card2.classList.toggle("visible", !!card_b);
 
   // 3) Si on est en phase “reveal” ET que mes cartes sont déjà signalées revealed,
   //    on montre la face en fondu (via .visible), sans flip
-  if (gameState.phase === "reveal" && userCardsRevealed) {
+  if (currentGameState?.phase === "reveal" && myCardsRevealed) {
     [card1,card2].forEach(c=>{
       c.style.transition = "opacity 0.6s ease";
-      c.style.transform  = "none";
       c.classList.add("visible");
     });
   }
@@ -292,6 +321,19 @@ function gui_set_my_cards(card_a, card_b, seat) {
 }
 
 function internal_setCard(diva, card, folded, hidden = false) {
+  if (!diva) return;
+  const owner = diva.closest?.('.seat');
+  const state = typeof currentGameState !== 'undefined' ? currentGameState : null;
+  const ownerIndex = owner ? Number(owner.id.replace('seat', '')) : -1;
+  if (owner && state?.phase === 'reveal' && state.players?.[ownerIndex]?.revealStatus === 'hide') card = '';
+  // Opponents' hands are private until SHOW. Deal flights are transient effects,
+  // so they never require persistent face-down cards on an opponent's seat.
+  if (owner && !owner.classList.contains('my-seat') && (hidden || card === 'blinded')) {
+    const choosing = state?.phase === 'reveal'
+      && state.revealSeq?.activeSeat === ownerIndex
+      && !state.revealSeq?.done;
+    if (!choosing && !owner.classList.contains('card-shown')) card = '';
+  }
   // 1) Choix de l’image de dos
   let backImage;
   // ← on regarde si cet élément est dans VOTRE seat grâce à la classe .my-seat
@@ -306,7 +348,9 @@ function internal_setCard(diva, card, folded, hidden = false) {
           : "url('static/images/custom_M.png')");
   } else {
     // dos standard pour tous les autres sièges
-    backImage = "url('static/images/cardbck.png')";
+    backImage = typeof window.getThemeCardAssetCssUrl === 'function'
+      ? window.getThemeCardAssetCssUrl('cardback')
+      : "url('static/images/cardback1.png')";
   }
 
   // 2) Image de face si ce n’est pas “blinded”
@@ -322,10 +366,12 @@ function internal_setCard(diva, card, folded, hidden = false) {
 
   // 3) Si pas de carte, on masque
   if (!card) {
+    window.IMDCXMotion?.cancelCard(diva);
+    diva.querySelectorAll('.card-back-theme-transition').forEach(overlay => overlay.remove());
     diva.style.opacity = 0;
     diva.style.backgroundImage = "";
     delete diva.dataset.cardCode;
-    diva.classList.remove("revealed");
+    diva.classList.remove("revealed", "visible");
     return;
   }
 
@@ -334,6 +380,9 @@ function internal_setCard(diva, card, folded, hidden = false) {
   // 4) Si on affiche le dos (hidden ou “blinded”)
   if (hidden || card === "blinded") {
     diva.style.backgroundImage = backImage;
+    diva.style.backgroundSize = 'contain';
+    diva.style.backgroundPosition = 'center';
+    diva.style.backgroundRepeat = 'no-repeat';
     diva.style.opacity = 1;
     diva.classList.remove("revealed");
     return;
@@ -357,19 +406,25 @@ function internal_setCard(diva, card, folded, hidden = false) {
     diva.style.backgroundRepeat = '';
   }
   diva.style.opacity = folded ? 0.5 : 1;
+  diva.querySelectorAll('.card-back-theme-transition').forEach(overlay => overlay.remove());
   diva.classList.add("revealed");
 }
 
 
 function flipCardsSimultaneously(cardElem1, cardElem2, newCard1, newCard2, options = {}) {
+  if (!cardElem1 || !cardElem2 || !newCard1 || !newCard2) return;
   if (window.IMDCXMotion) {
     [cardElem1, cardElem2].forEach((el, n) => {
       const code = n === 0 ? newCard1 : newCard2;
-      if (!el) return;
-      el.style.transition = 'none';
-      el.style.setProperty('transform', 'rotateY(0deg)', options.forceTransform ? 'important' : '');
-      window.IMDCXMotion.flip(el, `show:${code}`, () => internal_setCard(el, code, false),
-        { valid: options.isCurrent || (() => true), delay: n * 45 });
+      el.style.removeProperty('transition');
+      // Keep the seat stack's CSS transform: the motion module flips through the
+      // independent rotate property, so SHOW cannot displace either card.
+      el.style.removeProperty('transform');
+      el.classList.add('visible');
+      window.IMDCXMotion.flip(el, `show:${code}`, () => {
+        internal_setCard(el, code, false);
+        el.classList.add('visible');
+      }, { valid: options.isCurrent || (() => true), delay: n * 55 });
     });
     return;
   }
@@ -690,7 +745,7 @@ function gui_write_end_game_modal(html) {
 
 function gui_initialize_css() {
   var item = document.getElementById('poker_table');
-  var image = "url('static/images/poker_table.png')";
+  var image = "url('static/images/poker_table_vert.png')";
   internal_setBackground(item, image, 1.0);
 }
 

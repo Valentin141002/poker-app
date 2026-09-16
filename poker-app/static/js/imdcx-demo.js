@@ -17,11 +17,13 @@
       if (!cards || cards.length !== 2) return;
       const shown = player.revealStatus === 'show' && player.carda && player.cardb;
       const choosing = !state.revealSeq?.done && state.revealSeq?.activeSeat === index;
+      seat.classList.toggle('card-shown', !!shown);
       seat.classList.toggle('demo-card-shown', !!shown);
       seat.classList.toggle('demo-reveal-active', choosing);
       seat.classList.toggle('demo-has-seat-cards', !!shown || choosing);
       if (!shown) {
         cards.forEach(card => {
+          window.IMDCXMotion?.cancelCard(card);
           internal_setCard(card, choosing ? 'blinded' : '', false, choosing);
           card.classList.toggle('visible', choosing);
         });
@@ -31,7 +33,9 @@
       const stillCurrent = () => currentGameState?.demoRoomID === state.demoRoomID
         && currentGameState.roundNumber === state.roundNumber
         && currentGameState.phase === 'reveal'
-        && currentGameState.players[index]?.revealStatus === 'show';
+        && currentGameState.players[index]?.revealStatus === 'show'
+        && currentGameState.players[index]?.carda === player.carda
+        && currentGameState.players[index]?.cardb === player.cardb;
       const started = shownCards.get(key);
       if (started === undefined) {
         shownCards.set(key, performance.now());
@@ -41,7 +45,7 @@
         });
         flipCardsSimultaneously(cards[0], cards[1], player.carda, player.cardb,
           { isCurrent: stillCurrent, forceTransform: true });
-      } else if (performance.now() - started >= 650) {
+      } else if (performance.now() - started >= 650 && !Array.from(cards).some(card => card.classList.contains('motion-flipping'))) {
         // A theme refresh or a legacy winner reset must not put shown cards back.
         gui_set_player_cards(player.carda, player.cardb, index, false);
         cards.forEach(card => card.classList.add('visible'));
@@ -117,10 +121,14 @@
       shownCards.clear();
       revealShownSeats.clear();
       document.querySelectorAll('#poker_table .seat').forEach(seat => {
-        seat.classList.remove('demo-card-shown', 'demo-reveal-active', 'demo-has-seat-cards');
+        seat.classList.remove('demo-card-shown', 'demo-reveal-active', 'demo-has-seat-cards', 'card-shown');
       });
       lastPhase = null;
-      currentGameState = null;
+      // demo:next hands out a fresh demoRoomID even for a plain "next hand" (it
+      // just retires the previous room's pending server timers) - nulling
+      // currentGameState here would erase the reveal-phase prevState that
+      // handleGameStateUpdate needs to detect reveal -> preflop and play the
+      // hand-tornado vortex, so leave it for handleGameStateUpdate to replace.
       revealedAllSeats = false;
       revealFlowToken++;
       resetBoardRenderState();
@@ -135,7 +143,7 @@
     removeLoadingScreenNow();
     gui_show_poker_table();
     handleGameStateUpdate(state);
-    if (newRoom) { resetAllBacks(null, state); setupBoardBacks(); animateMyCards(); }
+    if (newRoom && state.phase === 'preflop') { resetAllBacks(null, state); setupBoardBacks(); animateMyCards(); }
     else if (state.phase !== 'reveal') restoreMyCardsIfNeeded(state, { force: true });
     renderRevealCards(state);
     if (state.phase === 'reveal' && Number.isInteger(revealSeat) && !state.revealSeq.done) showRevealButton();

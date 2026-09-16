@@ -43,6 +43,72 @@ body.imdcx-motion-enabled #poker_table .motion-flipping { backface-visibility: h
 body.imdcx-motion-enabled #poker_table .seat.motion-winner .name-chips { outline: 2px solid var(--motion-gold); outline-offset: 2px; }
 body.imdcx-motion-enabled #poker_table .card.motion-winning-card.revealed { outline: 2px solid var(--motion-gold); outline-offset: 2px; }
 @keyframes motionTurnGlow { 0%,100% { opacity: .6; } 50% { opacity: 1; } }
+/* Vortex and flights use viewport coordinates, so the existing scaled table
+   keeps the same trajectories on desktop and phones. All surfaces are inert. */
+#imdcx-motion-layer .motion-vortex-scene { perspective: 650px; overflow: visible; border:0; background:none; box-shadow:none; }
+.motion-vortex-scene > * { position:absolute; pointer-events:none; box-sizing:border-box; }
+.motion-vortex-halo {
+  inset:-15%; border-radius:50%;
+  background:radial-gradient(ellipse,#48dfff44, #245dff22 35%,#b533ff19 52%,transparent 72%);
+}
+.motion-vortex-orbit {
+  inset:6% -2% -6%; border-radius:50%;
+  border:2px solid transparent; border-top-color:#abfaff; border-bottom-color:var(--motion-second);
+  background:conic-gradient(from 30deg,transparent 10%,#04baff44 27%,transparent 35% 58%,#b842ff55 75%,transparent 84%);
+  box-shadow:inset 0 0 8px #3ddfff99,0 0 7px #00cfff,0 0 17px #144dff99;
+}
+.motion-vortex-core {
+  inset:33%; border-radius:50%;
+  background:radial-gradient(ellipse,#f0ffff 0%,#4ee9ff 8%,#197bff77 25%,#052354 38%,transparent 65%);
+  box-shadow:0 0 22px #19cfff77;
+}
+.motion-vortex-beam {
+  width:18%; height:110%; left:41%; bottom:43%; transform-origin:50% 100%;
+  background:linear-gradient(0deg,#c9ffffcc,#11c6ff55 35%,transparent 95%);
+  clip-path:polygon(45% 100%,0 0,100% 0,55% 100%); filter:drop-shadow(0 0 8px #00bfff);
+}
+#imdcx-motion-layer .motion-card-flight {
+  border:1px solid #c0f9ff; background-color:#020b25;
+  box-shadow:0 0 3px #fff,0 0 9px #009fff,0 4px 5px #0008; backface-visibility:hidden;
+}
+#imdcx-motion-layer .motion-energy-trail { overflow:visible; }
+.motion-energy-path { fill:none; stroke:var(--motion-light); stroke-width:2; stroke-linecap:round; filter:drop-shadow(0 0 3px #00aeff); }
+.motion-energy-glow { stroke-width:7; opacity:.35; filter:blur(3px); }
+.motion-energy-trail.is-gold .motion-energy-path { stroke:var(--motion-gold); filter:drop-shadow(0 0 4px #ffbd00); }
+.motion-energy-trail.is-bet .motion-energy-path { stroke:var(--motion-second); filter:drop-shadow(0 0 4px #df2eff); }
+.motion-energy-trail.is-payout .motion-energy-path { stroke:var(--motion-gold); filter:drop-shadow(0 0 4px #ffbd00); }
+#imdcx-motion-layer .motion-seat-landing {
+  border-radius:12px; border:2px solid #d2ffff;
+  background:linear-gradient(145deg,#25dfff1c,transparent 70%,#bf2fff20);
+  box-shadow:inset 0 0 9px #28ddff77,0 0 6px #07dfff,0 0 18px #215eff99;
+}
+#imdcx-motion-layer .motion-chip { filter:drop-shadow(0 0 4px #20ceff99) drop-shadow(0 3px 2px #0008); }
+#imdcx-motion-layer .motion-chip.is-payout { filter:drop-shadow(0 0 5px #ffc828) drop-shadow(0 3px 2px #0008); }
+#imdcx-motion-layer .motion-particle.is-gold { background:#ffe98b; box-shadow:0 0 7px #ffc400; }
+#imdcx-motion-layer .motion-seat-landing.is-gold { border-color:#fff1a0; box-shadow:inset 0 0 10px #ffdb4b66,0 0 7px #ffd02f,0 0 20px #ffb70099; }
+#imdcx-motion-layer .motion-action {
+  border:1px solid var(--motion-light); background:linear-gradient(150deg,var(--motion-panel),#050c23);
+  box-shadow:inset 0 1px 0 #ffffff77,0 0 7px #1cbdff66,0 3px 9px #03081799;
+}
+#imdcx-motion-layer .motion-action-bet,
+#imdcx-motion-layer .motion-action-raise,
+#imdcx-motion-layer .motion-action-allin { border-color:#ef83ff; box-shadow:0 0 8px #ca36ff77; }
+#imdcx-motion-layer .motion-amount {
+  display:grid;place-items:center;color:#ff8ce9;font:800 clamp(12px,2vw,20px)/1 'Montserrat',Arial,sans-serif;
+  text-shadow:0 2px 2px #000,0 0 8px #fb25cd; white-space:nowrap;
+}
+#imdcx-motion-layer .motion-amount.is-payout { color:#94ff84;text-shadow:0 2px 2px #000,0 0 8px #4ded5577; }
+#imdcx-motion-layer .motion-victory {
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  padding:12px 18px;border-radius:20px;border:2px solid #fff2a0;
+  color:#ffe57b;background:radial-gradient(ellipse at top,#69471a99,transparent 65%),linear-gradient(160deg,#1e190e,#030c1c);
+  box-shadow:inset 0 0 0 2px #d89019,0 0 7px #ffea7f,0 0 24px #ffbd0077,0 8px 22px #000a;
+  text-align:center;font-family:'Montserrat',Arial,sans-serif;
+}
+.motion-victory-crown { position:absolute;top:-27px;font:38px/1 Georgia,serif;color:#ffe85e;filter:drop-shadow(0 0 5px #ffbb00); }
+.motion-victory-title { font-size:clamp(17px,3.5vw,34px);font-weight:900;letter-spacing:.6px;text-shadow:0 1px 0 #fff,0 0 12px #ffbf0077; }
+.motion-victory-amount { font-size:clamp(12px,2.1vw,21px);font-weight:800;color:#fff1b4; }
+body.tier-fruity-bg #imdcx-motion-layer .motion-action { background:var(--motion-panel); }
 @media (prefers-reduced-motion: reduce) {
   body.imdcx-motion-enabled #poker_table .seat.turn .name-chips::after,
   body.imdcx-motion-enabled #poker_table .seat.demo-reveal-active .name-chips::after { animation: none !important; }

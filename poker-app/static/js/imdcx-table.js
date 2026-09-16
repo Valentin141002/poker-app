@@ -3,10 +3,23 @@
   'use strict';
   function layoutSeatCards(table, state) {
     if (!table || !state) return false;
-    const demoReveal = !!state.demo && state.phase === 'reveal';
+    if (!table.querySelector('.neon-table-ambience')) {
+      const ambience = document.createElement('div');
+      ambience.className = 'neon-table-ambience';
+      ambience.setAttribute('aria-hidden', 'true');
+      ['♥','♠','♦','♣'].forEach((suit, index) => {
+        const icon = document.createElement('span');
+        icon.className = `neon-suit neon-suit-${index}`;
+        icon.textContent = suit; ambience.appendChild(icon);
+      });
+      table.appendChild(ambience);
+    }
+    const reveal = state.phase === 'reveal' || document.body.classList.contains('final-end-ui');
+    const demoReveal = !!state.demo && reveal;
     table.classList.toggle('demo-seat-reveal', demoReveal);
-    if (!demoReveal && !['waiting', 'preflop', 'flop', 'turn', 'river'].includes(state.phase)) return false;
-    const width = demoReveal ? 48 : 40, height = demoReveal ? 64 : 54, gap = 5;
+    table.classList.toggle('seat-cards-reveal', reveal);
+    if (!reveal && !['waiting', 'preflop', 'flop', 'turn', 'river'].includes(state.phase)) return false;
+    const width = reveal ? 56 : 40, height = reveal ? 70 : 54, gap = reveal ? -30 : 5;
     table.style.setProperty('--seat-card-w', `${width}px`);
     table.style.setProperty('--seat-card-h', `${height}px`);
     table.style.setProperty('--seat-card-gap', `${gap}px`);
@@ -18,19 +31,19 @@
       if (!panel) return;
       const seatRect = seat.getBoundingClientRect();
       const scaleY = seat.offsetHeight ? seatRect.height / seat.offsetHeight : 1;
-      const panelTop = demoReveal && scaleY > 0
+      const panelTop = reveal && scaleY > 0
         ? (panel.getBoundingClientRect().top - seatRect.top) / scaleY : panel.offsetTop;
       seat.style.setProperty('--table-panel-top', `${panelTop}px`);
-      if (seat.classList.contains('my-seat') && !demoReveal) return;
+      if (seat.classList.contains('my-seat') && !reveal) return;
       const hole = seat.querySelector('.holecards');
       const first = hole?.querySelector('.holecard1');
       const second = hole?.querySelector('.holecard2');
       if (!first || !second) return;
       const topRow = Number(seat.id.replace('seat', '')) < 5;
-      set(hole, { position: 'absolute', left: '50%', top: `${panelTop + (demoReveal ? 64 : topRow ? 94 : 35)}px`,
-        width: `${width * 2 + gap}px`, height: `${height}px`, transform: 'translateX(-50%)' });
-      set(first, { left: '0px', top: '0px', width: `${width}px`, height: `${height}px` });
-      set(second, { left: `${width + gap}px`, top: '0px', width: `${width}px`, height: `${height}px` });
+      set(hole, { position: 'absolute', left: '50%', top: `${panelTop + (reveal ? 62 : topRow ? 94 : 35)}px`,
+        width: `${width * 2 + gap}px`, height: `${height + (reveal ? 13 : 0)}px`, transform: 'translateX(-50%)' });
+      set(first, { position:'absolute', left: '0px', top: '0px', width: `${width}px`, height: `${height}px`, transform: reveal ? 'rotate(-7deg)' : 'none', 'z-index':'3' });
+      set(second, { position:'absolute', left: `${width + gap}px`, top: reveal ? '13px' : '0px', width: `${width}px`, height: `${height}px`, transform: reveal ? 'rotate(7deg)' : 'none', 'z-index':'4' });
     });
     return true;
   }

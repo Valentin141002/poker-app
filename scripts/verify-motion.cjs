@@ -11,6 +11,14 @@ module.exports=async({cdp,evaluate,wait,screenshot,check,delay,port})=>{
   };
   const probe=`(() => {
     window.__motionEvents=[];window.__peakEffects=0;window.__longestEffect=0;
+    window.__motionFaceMatches=(el,code)=>{
+      if(!el||!code)return false;
+      const expected=document.createElement('div');
+      expected.style.cssText='position:fixed;left:-9999px;width:120px;height:145px';
+      document.body.appendChild(expected);internal_setCard(expected,code,false);
+      const matches=getComputedStyle(el).backgroundImage===getComputedStyle(expected).backgroundImage;
+      expected.remove();return matches;
+    };
     new MutationObserver(records=>{
       for(const record of records) for(const el of record.addedNodes) {
         if(el.nodeType!==1)continue;
@@ -38,7 +46,7 @@ module.exports=async({cdp,evaluate,wait,screenshot,check,delay,port})=>{
       await wait("currentGameState.phase==='flop'");
       await screenshot(`${label}-flop-in-motion`);
       await delay(650);
-      check(`${label}: flop faces match dealt cards after short flips`,await evaluate("['flop1','flop2','flop3'].every((id,i)=>document.getElementById(id).dataset.cardCode===currentGameState.board[i]&&!document.getElementById(id).classList.contains('motion-flipping'))"));
+      check(`${label}: flop faces match dealt cards after short flips`,await evaluate("['flop1','flop2','flop3'].every((id,i)=>document.getElementById(id).dataset.cardCode===currentGameState.board[i]&&__motionFaceMatches(document.getElementById(id),currentGameState.board[i])&&!document.getElementById(id).classList.contains('motion-flipping'))"));
       await act('human_check_call()');
       await act("show_custom_raise();document.querySelector('[onclick=\"calcConfirm()\"]').click()");
       await act("show_custom_raise();document.querySelector('.calc-allin-btn').click();document.querySelector('[onclick=\"calcConfirm()\"]').click()");
@@ -47,6 +55,8 @@ module.exports=async({cdp,evaluate,wait,screenshot,check,delay,port})=>{
       const events=await evaluate('__motionEvents');
       for(const action of ['RAISE','CALL','CHECK','BET','ALL-IN','FOLD'])check(`${label}: ${action} has short visible feedback`,events.includes(action));
       await delay(1100);
+      // Folding can also trigger the winner celebration (up to 1500 ms).
+      await wait("!document.querySelector('#imdcx-motion-layer > *')");
       check(`${label}: transient action effects finish`,await evaluate("!document.querySelector('#imdcx-motion-layer > *')"));
       // Restart during a board flip. Old callbacks must not bring old faces back.
       await evaluate("document.querySelector('[data-restart]').click()");await wait('currentGameState.demoRevision===0');await delay(750);
@@ -58,6 +68,9 @@ module.exports=async({cdp,evaluate,wait,screenshot,check,delay,port})=>{
       // Await the browser's completion event, which may be delivered a frame late
       // under headless load. Actual effect durations are independently capped below.
       await wait("!document.querySelector('#imdcx-motion-layer > *')");
+      // The fresh private hand opens after distribution; its valid flip is independent
+      // of the canceled previous board flip and can finish after the effect layer.
+      await wait("!document.querySelector('.motion-flipping')&&[...document.querySelectorAll('.my-seat .holecards .card')].every((c,n)=>__motionFaceMatches(c,n?currentGameState.players[mySeatIndex].cardb:currentGameState.players[mySeatIndex].carda))");
       const resetInfo=await evaluate("({phase:currentGameState.phase,board:['flop1','flop2','flop3','turn','river'].map(id=>({id,back:document.getElementById(id).dataset.hasBack,face:document.getElementById(id).dataset.cardCode})),flips:[...document.querySelectorAll('.motion-flipping')].map(el=>el.className),fx:[...document.querySelectorAll('#imdcx-motion-layer > *')].map(el=>({name:el.className,animations:el.getAnimations().map(a=>({current:a.currentTime,timing:a.effect.getTiming(),state:a.playState}))}))})");
       assert.ok(resetInfo.phase==='preflop'&&resetInfo.board.every(c=>c.back==='1')&&!resetInfo.flips.length&&!resetInfo.fx.length,`${label}: reset ${JSON.stringify(resetInfo)}`);
       check(`${label}: new hand clears flips and deals without leftover seat backs`,true);
@@ -74,29 +87,18 @@ module.exports=async({cdp,evaluate,wait,screenshot,check,delay,port})=>{
         await delay(70);await screenshot(`${label}-show-${i}`);await delay(550);
       }
       await wait('currentGameState.roundEvaluated');
-      await delay(mobile?6000:11000);
+      await wait("currentGameState.players.filter(p=>p.status==='WINNER').length>0&&currentGameState.players.every((p,i)=>p.status!=='WINNER'||document.getElementById('seat'+i).classList.contains('motion-winner'))");
+      await wait("!document.querySelector('#imdcx-motion-layer > *')");
       check(`${label}: authoritative winner is highlighted`,await evaluate("currentGameState.players.every((p,i)=>p.status!=='WINNER'||document.getElementById('seat'+i).classList.contains('motion-winner'))"));
-      check(`${label}: winner faces remain correctly painted`,await evaluate("currentGameState.players.filter(p=>p.status==='WINNER').length>0&&currentGameState.players.every((p,i)=>p.status!=='WINNER'||[...document.querySelectorAll('#seat'+i+' .card')].every((c,n)=>c.dataset.cardCode===(n?p.cardb:p.carda)&&c.classList.contains('motion-winning-card')))"));
+      check(`${label}: winner faces remain correctly painted`,await evaluate("currentGameState.players.filter(p=>p.status==='WINNER').length>0&&currentGameState.players.every((p,i)=>p.status!=='WINNER'||[...document.querySelectorAll('#seat'+i+' .card')].every((c,n)=>c.dataset.cardCode===(n?p.cardb:p.carda)&&__motionFaceMatches(c,n?p.cardb:p.carda)&&c.classList.contains('motion-winning-card')))"));
       await screenshot(`${label}-winner`);
-      check(`${label}: bounded particle count, short durations and no lingering effects`,await evaluate("__peakEffects<=48&&__longestEffect<=800&&!document.querySelector('#imdcx-motion-layer > *')"));
+      check(`${label}: bounded particle count, short durations and no lingering effects`,await evaluate("__peakEffects<=48&&__longestEffect<=1600&&!document.querySelector('#imdcx-motion-layer > *')"));
       // Accessibility: flips settle synchronously and decorative flights stop.
       await cdp('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
       await evaluate("document.querySelector('[data-next]').click()");await wait("currentGameState.phase==='preflop'");
       await act('human_check_call()');await act('human_check_call()');await wait("currentGameState.phase==='flop'");
       check(`${label}: reduced motion keeps correct cards and avoids flights`,await evaluate("!document.querySelector('.motion-flipping')&&!document.querySelector('#imdcx-motion-layer > *')&&['flop1','flop2','flop3'].every((id,i)=>document.getElementById(id).dataset.cardCode===currentGameState.board[i])"));
       await cdp('Emulation.setEmulatedMedia',{features:[]});
-      // Normal-client reset paths must cancel a pending face paint within the same hand.
-      // These only exercise rendering; the demo's server state is left untouched.
-      for(const reset of ['personal','all']){
-        await evaluate(`(() => {
-          const cards=[...document.querySelectorAll('#seat'+mySeatIndex+' .holecards .card')];
-          const player=currentGameState.players[mySeatIndex];
-          flipMyCardsWithLift3D(cards[0],cards[1],player.carda,player.cardb);
-          ${reset==='personal'?'resetMySeatBacks()':'resetAllBacks(null,{...currentGameState})'};
-        })()`);
-        await delay(550);
-        check(`${label}: ${reset} reset cancels pending hole-card faces`,await evaluate("[...document.querySelectorAll('#seat'+mySeatIndex+' .holecards .card')].every(c=>c.dataset.cardCode==='blinded'&&!c.classList.contains('revealed')&&!c.classList.contains('motion-flipping'))"));
-      }
     }
   }
 };

@@ -1,5 +1,10 @@
 # IMDCX — Phase 3 : animations et retours visuels
 
+> Mise à jour du 16 septembre : le rendu des références néon, les fichiers à
+> charger ensemble et les contrôles actuels sont décrits dans
+> [imdcx-neon-reference.md](imdcx-neon-reference.md). Les durées ci-dessous
+> décrivent la version précédente.
+
 Cette phase améliore uniquement les animations du jeu existant. La structure
 de la table et des popups, les cartes, les règles, le moteur et les décisions
 de mise sont conservés. La démo manuelle à 2 et 10 sièges reste disponible.
@@ -62,8 +67,6 @@ Web Animations. La couche décorative ne capte aucun clic et reste sous les popu
 Elle est limitée à 48 éléments temporaires, y compris sur une table à 10 sièges.
 Les effets terminés sont retirés ; les animations de cartes sont annulées à la
 nouvelle main et protégées par une génération de rendu.
-Les remises dos caché de la main personnelle et de tous les sièges annulent
-aussi les retournements en cours, même sans changement de main.
 
 Un redimensionnement, le passage de l'onglet en arrière-plan ou l'activation
 de `prefers-reduced-motion` termine les peintures encore valides et arrête les
@@ -77,7 +80,6 @@ pas une garantie de cette cadence sur chaque téléphone physique.
 ```powershell
 node scripts/verify-manual-demo.cjs --motion
 node scripts/verify-manual-demo.cjs --reveal-cards
-node scripts/verify-manual-demo.cjs
 ```
 
 Les scénarios utilisent Chrome et un serveur temporaire avec des données
@@ -87,8 +89,6 @@ les cartes gagnantes, les effets terminés et le mouvement réduit.
 
 Le scénario SHOW/HIDE couvre les démos à 2 et 10 sièges, le changement de thème,
 la position des faces, les annonces différées et une nouvelle main pendant SHOW.
-Le scénario démo vérifie également les all-ins jusqu'au résultat, la conservation
-du total de jetons, le redémarrage et le retour à l'accueil.
 Captures et rapports : `build/motion-review/` et `build/demo-reveal-review/`.
 Un contrôle sur téléphone physique reste à effectuer.
 
