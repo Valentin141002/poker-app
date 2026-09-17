@@ -234,7 +234,7 @@ test('manual demo uses the live engine for every seat without writing accounts o
     assert.equal(state.players.reduce((sum, p) => sum + p.bankroll, 0) + state.pot, 20000 * seats);
 
     const previous = state;
-    assert.equal((await client.request('demo:next')).ok, true);
+    assert.equal((await client.request('demo:next', { demoRoomID: state.demoRoomID, demoRound: state.roundNumber })).ok, true);
     state = await waitState(client, seats, s => s.demoRoomID !== previous.demoRoomID);
     assert.equal(state.roundNumber, previous.roundNumber + 1);
     assert.notEqual(state.dealerIndex, previous.dealerIndex);
@@ -243,7 +243,7 @@ test('manual demo uses the live engine for every seat without writing accounts o
     send(client, 'playerAction', decision(previous, { type: 'fold' }));
     assert.equal((await client.request('progression:claimLogin', { name: 'P1' })).ok, false);
     assert.equal((await client.request('joinGame', { table: state.demoRoomID, seat: 0 })).ok, false);
-    assert.equal((await client.request('demo:restart')).ok, true);
+    assert.equal((await client.request('demo:restart', { demoRoomID: state.demoRoomID, demoRound: state.roundNumber })).ok, true);
     state = (await client.next('startGame')).gameState;
     assert.equal(state.roundNumber, 1);
     assert.ok(state.players.every(p => p.bankroll + p.subtotal_bet === 20000));
@@ -259,7 +259,7 @@ test('manual demo uses the live engine for every seat without writing accounts o
     assert.equal(state.players.reduce((sum, p) => sum + p.bankroll, 0) + state.pot, 20000 * seats);
     assert.ok(state.players.some(p => p.status === 'WINNER'));
 
-    assert.equal((await client.request('demo:restart')).ok, true);
+    assert.equal((await client.request('demo:restart', { demoRoomID: state.demoRoomID, demoRound: state.roundNumber })).ok, true);
     state = (await client.next('startGame')).gameState;
     // Fold all but one player, then reset during the existing timed runout.
     t.diagnostic(`Resetting ${seats} seats during fold runout`);
@@ -268,7 +268,7 @@ test('manual demo uses the live engine for every seat without writing accounts o
       const revision = state.demoRevision;
       state = await waitState(client, seats, s => s.demoRevision > revision);
     }
-    assert.equal((await client.request('demo:next')).ok, true);
+    assert.equal((await client.request('demo:next', { demoRoomID: state.demoRoomID, demoRound: state.roundNumber })).ok, true);
     state = await waitState(client, seats, s => s.demoRoomID !== state.demoRoomID);
     assert.equal(state.players.reduce((sum, p) => sum + p.bankroll, 0) + state.pot, 20000 * seats);
   }

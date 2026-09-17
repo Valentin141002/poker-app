@@ -13,7 +13,8 @@ const popups = process.argv.includes('--popups');
 const motion = process.argv.includes('--motion');
 const neonReference = process.argv.includes('--neon-reference');
 const liveReveal = process.argv.includes('--live-reveal');
-const output = path.join(root, 'build', liveReveal ? 'live-reveal-review' : neonReference ? 'neon-reference-review' : motion ? 'motion-review' : popups ? 'popup-review' : revealCards ? 'demo-reveal-review' : tablePolish ? 'table-step1-review' : 'demo-review');
+const handCycle = process.argv.includes('--hand-cycle');
+const output = path.join(root, 'build', handCycle ? 'hand-cycle-review' : liveReveal ? 'live-reveal-review' : neonReference ? 'neon-reference-review' : motion ? 'motion-review' : popups ? 'popup-review' : revealCards ? 'demo-reveal-review' : tablePolish ? 'table-step1-review' : 'demo-review');
 fs.mkdirSync(output, { recursive: true });
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 let server, chrome, ws;
@@ -41,11 +42,16 @@ async function main() {
   const profile = path.join(directory, 'chrome');
   chrome = spawn(process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
     ['--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'],
-    { windowsHide: true, stdio: 'ignore' });
+    { windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'] });
+  let chromeLogs = '';
+  chrome.stderr.on('data', value => { chromeLogs += value; });
   const portFile = path.join(profile, 'DevToolsActivePort');
   for (let i = 0; i < 200 && !fs.existsSync(portFile); i++) await delay(100);
   assert.ok(fs.existsSync(portFile), 'Chrome started');
   console.log('Chrome ready');
+  // DevToolsActivePort can precede the initial page renderer on Windows.
+  await delay(2000);
+  assert.equal(chrome.exitCode, null, `Chrome exited before attach: ${chromeLogs}`);
   const debugPort = fs.readFileSync(portFile, 'utf8').split('\n')[0];
   const pages = await (await fetch(`http://127.0.0.1:${debugPort}/json/list`)).json();
   ws = new WebSocket(pages.find(page => page.type === 'page').webSocketDebuggerUrl);
@@ -90,9 +96,9 @@ async function main() {
   await cdp('Page.enable');
   const checks = [];
   const check = (name, value) => { assert.ok(value, name); checks.push(name); console.log(name); };
-  if (neonReference || motion || liveReveal) {
+  if (neonReference || motion || liveReveal || handCycle) {
     const helpers = { cdp, evaluate, wait, screenshot, check, delay, port, output };
-    const scenario = liveReveal ? './verify-live-reveal.cjs' : neonReference ? './verify-neon-reference.cjs' : './verify-motion.cjs';
+    const scenario = handCycle ? './verify-hand-cycle.cjs' : liveReveal ? './verify-live-reveal.cjs' : neonReference ? './verify-neon-reference.cjs' : './verify-motion.cjs';
     const metrics = await require(scenario)(helpers);
     if (neonReference && !liveReveal) await require('./verify-live-reveal.cjs')(helpers);
     check('No browser exceptions', errors.length === 0);

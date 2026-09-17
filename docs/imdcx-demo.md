@@ -9,9 +9,17 @@ entrées Bataille et roue.
 
 Les commandes de poker existantes agissent pour le joueur indiqué par
 « À vous de jouer : P… ». Le contrôleur suit l’ordre des tours du moteur, y
-compris les choix SHOW/HIDE. Aucun bot et aucune décision automatique à
-l’expiration d’un délai. Les distributions, blinds, mises, pots, animations,
-showdowns et évaluations sont ceux du jeu existant.
+compris les choix SHOW/HIDE. Aucun bot ne mise à votre place et les tours de
+mises n’expirent pas en démo. Un choix SHOW/HIDE laissé sans réponse applique
+toutefois le choix par défaut du moteur après **5 secondes**. Lors d’un showdown
+all-in, le moteur montre automatiquement les mains concernées, comme en partie
+réelle. Les distributions, blinds, mises, pots, animations, showdowns et
+évaluations sont ceux du jeu existant.
+
+Après l’attribution du pot et la fin des choix de révélation, la main suivante
+est distribuée automatiquement après **10 secondes**, tant que la partie n’est
+pas terminée. Il n’est pas nécessaire de cliquer sur **Nouvelle main**. Une
+partie terminée se relance avec **Recommencer la partie**.
 
 **Voir toutes les cartes** affiche les deux cartes de chaque siège dans la barre
 de démo. Ce panneau n’existe pas dans les parties normales.
@@ -33,6 +41,11 @@ Liens directs : `/poker.html?demo=2` et `/poker.html?demo=10`.
 sièges à une seule connexion. Il appelle `tryStartGame`, `tryStartMatch2` et
 `dealNextHand`. Les décisions passent dans le handler `playerAction` existant,
 avec vérification de la salle, de la main, du siège et de la révision.
+La continuation automatique utilise le même timer de fin de révélation que les
+parties réelles et conserve la salle. **Nouvelle main** et **Recommencer la
+partie** vérifient aussi la salle et le numéro de main : un ancien clic ou un
+double déclenchement ne peut pas sauter une main. Ces deux commandes manuelles
+remplacent la salle et annulent ses timers devenus obsolètes.
 
 Les salles de démo sont exclues des listes et fichiers de configuration. Les
 joueurs de démo ne sont pas des comptes : les écritures d’historique, de
@@ -49,10 +62,17 @@ Les tests utilisent exclusivement des serveurs temporaires avec des données
 fictives, sans lire ni copier les bases de joueurs du projet.
 
 ```powershell
+node --test tests/hand-cycle-server.test.cjs tests/hand-cycle-timers.test.cjs
 node --test tests/progression-server.test.cjs
 node --test tests/progression.test.cjs tests/progression-sockets.test.cjs tests/competitive-settlement.test.cjs tests/competitive-settlement-edge.test.cjs
 node scripts/verify-manual-demo.cjs
+node scripts/verify-manual-demo.cjs --hand-cycle
 ```
 
-Le dernier script nécessite Chrome et vérifie la vraie page avec le vrai serveur
-sur des formats ordinateur et mobile. Captures et résultats : `build/demo-review/`.
+Les scripts navigateur nécessitent Chrome et vérifient la vraie page avec le
+vrai serveur. La vérification générale couvre les formats ordinateur et mobile
+et écrit dans `build/demo-review/`. L’option `--hand-cycle` vérifie les transitions
+automatiques et écrit dans `build/hand-cycle-review/`.
+
+Le diagnostic et les résultats de validation du cycle sont décrits dans
+[imdcx-hand-cycle.md](imdcx-hand-cycle.md).

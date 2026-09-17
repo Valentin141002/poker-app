@@ -2659,6 +2659,77 @@ const REVEAL_DECISION_MS = 5000;
 const REVEAL_WINNER_MS = 10000;
 const WINNER_SCREEN_DELAY_MS = 5000;
 const revealFinishTimersByRoom = {};
+const runoutTimersByRoom = new Map();
+const pausedRunoutsByRoom = new Map();
+
+function clearHandRunout(roomID) {
+  const timers = runoutTimersByRoom.get(roomID);
+  if (timers) timers.forEach((_job, timer) => clearTimeout(timer));
+  runoutTimersByRoom.delete(roomID);
+  pausedRunoutsByRoom.delete(roomID);
+}
+
+function scheduleHandRunout(roomID, state, callback, delay) {
+  const round = state.roundNumber;
+  let timers = runoutTimersByRoom.get(roomID);
+  if (!timers) runoutTimersByRoom.set(roomID, timers = new Map());
+  const timer = setTimeout(() => {
+    if (runoutTimersByRoom.get(roomID) !== timers || !timers.has(timer)) return;
+    timers.delete(timer);
+    if (timers.size === 0 && runoutTimersByRoom.get(roomID) === timers) runoutTimersByRoom.delete(roomID);
+    if (gameStateByTable[roomID] !== state || state.roundNumber !== round) return;
+    callback();
+  }, delay);
+  timers.set(timer, { state, round, callback, deadline: Date.now() + delay });
+}
+
+function pauseHandRunout(roomID) {
+  const timers = runoutTimersByRoom.get(roomID);
+  if (!timers) return false;
+  const pending = [...timers.values()].map(job => ({
+    ...job, remainingMs: Math.max(0, job.deadline - Date.now())
+  }));
+  clearHandRunout(roomID);
+  // Keep callbacks outside the broadcast game state.
+  pausedRunoutsByRoom.set(roomID, pending);
+  return true;
+}
+
+function resumeHandRunout(roomID) {
+  const pending = pausedRunoutsByRoom.get(roomID);
+  pausedRunoutsByRoom.delete(roomID);
+  pending?.forEach(job => {
+    if (gameStateByTable[roomID] !== job.state || job.state.roundNumber !== job.round || job.state.gameFinished) return;
+    scheduleHandRunout(roomID, job.state, job.callback, job.remainingMs);
+  });
+}
+
+function clearHandTurnTimers(roomID) {
+  for (const timers of [turnTimersByTable, turnTimersByMatch2]) {
+    clearTimeout(timers[roomID]);
+    delete timers[roomID];
+  }
+}
+
+// One continuation for every completed hand, including demos. A timer belongs
+// to this exact state/round; a manual restart or stale callback cannot deal twice.
+function scheduleNextHand(roomID, delay = REVEAL_WINNER_MS) {
+  const state = gameStateByTable[roomID];
+  if (!state || state.gameFinished || state.adminPaused || state.phase !== 'reveal'
+      || !state.revealSeqDone || !state.roundEvaluated || revealFinishTimersByRoom[roomID]) return;
+  const round = state.roundNumber;
+  state.revealWinnerDeadline = Date.now() + delay;
+  const timer = setTimeout(() => {
+    if (revealFinishTimersByRoom[roomID] !== timer) return;
+    delete revealFinishTimersByRoom[roomID];
+    if (gameStateByTable[roomID] !== state || state.roundNumber !== round) return;
+    state.revealWinnerDeadline = null;
+    if (state.gameFinished || state.adminPaused || state.phase !== 'reveal'
+        || !state.revealSeqDone || !state.roundEvaluated) return;
+    dealNextHand(roomID);
+  }, delay);
+  revealFinishTimersByRoom[roomID] = timer;
+}
 
 function emitRoomState(roomID, isMatch2) {
   if (isMatch2) broadcastMatch2State(roomID);
@@ -2695,13 +2766,20 @@ function scheduleRevealDecisionTimeout(roomID, isMatch2, seat, ms) {
     clearTimeout(revealTimersByRoom[roomID]);
     delete revealTimersByRoom[roomID];
   }
-  const delay = Math.max(0, ms || REVEAL_DECISION_MS);
-  revealTimersByRoom[roomID] = setTimeout(() => {
-    const st = gameStateByTable[roomID];
-    if (!st || !st.revealSeq || st.adminPaused) return;
-    const defaultAction = st.revealSeq.defaultAction || 'show';
+  const state = gameStateByTable[roomID];
+  if (!state?.revealSeq || state.revealSeq.done) return;
+  const seq = state.revealSeq;
+  const round = state.roundNumber;
+  const delay = Math.max(0, ms ?? REVEAL_DECISION_MS);
+  const timer = setTimeout(() => {
+    if (revealTimersByRoom[roomID] !== timer) return;
+    delete revealTimersByRoom[roomID];
+    if (gameStateByTable[roomID] !== state || state.roundNumber !== round
+        || state.revealSeq !== seq || seq.done || seq.activeSeat !== seat || state.adminPaused) return;
+    const defaultAction = seq.defaultAction || 'show';
     applyRevealChoice(roomID, isMatch2, seat, defaultAction === 'hide');
   }, delay);
+  revealTimersByRoom[roomID] = timer;
 }
 
 function markInShowdown(state, useRevealStatus = false) {
@@ -2715,7 +2793,7 @@ function markInShowdown(state, useRevealStatus = false) {
 
 function applyRevealChoice(roomID, isMatch2, seat, hide) {
   const state = gameStateByTable[roomID];
-  if (!state || !state.revealSeq) return;
+  if (!state || !state.revealSeq || state.revealSeq.done || state.revealSeqDone) return;
   if (state.adminPaused) return;
 
   if (state.revealSeq.activeSeat !== seat) {
@@ -2776,14 +2854,8 @@ function applyRevealChoice(roomID, isMatch2, seat, hide) {
       }
       state.revealSeqDone = true;
 
+      scheduleNextHand(roomID);
       emitRoomState(roomID, isMatch2);
-      if (!state.demo && !revealFinishTimersByRoom[roomID]) {
-        state.revealWinnerDeadline = Date.now() + REVEAL_WINNER_MS;
-        revealFinishTimersByRoom[roomID] = setTimeout(() => {
-          delete revealFinishTimersByRoom[roomID];
-          dealNextHand(roomID);
-        }, REVEAL_WINNER_MS);
-      }
       return;
     }
     const remaining = state.players.filter(pl =>
@@ -2818,14 +2890,8 @@ function applyRevealChoice(roomID, isMatch2, seat, hide) {
       }
       state.revealSeqDone = true;
 
+      scheduleNextHand(roomID);
       emitRoomState(roomID, isMatch2);
-      if (!state.demo && !revealFinishTimersByRoom[roomID]) {
-        state.revealWinnerDeadline = Date.now() + REVEAL_WINNER_MS;
-        revealFinishTimersByRoom[roomID] = setTimeout(() => {
-          delete revealFinishTimersByRoom[roomID];
-          dealNextHand(roomID);
-        }, REVEAL_WINNER_MS);
-      }
       return;
     }
   }
@@ -2912,15 +2978,8 @@ function advanceRevealSequence(roomID, isMatch2) {
     seq.done = true;
     state.revealSeqDone = true;
     finalizeRevealWinners(roomID, isMatch2);
+    scheduleNextHand(roomID);
     emitRoomState(roomID, isMatch2);
-    // Manual demos keep the completed hand available for inspection until demo:next.
-    if (!state.demo && !revealFinishTimersByRoom[roomID]) {
-      state.revealWinnerDeadline = Date.now() + REVEAL_WINNER_MS;
-      revealFinishTimersByRoom[roomID] = setTimeout(() => {
-        delete revealFinishTimersByRoom[roomID];
-        dealNextHand(roomID);
-      }, REVEAL_WINNER_MS);
-    }
     return;
   }
 
@@ -2988,19 +3047,17 @@ function pauseGame(roomID, isMatch2, opts = {}) {
     turnRemainingMs: null,
     revealRemainingMs: null,
     revealActiveSeat: null,
-    revealWinnerRemainingMs: null
+    revealWinnerRemainingMs: null,
+    runoutPaused: pauseHandRunout(roomID)
   };
 
   // Stop action timer and preserve remaining time
-  if (['preflop','flop','turn','river'].includes(state.phase) && !state.timeFrozen) {
+  if (['preflop','flop','turn','river'].includes(state.phase) && !state.timeFrozen && !state.adminPause.runoutPaused) {
     const remaining = Math.max(0, (state.turnDuration || 0) - (now - (state.turnStartTime || now)));
     state.disconnectPaused = true;
     state.turnRemainingMs = remaining;
     state.adminPause.turnRemainingMs = remaining;
-    if (turnTimersByTable[roomID]) {
-      clearTimeout(turnTimersByTable[roomID]);
-      delete turnTimersByTable[roomID];
-    }
+    clearHandTurnTimers(roomID);
   }
 
   // Pause reveal decision timer if needed
@@ -3096,9 +3153,10 @@ function resumeGame(roomID, isMatch2) {
   state.timeFrozen = !!snap.timeFrozen;
   state.timeFrozenFor = snap.timeFrozenFor ?? null;
   state.disconnectPaused = false;
+  resumeHandRunout(roomID);
 
   // Resume action timer with remaining time
-  if (['preflop','flop','turn','river'].includes(state.phase) && !state.timeFrozen) {
+  if (['preflop','flop','turn','river'].includes(state.phase) && !state.timeFrozen && !snap.runoutPaused) {
     const remaining = typeof snap.turnRemainingMs === 'number' ? snap.turnRemainingMs : null;
     if (remaining != null) {
       const override = {
@@ -3125,11 +3183,7 @@ function resumeGame(roomID, isMatch2) {
   // Resume winner delay if needed
   if (state.revealSeqDone && typeof snap.revealWinnerRemainingMs === 'number') {
     const remaining = Math.max(0, snap.revealWinnerRemainingMs);
-    state.revealWinnerDeadline = Date.now() + remaining;
-    revealFinishTimersByRoom[roomID] = setTimeout(() => {
-      delete revealFinishTimersByRoom[roomID];
-      dealNextHand(roomID);
-    }, remaining);
+    scheduleNextHand(roomID, remaining);
   }
 
   emitRoomState(roomID, isMatch2);
@@ -3201,12 +3255,9 @@ function forceResumeFromCurrentState(roomID, isMatch2) {
       const remaining = Math.max(0, (state.revealWinnerDeadline || now) - now);
       if (revealFinishTimersByRoom[roomID]) {
         clearTimeout(revealFinishTimersByRoom[roomID]);
-      }
-      revealFinishTimersByRoom[roomID] = setTimeout(() => {
         delete revealFinishTimersByRoom[roomID];
-        dealNextHand(roomID);
-      }, remaining);
-      state.revealWinnerDeadline = now + remaining;
+      }
+      scheduleNextHand(roomID, remaining);
       emitRoomState(roomID, isMatch2);
       return { ok: true, resumed: 'reveal-finish' };
     }
@@ -3751,6 +3802,8 @@ io.to(`spectate-match2:${matchID}`).emit('spectatorState', {
 function dealNextHand(tableID) {
   const state = gameStateByTable[tableID];
   if (!state) return;
+  clearHandRunout(tableID);
+  clearHandTurnTimers(tableID);
   if (state.demo) state.demoRunningOut = false;
   if (state.gameFinished) {
     competitiveSettlement.settle(state, { finished: true, winnerName: state.winReason?.winnerLabel });
@@ -3766,6 +3819,8 @@ function dealNextHand(tableID) {
   state.pot = 0;
   currentBetByTable[tableID]      = 0;
   currentMinRaiseByTable[tableID] = 0;
+  currentBetByMatch2[tableID] = 0;
+  currentMinRaiseByMatch2[tableID] = 0;
   state.current_bet    = 0;
   state.checkCount     = 0;
 state.timeFrozen        = false;
@@ -3775,10 +3830,14 @@ state.calcPrimaryUsed = false;
 state.calcExtensionUsed = false;
 state.add30Used = false;
 state.add30BonusMs = 0;
+  state.disconnectPaused = false;
+  state.turnRemainingMs = null;
   state.roundEvaluated = false;
 
   // 3) réinitialisation du statut des joueurs
   state.players.forEach(p => {
+    p.inShowdown = false;
+    p.handName = null;
     p.subtotal_bet = 0;
       p.total_bet_hand = 0;   // ← NEW
     if (p.status === 'BUST' && (p.bankroll | 0) > 0) {
@@ -4377,7 +4436,9 @@ const alive = state.players.filter(p => !['FOLD','BUST','WAIT'].includes(p.statu
 
 function startRevealAllIn(tableID) {
   const state = gameStateByTable[tableID];
-  if (!state) return;
+  if (!state || state.gameFinished || state.adminPaused || runoutTimersByRoom.has(tableID)
+      || (state.phase === 'reveal' && state.revealSeq)) return;
+  clearHandTurnTimers(tableID);
   if (state.demo) state.demoRunningOut = true;
   const alivePlayers = state.players.filter(p => p && !p.inactive && !['FOLD','BUST','WAIT'].includes(p.status));
   const hasMultipleAlive = alivePlayers.length > 1;
@@ -4428,8 +4489,7 @@ io.to(`spectate-table:${tableID}`).emit('spectatorState', {  // spectateurs
   // 3) Programmer chaque phase restante avec 2,5 s d’intervalle
   phasesÀJouer.forEach((phase, idx) => {
     const délai = idx * 2500;
-    setTimeout(() => {
-      if (state.demo && gameStateByTable[tableID] !== state) return;
+    scheduleHandRunout(tableID, state, () => {
       state.phase = phase;
 io.to(tableID).emit('updateTable', state);   // joueurs
 
@@ -4451,8 +4511,7 @@ io.to(`spectate-table:${tableID}`).emit('spectatorState', {  // spectateurs
     ? (phasesÀJouer.length - 1) * 2500 + 2500
     : 0;
 
-  setTimeout(() => {
-    if (state.demo && gameStateByTable[tableID] !== state) return;
+  scheduleHandRunout(tableID, state, () => {
     state.phase = 'reveal';
     if (!state.roundEvaluated) markInShowdown(state, false);
     if (!state.revealSeq || state.revealSeq.done) {
@@ -4481,7 +4540,9 @@ io.to(`spectate-table:${tableID}`).emit('spectatorState', {  // spectateurs
  */
 function startReveal(tableID, opts = {}) {
   const state = gameStateByTable[tableID];
-  if (!state) return;
+  if (!state || state.gameFinished || state.adminPaused || runoutTimersByRoom.has(tableID)
+      || (state.phase === 'reveal' && state.revealSeq)) return;
+  clearHandTurnTimers(tableID);
   if (state.demo) state.demoRunningOut = true;
 
   // 1) Si on est déjà en 'reveal', on n’a plus qu’à évaluer tout de suite
@@ -4539,8 +4600,7 @@ io.to(`spectate-table:${tableID}`).emit('spectatorState', {  // spectateurs
   // 3) On programme chacune des phases restantes avec 2,5 s entre chaque étape
   phasesÀJouer.forEach((phase, idx) => {
     const délai = idx * 2500; // 0ms pour la première (flop), 2500ms pour la suivante (turn), etc.
-    setTimeout(() => {
-      if (state.demo && gameStateByTable[tableID] !== state) return;
+    scheduleHandRunout(tableID, state, () => {
       state.phase = phase;
 io.to(tableID).emit('updateTable', state);   // joueurs
 
@@ -4563,8 +4623,7 @@ io.to(`spectate-table:${tableID}`).emit('spectatorState', {  // spectateurs
     ? (phasesÀJouer.length - 1) * 2500 + 2500
     : 0;
 
-  setTimeout(() => {
-    if (state.demo && gameStateByTable[tableID] !== state) return;
+  scheduleHandRunout(tableID, state, () => {
     state.phase = 'reveal';
     if (!state.roundEvaluated) markInShowdown(state, false);
     if (!state.revealSeq || state.revealSeq.done) {
@@ -4593,13 +4652,10 @@ registerDemoController(socket, {
   tables: tablesConfig, matches: matches2Config, states: gameStateByTable,
   tableWaiting: waitingPlayersByTable, matchWaiting: waitingPlayersByMatch2,
   startTable: tryStartGame, startMatch: tryStartMatch2, next: dealNextHand,
-  revealWinnerDelayMs: REVEAL_WINNER_MS,
   clear(id, state) {
     clearRevealSequence(id, state);
-    for (const timers of [turnTimersByTable, turnTimersByMatch2]) {
-      clearTimeout(timers[id]);
-      delete timers[id];
-    }
+    clearHandRunout(id);
+    clearHandTurnTimers(id);
     for (const bets of [currentBetByTable, currentBetByMatch2, currentMinRaiseByTable, currentMinRaiseByMatch2]) delete bets[id];
   }
 });

@@ -35,9 +35,11 @@ function runDealNextHand(f) {
     gameStateByTable: { room: f.state },
     competitiveSettlement: f.settlement,
     currentBetByTable: {}, currentMinRaiseByTable: {},
+    currentBetByMatch2: {}, currentMinRaiseByMatch2: {},
     matches2Config: {}, tablesConfig: { room: { mode: 'normal' } },
     turnTimersByTable: {}, turnTimersByMatch2: {},
     clearRevealSequence: () => {}, distributeCards: () => {},
+    clearHandRunout: () => {}, clearHandTurnTimers: () => {},
     configureBlinds: () => {}, resetTurnTimer: () => {}, broadcastTableState: () => {}
   });
   vm.runInContext(server.slice(start, end), context);

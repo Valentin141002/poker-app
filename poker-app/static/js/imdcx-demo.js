@@ -103,13 +103,14 @@
     lastPacket = packet;
     pending = false;
     const newRoom = currentGameState?.demoRoomID !== state.demoRoomID;
+    const newHand = newRoom || currentGameState?.roundNumber !== state.roundNumber;
     const oldSeat = mySeatIndex;
     const revealSeat = state.revealSeq?.activeSeat;
     const nextSeat = state.phase === 'reveal' && Number.isInteger(revealSeat)
       ? revealSeat : state.current_bettor_index;
-    if (newRoom || oldSeat !== nextSeat) {
+    if (newHand || oldSeat !== nextSeat) {
       myCardAnimRunId++;
-      if (newRoom || state.phase !== 'reveal' || currentGameState?.phase !== 'reveal') resetMySeatBacks();
+      if (newHand || state.phase !== 'reveal' || currentGameState?.phase !== 'reveal') resetMySeatBacks();
     }
     if (Number.isInteger(nextSeat) && state.players[nextSeat]) mySeatIndex = nextSeat;
     mySocketId = state.players[mySeatIndex]?.id || '';
@@ -117,24 +118,21 @@
     _tableID = isMatch2 ? null : state.demoRoomID;
     _match2ID = isMatch2 ? state.demoRoomID : null;
     gameMode = state.mode;
-    if (newRoom) {
+    if (newHand) {
       shownCards.clear();
       revealShownSeats.clear();
       document.querySelectorAll('#poker_table .seat').forEach(seat => {
         seat.classList.remove('demo-card-shown', 'demo-reveal-active', 'demo-has-seat-cards', 'card-shown');
       });
-      lastPhase = null;
-      // demo:next hands out a fresh demoRoomID even for a plain "next hand" (it
-      // just retires the previous room's pending server timers) - nulling
-      // currentGameState here would erase the reveal-phase prevState that
-      // handleGameStateUpdate needs to detect reveal -> preflop and play the
-      // hand-tornado vortex, so leave it for handleGameStateUpdate to replace.
+      if (newRoom) lastPhase = null;
+      // Keep the previous state/phase for the existing hand transition. Automatic
+      // hands stay in the same room; manually abandoning one retires its room.
       revealedAllSeats = false;
       revealFlowToken++;
       resetBoardRenderState();
       clearWinnerMessage();
     }
-    if (newRoom || oldSeat !== mySeatIndex) {
+    if (newHand || oldSeat !== mySeatIndex) {
       if (isCalcOpen()) calcClose();
       myCardsRevealed = false;
       myLastKnownHoleCards = null;
@@ -183,8 +181,12 @@
       return emit(event, payload, ...rest);
     };
     const reset = event => {
+      if (pending || !socket.connected || !currentGameState?.demo) return;
       pending = true;
-      socket.emit(event, {}, result => {
+      socket.emit(event, {
+        demoRoomID: currentGameState.demoRoomID,
+        demoRound: currentGameState.roundNumber
+      }, result => {
         pending = false;
         if (!result?.ok) showErrorToast(result?.error || 'Démo indisponible.');
       });
